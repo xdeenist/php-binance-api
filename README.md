@@ -1415,6 +1415,13 @@ $api->caOverride = true;
 > There are also numerous other formats available here:
 https://github.com/jaggedsoft/php-binance-api/tree/gh-pages
 
+
+[![Vitality](https://github.com/user-attachments/assets/0981aae2-3e12-4b57-8d2f-c5ae2b3b8b1c)](https://vitalitycrypto.com/)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=ccxt/php-binance-api&type=Date)](https://www.star-history.com/#ccxt/php-binance-api&Date)
+
 ## Contribution
 - Give us a star :star:
 - Fork and Clone! Awesome
