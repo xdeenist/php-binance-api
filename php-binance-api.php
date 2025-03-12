@@ -771,8 +771,6 @@ class API
     }
     
     /**
-     * @deprecated
-     *
      * Fetch current(daily) trade fee of symbol, values in percentage.
      * for more info visit binance official api document
      *
@@ -784,13 +782,11 @@ class API
     {
         $params = [
             "symbol" => $symbol,
-            "wapi" => true,
+            "sapi" => true,
         ];
-        trigger_error('Function tradeFee is deprecated and will be removed from Binance on Aug 1, 2021. Please use $api->commissionFee', E_USER_DEPRECATED);
-        
-        return $this->httpRequest("v3/tradeFee.html", 'GET', $params, true);
+        return $this->httpRequest("v1/asset/tradeFee", 'GET', $params, true);
     }
-    
+
     /**
      * commissionFee - Fetch commission trade fee
      * 
