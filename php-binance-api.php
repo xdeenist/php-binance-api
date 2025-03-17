@@ -3095,14 +3095,14 @@ class API
     public function futuresGetPing()
     {
         $arr = array();
-        $api_status = $this->httpRequest("fapi/v1/ping", 'GET');
+        $params['fapi'] = true;
+        $fapi_status = $this->httpRequest("fapi/v1/ping", 'GET');
         if ( empty($api_status) ) {
-            $arr['api']['status']  = 'ping ok';
+            $arr['fapi']['status']  = 'ping ok';
         } else {
-            $arr['api']['status']  = $api_status;
+            $arr['fapi']['status']  = $api_status;
         }
 
-        $arr['sapi'] = $this->httpRequest("fapi/v1/ping", 'GET', [ 'fapi' => true ], true);
         return $arr;
     }
 
@@ -3111,15 +3111,14 @@ class API
      *
      * $fapi->useServerTime();
      *
-     * @return null
+     * @return array
      * @throws \Exception
      */
     public function futuresUseServerTime()
     {
-        $request = $this->httpRequest("fapi/v1/time");
-        if (isset($request['serverTime'])) {
-            $this->info['timeOffset'] = $request['serverTime'] - (microtime(true) * 1000);
-        }
+        $params['fapi'] = true;
+        $request = $this->httpRequest("fapi/v1/time", 'GET', $params, true);
+        return $request;
     }
 
         /**
