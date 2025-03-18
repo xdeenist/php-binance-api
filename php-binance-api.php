@@ -33,7 +33,13 @@ class API
     protected $baseTestnet = 'https://testnet.binance.vision/api/'; // /< Testnet REST endpoint for the currency exchange
     protected $wapi = 'https://api.binance.com/wapi/'; // /< REST endpoint for the withdrawals
     protected $sapi = 'https://api.binance.com/sapi/'; // /< REST endpoint for the supporting network API
-    protected $fapi = 'https://fapi.binance.com/'; // /< REST endpoint for the futures API
+    protected $fapi = 'https://fapi.binance.com/fapi/'; // /< REST endpoint for the futures API
+    protected $fapiData = 'https://fapi.binance.com/futures/data'; // /< REST endpoint for the futures API
+    protected $fapiTestnet = 'https://testnet.binancefuture.com/fapi/'; // /< Testnet REST endpoint for the futures API
+    protected $dapi = 'https://dapi.binance.com/dapi/'; // /< REST endpoint for the delivery API
+    protected $dapiData = 'https://dapi.binance.com/futures/data/'; // /< REST endpoint for the delivery API
+    protected $dapiTestnet = 'https://testnet.binancefuture.com/dapi/'; // /< Testnet REST endpoint for the delivery API
+    protected $papi = 'https://papi.binance.com/papi/'; // /< REST endpoint for the options API
     protected $bapi = 'https://www.binance.com/bapi/'; // /< REST endpoint for the internal Binance API
     protected $stream = 'wss://stream.binance.com:9443/ws/'; // /< Endpoint for establishing websocket connections
     protected $streamTestnet = 'wss://testnet.binance.vision/ws/'; // /< Testnet endpoint for establishing websocket connections
