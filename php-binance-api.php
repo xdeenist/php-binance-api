@@ -1274,6 +1274,69 @@ class API
         curl_setopt($curl, CURLOPT_VERBOSE, $this->httpDebug);
         $query = $this->binance_build_query($params);
 
+        $base = $this->base;
+        if ($this->useTestnet) {
+            $base = $this->testnet;
+        }
+
+        if (isset($params['wapi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("wapi endpoints are not available in testnet");
+            }
+            unset($params['wapi']);
+            $base = $this->wapi;
+        }
+
+        if (isset($params['sapi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("sapi endpoints are not available in testnet");
+            }
+            unset($params['sapi']);
+            $base = $this->sapi;
+        }
+
+        if (isset($params['fapi'])) {
+            unset($params['fapi']);
+            $base = $this->useTestnet ? $this->fapiTestnet : $this->fapi;
+        }
+
+        if (isset($params['fapiData'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("fapiData endpoints are not available in testnet");
+            }
+            unset($params['fapiData']);
+            $base = $this->fapiData;
+        }
+
+        if (isset($params['dapi'])) {
+            unset($params['dapi']);
+            $base = $this->useTestnet ? $this->dapiTestnet : $this->dapi;
+        }
+
+        if (isset($params['dapiData'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("dapiData endpoints are not available in testnet");
+            }
+            unset($params['dapiData']);
+            $base = $this->dapiData;
+        }
+
+        if (isset($params['papi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("papi endpoints are not available in testnet");
+            }
+            unset($params['papi']);
+            $base = $this->papi;
+        }
+
+        if (isset($params['bapi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("bapi endpoints are not available in testnet");
+            }
+            unset($params['bapi']);
+            $base = $this->bapi;
+        }
+
         // signed with params
         if ($signed === true) {
             if (empty($this->api_key)) {
@@ -1284,34 +1347,8 @@ class API
                 throw new \Exception("signedRequest error: API Secret not set!");
             }
 
-            $base = $this->getRestEndpoint();
             $ts = (microtime(true) * 1000) + $this->info['timeOffset'];
             $params['timestamp'] = number_format($ts, 0, '.', '');
-            if (isset($params['wapi'])) {
-                if ($this->useTestnet) {
-                    throw new \Exception("wapi endpoints are not available in testnet");
-                }
-                unset($params['wapi']);
-                $base = $this->wapi;
-            }
-
-            if (isset($params['sapi'])) {
-                if ($this->useTestnet) {
-                    throw new \Exception("sapi endpoints are not available in testnet");
-                }
-                unset($params['sapi']);
-                $base = $this->sapi;
-            }
-
-            if (isset($params['fapi'])) {
-                unset($params['fapi']);
-                $base = $this->fapi;
-            }
-
-            if (isset($params['bapi'])) {
-                unset($params['bapi']);
-                $base = $this->bapi;
-            }
             $query = $this->binance_build_query($params);
             $query = str_replace([ '%40' ], [ '@' ], $query);//if send data type "e-mail" then binance return: [Signature for this request is not valid.]
             $signature = hash_hmac('sha256', $query, $this->api_secret);
@@ -1330,11 +1367,11 @@ class API
         }
         // params so buildquery string and append to url
         elseif (count($params) > 0) {
-            curl_setopt($curl, CURLOPT_URL, $this->getRestEndpoint() . $url . '?' . $query);
+            curl_setopt($curl, CURLOPT_URL, $base . $url . '?' . $query);
         }
         // no params so just the base url
         else {
-            curl_setopt($curl, CURLOPT_URL, $this->getRestEndpoint() . $url);
+            curl_setopt($curl, CURLOPT_URL, $base . $url);
             curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'X-MBX-APIKEY: ' . $this->api_key,
             ));
@@ -2841,11 +2878,6 @@ class API
         return $this->xMbxUsedWeight1m;
     }
 
-    private function getRestEndpoint() : string
-    {
-        return $this->useTestnet ? $this->baseTestnet : $this->base;
-    }
-
     private function getWsEndpoint() : string
     {
         return $this->useTestnet ? $this->streamTestnet : $this->stream;
@@ -3102,7 +3134,7 @@ class API
     {
         $arr = array();
         $params['fapi'] = true;
-        $fapi_status = $this->httpRequest("fapi/v1/ping", 'GET');
+        $fapi_status = $this->httpRequest("v1/ping", 'GET');
         if ( empty($api_status) ) {
             $arr['fapi']['status']  = 'ping ok';
         } else {
@@ -3123,7 +3155,7 @@ class API
     public function futuresUseServerTime()
     {
         $params['fapi'] = true;
-        $request = $this->httpRequest("fapi/v1/time", 'GET', $params, true);
+        $request = $this->httpRequest("v1/time", 'GET', $params);
         return $request;
     }
 
