@@ -2893,6 +2893,7 @@ class API
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#test-connectivity
      * @link https://binance-docs.github.io/apidocs/spot/en/#system-status-system
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api
      *
      * @property int $weight 2
      *
@@ -2909,7 +2910,14 @@ class API
             $arr['api']['status']  = $api_status;
         }
 
-        $arr['sapi'] = $this->httpRequest("v1/system/status", 'GET', [ 'sapi' => true ], true);
+        $fapi_status = $this->httpRequest("v1/ping", 'GET', [ 'fapi' => true ]);
+        if ( empty($fapi_status) ) {
+            $arr['fapi']['status'] = 'ping ok';
+        } else {
+            $arr['fapi']['status'] = $fapi_status;
+        }
+
+        $arr['sapi'] = $this->httpRequest("v1/system/status", 'GET', [ 'sapi' => true ]);
         return $arr;
     }
 
@@ -3120,29 +3128,6 @@ class API
     * https://developers.binance.com/docs/derivatives/usds-margined-futures/general-info
     *
     *********************************************/
-
-    /**
-     * systemStatus - Status indicator for api sapi
-     *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api     *
-     * @property int $weight 1
-     *
-     * @return array containing the response
-     * @throws \Exception
-     */
-    public function futuresGetPing()
-    {
-        $arr = array();
-        $params['fapi'] = true;
-        $fapi_status = $this->httpRequest("v1/ping", 'GET');
-        if ( empty($api_status) ) {
-            $arr['fapi']['status']  = 'ping ok';
-        } else {
-            $arr['fapi']['status']  = $api_status;
-        }
-
-        return $arr;
-    }
 
     /**
      * useServerTime adds the 'useServerTime'=>true to the API request to avoid time errors
