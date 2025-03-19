@@ -3187,8 +3187,14 @@ class API
      *
      * $depth = $api->futuresDepth("ETHBTC");
      *
-     * @param $symbol string the symbol to get the depth information for
-     * @param $limit int set limition for number of market depth data
+     * @property int $weight 10
+     * for limit 5, 10, 20, 50 - weight 2
+     * for limit 100 - weight 5
+     * for limit 500 (default) - weight 10
+     * for limit 1000 - weight 20
+     *
+     * @param string $symbol (mandatory) the symbol to get the depth information for
+     * @param int    $limit (optional) $limit set limition for number of market depth data, default 500, max 1000 (possible values are 5, 10, 20, 50, 100, 500, 1000)
      * @return array with error message or array of market depth
      * @throws \Exception
      */
@@ -3200,10 +3206,10 @@ class API
         }
 
         $params = [
-            "symbol" => $symbol,
-            "fapi" => true,
+            'symbol' => $symbol,
+            'fapi' => true,
         ];
-        if (isset($limit)) {
+        if (isset($limit) && is_numeric($limit)) {
             $params['limit'] = $limit;
         }
         $json = $this->httpRequest("v1/depth", "GET", $params);
@@ -3213,5 +3219,63 @@ class API
         }
         $this->info[$symbol]['futures']['firstUpdate'] = $json['lastUpdateId'];
         return $this->depthData($symbol, $json, 'futures');
+    }
+
+    /**
+     * futuresRecentTrades - Get recent trades for a specific currency
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Recent-Trades-List
+     *
+     * $trades = $api->futuresRecentTrades("ETHBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) to query, e.g. BNBBTC
+     * @param int    $limit  (optional) limit the amount of trades, default 500, max 1000
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresRecentTrades(string $symbol, int $limit = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if (isset($limit) && is_numeric($limit)) {
+            $parameters['limit'] = $limit;
+        }
+        return $this->httpRequest("v1/trades", "GET", $parameters);
+    }
+
+    /**
+     * futuresHistoricalTrades - Get historical trades for a specific currency
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Old-Trades-Lookup
+     *
+     * $trades = $api->futuresHistoricalTrades("ETHBTC");
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol  (mandatory) to query, e.g. BNBBTC
+     * @param int    $limit   (optional)  limit the amount of trades, default 100, max 500
+     * @param int    $tradeId (optional)  return the orders from this orderId onwards, negative to get recent ones
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresHistoricalTrades(string $symbol, int $limit = null, int $tradeId = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if (isset($limit) && is_numeric($limit)) {
+            $parameters['limit'] = $limit;
+        }
+        if (isset($tradeId) && is_numeric($tradeId)) {
+            $parameters['fromId'] = $tradeId;
+        }
+        return $this->httpRequest("v1/historicalTrades", "GET", $parameters, true);
     }
 }
