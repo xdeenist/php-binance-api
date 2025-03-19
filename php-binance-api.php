@@ -2061,7 +2061,7 @@ class API
      * @param $json array of the depth infomration
      * @return array of the depth information
      */
-    protected function depthData(string $symbol, array $json)
+    protected function depthData(string $symbol, array $json, string $product_type = null)
     {
         $bids = $asks = [];
         foreach ($json['bids'] as $obj) {
@@ -2070,10 +2070,16 @@ class API
         foreach ($json['asks'] as $obj) {
             $asks[$obj[0]] = $obj[1];
         }
-        return $this->depthCache[$symbol] = [
+        $result = [
             "bids" => $bids,
             "asks" => $asks,
         ];
+        if (isset($product_type)) {
+            $this->depthCache[$symbol][$product_type] = $result;
+        } else {
+            $this->depthCache[$symbol] = $result;
+        }
+        return $result;
     }
 
     /**
@@ -3172,5 +3178,40 @@ class API
         }
 
         return $this->futuresExchangeInfo;
+    }
+
+    /**
+     * futuresDepth get Market depth for futures
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Order-Book
+     *
+     * $depth = $api->futuresDepth("ETHBTC");
+     *
+     * @param $symbol string the symbol to get the depth information for
+     * @param $limit int set limition for number of market depth data
+     * @return array with error message or array of market depth
+     * @throws \Exception
+     */
+    public function futuresDepth(string $symbol, int $limit = null)
+    {
+        if (isset($symbol) === false || is_string($symbol) === false) {
+            // WPCS: XSS OK.
+            echo "asset: expected bool false, " . gettype($symbol) . " given" . PHP_EOL;
+        }
+
+        $params = [
+            "symbol" => $symbol,
+            "fapi" => true,
+        ];
+        if (isset($limit)) {
+            $params['limit'] = $limit;
+        }
+        $json = $this->httpRequest("v1/depth", "GET", $params);
+        if (isset($this->info[$symbol]) === false) {
+            $this->info[$symbol] = [];
+            $this->info[$symbol]['futures'] = [];
+        }
+        $this->info[$symbol]['futures']['firstUpdate'] = $json['lastUpdateId'];
+        return $this->depthData($symbol, $json, 'futures');
     }
 }
