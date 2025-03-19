@@ -66,6 +66,7 @@ class API
     // /< value of available onOrder assets
 
     protected $exchangeInfo = null;
+    protected $futuresExchangeInfo = null;
     protected $lastRequest = [];
 
     protected $xMbxUsedWeight = 0;
@@ -3130,60 +3131,46 @@ class API
     *********************************************/
 
     /**
-     * useServerTime adds the 'useServerTime'=>true to the API request to avoid time errors
+     * futuresTime Gets the server time
      *
-     * $fapi->useServerTime();
+     * $time = $api->futuresTime();
      *
-     * @return array
+     * @return array with error message or array with server time key
      * @throws \Exception
      */
-    public function futuresUseServerTime()
+    public function futuresTime()
     {
-        $params['fapi'] = true;
-        $request = $this->httpRequest("v1/time", 'GET', $params);
-        return $request;
+        return $this->httpRequest("v1/time", "GET", [ 'fapi' => true ]);
     }
 
-        /**
+    /**
      * futuresExchangeInfo -  Gets the complete exchange info, including limits, currency options etc. for futures
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Exchange-Information
      *
-     * $info = $fapi->exchangeInfo();
+     * $info = $api->futuresExchangeInfo();
      *
      * @property int $weight 1
-     *
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresExchangeInfo($symbols = null)
+    public function futuresExchangeInfo()
     {
-        if (!$this->exchangeInfo) {
+        if (!$this->futuresExchangeInfo) {
             $arr = array();
             $arr['symbols'] = array();
-            $parameters = [];
 
-            if ($symbols) {
-                if (gettype($symbols) == "string") {
-                    $parameters["symbol"] = $symbols;
-                    $arr = $this->httpRequest("v3/exchangeInfo", "GET", $parameters);
-                }
-                if (gettype($symbols) == "array")  {
-                    $arr = $this->httpRequest('v3/exchangeInfo?symbols=' . '["' . implode('","', $symbols) . '"]');
-                }
-            } else {
-                $arr = $this->httpRequest("v3/exchangeInfo");
-            }
+            $arr = $this->httpRequest("v1/exchangeInfo", "GET", [ 'fapi' => true ]);
 
-            $this->exchangeInfo = $arr;
-            $this->exchangeInfo['symbols'] = null;
+            $this->futuresExchangeInfo = $arr;
+            $this->futuresExchangeInfo['symbols'] = null;
 
             foreach ($arr['symbols'] as $key => $value) {
-                $this->exchangeInfo['symbols'][$value['symbol']] = $value;
+                $this->futuresExchangeInfo['symbols'][$value['symbol']] = $value;
             }
         }
 
-        return $this->exchangeInfo;
+        return $this->futuresExchangeInfo;
     }
 }
