@@ -3529,4 +3529,139 @@ class API
         $this->charts['futures'][$symbol][$klineType][$interval] = $candlesticks;
         return $candlesticks;
     }
+
+    /**
+     * futuresMarkPrice get the mark price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price
+     *
+     * $markPrice = $api->futuresMarkPrice();
+     * $markPrice = $api->futuresMarkPrice("ETHBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (optional) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresMarkPrice(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/premiumIndex", "GET", $parameters);
+    }
+
+    /**
+     * futuresFundingRateHistory get the funding rate history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-History
+     *
+     * $fundingRate = $api->futuresFundingRateHistory();
+     * $fundingRate = $api->futuresFundingRateHistory("ETHBTC");
+     *
+     * @param string $symbol (optional) string to query
+     * @param int    $limit  (optional) int limit the amount of funding rate history (default 100, max 1000)
+     * @param int    $startTime (optional) string request funding rate history starting from here
+     * @param int    $endTime (optional) string request funding rate history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFundingRateHistory(string $symbol = null, int $limit = null, $startTime = null, $endTime = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        return $this->httpRequest("v1/fundingRate", "GET", $parameters);
+    }
+
+    /**
+     * futuresFundingInfo get the funding rate history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-Info
+     *
+     * $fundingInfo = $api->futuresFundingInfo();
+     *
+     * @property int $weight 1
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFundingInfo()
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        return $this->httpRequest("v1/fundingInfo", "GET", $parameters);
+    }
+
+    /**
+     * futures24hrTickerPrice get 24 hour price change statistics for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/24hr-Ticker-Price-Change-Statistics
+     *
+     * $ticker = $api->futures24hrTickerPrice();
+     * $ticker = $api->futures24hrTickerPrice("ETHBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (optional) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futures24hrTickerPrice(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/ticker/24hr", "GET", $parameters);
+    }
+
+    /**
+     * futuresSymbolPriceTicker get the latest price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker
+     *
+     * $price = $api->futuresSymbolPriceTicker();
+     * $price = $api->futuresSymbolPriceTicker("ETHBTC");
+     *
+     * @property int $weight 1
+     * 2 when the symbol parameter is omitted
+     *
+     * @param string $symbol (optional) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSymbolPriceTicker(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/ticker/price", "GET", $parameters);
+    }
 }
