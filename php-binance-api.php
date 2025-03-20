@@ -3359,14 +3359,127 @@ class API
      */
     public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
-        return $this->futuresCandlesticksRouter($symbol, $interval, $limit, $startTime, $endTime, 'klines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'klines');
     }
 
     /**
-     * futuresCandlesticksRouter
+     * futuresContinuousCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Continuous-Contract-Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresContinuousCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     * @param string $contractType (optional) string to request - PERPETUAL, CURRENT_QUARTER, NEXT_QUARTER (default PERPETUAL)
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresContinuousCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'continuousKlines', $contractType);
+    }
+
+    /**
+     * futuresIndexPriceCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Index-Price-Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresIndexPriceCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresIndexPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'indexPriceKlines');
+    }
+
+    /**
+     * futuresMarkPriceCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price-Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresMarkPriceCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresMarkPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'markPriceKlines');
+    }
+
+    /**
+     * futuresPremiumIndexKlines get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Premium-Index-Kline-Data
+     *
+     * $candles = $api->futuresPremiumIndexKlines("ETHBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPremiumIndexKlines(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines');
+    }
+
+    /**
+     * futuresCandlesticksHelper
      * helper for routing the futuresCandlesticks, futuresContinuousCandlesticks, futuresIndexPriceCandlesticks, futuresMarkPriceCandlesticks and futuresPremiumIndexKlines
      */
-    private function futuresCandlesticksRouter($symbol, $interval, $limit, $startTime, $endTime, $type, $contractType = null)
+    private function futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, $klineType, $contractType = null)
     {
         if (!isset($this->charts['futures'])) {
             $this->charts['futures'] = [];
@@ -3381,10 +3494,14 @@ class API
             $this->charts['futures'][$symbol][$type][$interval] = [];
         }
         $params = [
-            'symbol' => $symbol,
             'interval' => $interval,
             'fapi' => true,
         ];
+        if ($klineType === 'continuousKlines' || $klineType === 'indexPriceKlines') {
+            $params['pair'] = $symbol;
+        } else {
+            $params['symbol'] = $symbol;
+        }
         if ($limit) {
             $params['limit'] = $limit;
         }
@@ -3398,18 +3515,18 @@ class API
             $params['contractType'] = $contractType;
         }
 
-        $response = $this->httpRequest("v1/{$type}", 'GET', $params);
+        $response = $this->httpRequest("v1/{$klineType}", 'GET', $params);
 
         if (is_array($response) === false) {
             return [];
         }
         if (count($response) === 0) {
-            echo "warning: fapi/v1/{$type} returned empty array, usually a blip in the connection or server" . PHP_EOL;
+            echo "warning: fapi/v1/{$klineType} returned empty array, usually a blip in the connection or server" . PHP_EOL;
             return [];
         }
 
-        $candlesticks = $this->chartData($symbol, $interval, $response, 'futures', $type);
-        $this->charts['futures'][$symbol][$type][$interval] = $candlesticks;
+        $candlesticks = $this->chartData($symbol, $interval, $response, 'futures', $klineType);
+        $this->charts['futures'][$symbol][$klineType][$interval] = $candlesticks;
         return $candlesticks;
     }
 }
