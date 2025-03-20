@@ -1824,27 +1824,8 @@ class API
      * @param $ticks array of the canbles array
      * @return array object of the chartdata
      */
-    protected function chartData(string $symbol, string $interval, array $ticks, string $product_type = "spot")
+    protected function chartData(string $symbol, string $interval, array $ticks, string $market_type = "spot", string $kline_type = 'klines')
     {
-        if ($product_type !== "spot") {
-            if (!isset($this->info[$product_type])) {
-                $this->info[$product_type] = [];
-            }
-            if (!isset($this->info[$product_type][$symbol])) {
-                $this->info[$product_type][$symbol] = [];
-            }
-            if (!isset($this->info[$product_type][$symbol][$interval])) {
-                $this->info[$product_type][$symbol][$interval] = [];
-            }
-        } else {
-            if (!isset($this->info[$symbol])) {
-                $this->info[$symbol] = [];
-            }
-            if (!isset($this->info[$symbol][$interval])) {
-                $this->info[$symbol][$interval] = [];
-            }
-        }
-
         $output = [];
         foreach ($ticks as $tick) {
             list($openTime, $open, $high, $low, $close, $assetVolume, $closeTime, $baseVolume, $trades, $assetBuyVolume, $takerBuyVolume, $ignored) = $tick;
@@ -1865,11 +1846,31 @@ class API
             ];
         }
 
-        if (isset($openTime)) {
-            if ($product_type == "spot") {
+        if ($market_type !== "spot") {
+            if (!isset($this->info[$market_type])) {
+                $this->info[$market_type] = [];
+            }
+            if (!isset($this->info[$market_type][$symbol])) {
+                $this->info[$market_type][$symbol] = [];
+            }
+            if (!isset($this->info[$market_type][$symbol][$kline_type])) {
+                $this->info[$market_type][$symbol][$kline_type] = [];
+            }
+            if (!isset($this->info[$market_type][$symbol][$kline_type][$interval])) {
+                $this->info[$market_type][$symbol][$kline_type][$interval] = [];
+            }
+            if (isset($openTime)) {
+                $this->info[$market_type][$symbol][$kline_type][$interval]['firstOpen'] = $openTime;
+            }
+        } else {
+            if (!isset($this->info[$symbol])) {
+                $this->info[$symbol] = [];
+            }
+            if (!isset($this->info[$symbol][$interval])) {
+                $this->info[$symbol][$interval] = [];
+            }
+            if (isset($openTime)) {
                 $this->info[$symbol][$interval]['firstOpen'] = $openTime;
-            } else {
-                $this->info[$product_type][$symbol][$interval]['firstOpen'] = $openTime;
             }
         }
 
@@ -3358,11 +3359,26 @@ class API
      */
     public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
+        return $this->futuresCandlesticksRouter($symbol, $interval, $limit, $startTime, $endTime, 'klines');
+    }
+
+    /**
+     * futuresCandlesticksRouter
+     * helper for routing the futuresCandlesticks, futuresContinuousCandlesticks, futuresIndexPriceCandlesticks, futuresMarkPriceCandlesticks and futuresPremiumIndexKlines
+     */
+    private function futuresCandlesticksRouter($symbol, $interval, $limit, $startTime, $endTime, $type, $contractType = null)
+    {
         if (!isset($this->charts['futures'])) {
             $this->charts['futures'] = [];
         }
         if (!isset($this->charts['futures'][$symbol])) {
             $this->charts['futures'][$symbol] = [];
+        }
+        if (!isset($this->charts['futures'][$symbol][$type])) {
+            $this->charts['futures'][$symbol][$type] = [];
+        }
+        if (!isset($this->charts['futures'][$symbol][$type][$interval])) {
+            $this->charts['futures'][$symbol][$type][$interval] = [];
         }
         $params = [
             'symbol' => $symbol,
@@ -3378,19 +3394,22 @@ class API
         if ($endTime) {
             $params['endTime'] = $endTime;
         }
+        if ($contractType) {
+            $params['contractType'] = $contractType;
+        }
 
-        $response = $this->httpRequest("v1/klines", 'GET', $params);
+        $response = $this->httpRequest("v1/{$type}", 'GET', $params);
 
         if (is_array($response) === false) {
             return [];
         }
         if (count($response) === 0) {
-            echo "warning: fapi/v1/klines returned empty array, usually a blip in the connection or server" . PHP_EOL;
+            echo "warning: fapi/v1/{$type} returned empty array, usually a blip in the connection or server" . PHP_EOL;
             return [];
         }
 
-        $ticks = $this->chartData($symbol, $interval, $response, 'futures');
-        $this->charts['futures'][$symbol][$interval] = $ticks;
-        return $ticks;
+        $candlesticks = $this->chartData($symbol, $interval, $response, 'futures', $type);
+        $this->charts['futures'][$symbol][$type][$interval] = $candlesticks;
+        return $candlesticks;
     }
 }
