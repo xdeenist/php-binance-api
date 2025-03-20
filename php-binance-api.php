@@ -1824,14 +1824,25 @@ class API
      * @param $ticks array of the canbles array
      * @return array object of the chartdata
      */
-    protected function chartData(string $symbol, string $interval, array $ticks)
+    protected function chartData(string $symbol, string $interval, array $ticks, string $product_type = "spot")
     {
-        if (!isset($this->info[$symbol])) {
-            $this->info[$symbol] = [];
-        }
-
-        if (!isset($this->info[$symbol][$interval])) {
-            $this->info[$symbol][$interval] = [];
+        if ($product_type !== "spot") {
+            if (!isset($this->info[$product_type])) {
+                $this->info[$product_type] = [];
+            }
+            if (!isset($this->info[$product_type][$symbol])) {
+                $this->info[$product_type][$symbol] = [];
+            }
+            if (!isset($this->info[$product_type][$symbol][$interval])) {
+                $this->info[$product_type][$symbol][$interval] = [];
+            }
+        } else {
+            if (!isset($this->info[$symbol])) {
+                $this->info[$symbol] = [];
+            }
+            if (!isset($this->info[$symbol][$interval])) {
+                $this->info[$symbol][$interval] = [];
+            }
         }
 
         $output = [];
@@ -1855,7 +1866,11 @@ class API
         }
 
         if (isset($openTime)) {
-            $this->info[$symbol][$interval]['firstOpen'] = $openTime;
+            if ($product_type == "spot") {
+                $this->info[$symbol][$interval]['firstOpen'] = $openTime;
+            } else {
+                $this->info[$product_type][$symbol][$interval]['firstOpen'] = $openTime;
+            }
         }
 
         return $output;
@@ -3209,7 +3224,7 @@ class API
             'symbol' => $symbol,
             'fapi' => true,
         ];
-        if (isset($limit) && is_numeric($limit)) {
+        if ($limit) {
             $params['limit'] = $limit;
         }
         $json = $this->httpRequest("v1/depth", "GET", $params);
@@ -3242,7 +3257,7 @@ class API
             'symbol' => $symbol,
             'fapi' => true,
         ];
-        if (isset($limit) && is_numeric($limit)) {
+        if ($limit) {
             $parameters['limit'] = $limit;
         }
         return $this->httpRequest("v1/trades", "GET", $parameters);
@@ -3270,12 +3285,112 @@ class API
             'symbol' => $symbol,
             'fapi' => true,
         ];
-        if (isset($limit) && is_numeric($limit)) {
+        if ($limit) {
             $parameters['limit'] = $limit;
         }
-        if (isset($tradeId) && is_numeric($tradeId)) {
+        if ($tradeId) {
             $parameters['fromId'] = $tradeId;
         }
         return $this->httpRequest("v1/historicalTrades", "GET", $parameters, true);
+    }
+
+    /**
+     * futuresAggTrades get Market History / Aggregate Trades
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Compressed-Aggregate-Trades-List
+     *
+     * $trades = $api->futuresAggTrades("BNBBTC");
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol (mandatory) the symbol to get the trade information for
+     * @param int    $fromId (optional) ID to get aggregate trades from INCLUSIVE
+     * @param int    $startTime (optional) timestamp in ms to get aggregate trades from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get aggregate trades until INCLUSIVE
+     * @param int    $limit (optional) the amount of trades, default 500, max 1000
+     *
+     * @return array with error message or array of market history
+     * @throws \Exception
+     */
+    public function futuresAggTrades(string $symbol, int $fromId = null, int $startTime = null, int $endTime = null, int $limit = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($fromId) {
+            $parameters['fromId'] = $fromId;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        return $this->tradesData($this->httpRequest("v1/aggTrades", "GET", $parameters));
+    }
+
+    /**
+     * futuresCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        if (!isset($this->charts['futures'])) {
+            $this->charts['futures'] = [];
+        }
+        if (!isset($this->charts['futures'][$symbol])) {
+            $this->charts['futures'][$symbol] = [];
+        }
+        $params = [
+            'symbol' => $symbol,
+            'interval' => $interval,
+            'fapi' => true,
+        ];
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+
+        $response = $this->httpRequest("v1/klines", 'GET', $params);
+
+        if (is_array($response) === false) {
+            return [];
+        }
+        if (count($response) === 0) {
+            echo "warning: fapi/v1/klines returned empty array, usually a blip in the connection or server" . PHP_EOL;
+            return [];
+        }
+
+        $ticks = $this->chartData($symbol, $interval, $response, 'futures');
+        $this->charts['futures'][$symbol][$interval] = $ticks;
+        return $ticks;
     }
 }
