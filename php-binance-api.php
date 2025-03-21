@@ -3765,8 +3765,8 @@ class API
     }
 
     /**
-     * symbolPeriodLimitStartEndContractTypeRequest
-     * helper for routing methods that require symbol, period, limit, startTime, endTime and contractType
+     * symbolPeriodLimitStartEndRequest
+     * helper for routing GET methods that require symbol, period, limit, startTime and endTime
      */
     private function symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
     {
@@ -3783,9 +3783,6 @@ class API
         }
         if ($endTime) {
             $parameters['endTime'] = $endTime;
-        }
-        if ($contractType) {
-            $parameters['contractType'] = $contractType;
         }
         return $this->httpRequest($url, 'GET', $parameters);
     }
@@ -3808,7 +3805,7 @@ class API
      */
     public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
-        return $this->symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', 'fapiData');
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', 'fapiData');
     }
 
     /**
@@ -3816,7 +3813,7 @@ class API
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Top-Trader-Long-Short-Ratio
      *
-     * $openInterest = $api->futuresTopLongShortPositionRatio("ETHBTC", 5m);
+     * $ratio = $api->futuresTopLongShortPositionRatio("ETHBTC", 5m);
      *
      * @param string $symbol (mandatory) string to query
      * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
@@ -3829,6 +3826,106 @@ class API
      */
     public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
-        return $this->symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', 'fapiData');
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', 'fapiData');
+    }
+
+    /**
+     * futuresTopLongShortAccountRatio get the proportion of net long and net short accounts to total accounts of the top 20% users with the highest margin balance
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Top-Long-Short-Account-Ratio
+     *
+     * $ratio = $api->futuresTopLongShortAccountRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', 'fapiData');
+    }
+
+    /**
+     * futuresGlobalLongShortAccountRatio get the Long/Short Ratio for symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Long-Short-Ratio
+     *
+     * $ratio = $api->futuresGlobalLongShortAccountRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', 'fapiData');
+    }
+
+    /**
+     * futuresTakerLongShortRatio get the taker Long/Short Ratio for symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Taker-BuySell-Volume
+     *
+     * $ratio = $api->futuresTakerLongShortRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', 'fapiData');
+    }
+
+    /**
+     * futuresBasis get future basis for symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Basis
+     *
+     * $basis = $api->futuresBasis("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     * @param string $contractType (optional) string to query - PERPETUAL, CURRENT_QUARTER, NEXT_QUARTER (default PERPETUAL)
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresBasis(string $symbol, string $period = '5m', int $limit = 30, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    {
+        $parameters = [
+            'pair' => $symbol,
+            'period' => $period,
+            'contractType' => $contractType,
+            'fapiData' => true,
+        ];
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        return $this->httpRequest('basis', 'GET', $parameters);
     }
 }
