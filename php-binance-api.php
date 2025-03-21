@@ -34,7 +34,7 @@ class API
     protected $wapi = 'https://api.binance.com/wapi/'; // /< REST endpoint for the withdrawals
     protected $sapi = 'https://api.binance.com/sapi/'; // /< REST endpoint for the supporting network API
     protected $fapi = 'https://fapi.binance.com/fapi/'; // /< REST endpoint for the futures API
-    protected $fapiData = 'https://fapi.binance.com/futures/data'; // /< REST endpoint for the futures API
+    protected $fapiData = 'https://fapi.binance.com/futures/data/'; // /< REST endpoint for the futures API
     protected $fapiTestnet = 'https://testnet.binancefuture.com/fapi/'; // /< Testnet REST endpoint for the futures API
     protected $dapi = 'https://dapi.binance.com/dapi/'; // /< REST endpoint for the delivery API
     protected $dapiData = 'https://dapi.binance.com/futures/data/'; // /< REST endpoint for the delivery API
@@ -1271,10 +1271,6 @@ class API
             }
         }
 
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_VERBOSE, $this->httpDebug);
-        $query = $this->binance_build_query($params);
-
         $base = $this->base;
         if ($this->useTestnet) {
             $base = $this->testnet;
@@ -1337,6 +1333,10 @@ class API
             unset($params['bapi']);
             $base = $this->bapi;
         }
+
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_VERBOSE, $this->httpDebug);
+        $query = $this->binance_build_query($params);
 
         // signed with params
         if ($signed === true) {
@@ -3734,10 +3734,11 @@ class API
     public function futuresDeliveryPrice(string $symbol): array
     {
         $parameters = [
-            'symbol' => $symbol,
-            'fapi' => true,
+            'pair' => $symbol,
+            'fapiData' => true,
         ];
-        return $this->httpRequest('futures/data/delivery-price', 'GET', $parameters);
+
+        return $this->httpRequest("delivery-price", "GET", $parameters);
     }
 
     /**
@@ -3764,14 +3765,14 @@ class API
     }
 
     /**
-     * futuresOpenInterestStatistics get the open interest history for a symbol
+     * futuresOpenInterestHistory get the open interest history for a symbol
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Open-Interest-Statistics
      *
-     * $openInterest = $api->futuresOpenInterestStatistics("ETHBTC", 5m);
+     * $openInterest = $api->futuresOpenInterestHistory("ETHBTC", 5m);
      *
      * @param string $symbol (mandatory) string to query
-     * @param string $period (mandatory) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d
+     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 100, max 1000)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
@@ -3779,12 +3780,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOpenInterestStatistics(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
         $parameters = [
             'symbol'=> $symbol,
             'period'=> $period,
-            'fapi' => true,
+            'fapiData' => true,
         ];
         if ($limit) {
             $parameters['limit'] = $limit;
@@ -3795,6 +3796,6 @@ class API
         if ($endTime) {
             $parameters['endTime'] = $endTime;
         }
-        return $this->httpRequest('futures/data/openInterestHist', 'GET', $parameters);
+        return $this->httpRequest('openInterestHist', 'GET', $parameters);
     }
 }
