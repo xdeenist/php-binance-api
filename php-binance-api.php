@@ -1593,7 +1593,7 @@ class API
      *
      * $candles = $api->candlesticks("BNBBTC", "5m");
      *
-     * @param $symbol string to query
+     * @param $symbol market symbol to get the response for, e.g. ETHUSDT
      * @param $interval string to request
      * @param $limit int limit the amount of candles
      * @param $startTime string request candle information starting from here
@@ -3209,7 +3209,7 @@ class API
      * for limit 500 (default) - weight 10
      * for limit 1000 - weight 20
      *
-     * @param string $symbol (mandatory) the symbol to get the depth information for
+     * @param string $symbol (mandatory) the symbol to get the depth information for, e.g. ETHUSDT
      * @param int    $limit (optional) $limit set limition for number of market depth data, default 500, max 1000 (possible values are 5, 10, 20, 50, 100, 500, 1000)
      * @return array with error message or array of market depth
      * @throws \Exception
@@ -3246,7 +3246,7 @@ class API
      *
      * @property int $weight 5
      *
-     * @param string $symbol (mandatory) to query, e.g. BNBBTC
+     * @param string $symbol (mandatory) the symbol to query, e.g. ETHUSDT
      * @param int    $limit  (optional) limit the amount of trades, default 500, max 1000
      *
      * @return array containing the response
@@ -3273,7 +3273,7 @@ class API
      *
      * @property int $weight 20
      *
-     * @param string $symbol  (mandatory) to query, e.g. BNBBTC
+     * @param string $symbol  (mandatory) the symbol to query, e.g. ETHUSDT
      * @param int    $limit   (optional)  limit the amount of trades, default 100, max 500
      * @param int    $tradeId (optional)  return the orders from this orderId onwards, negative to get recent ones
      *
@@ -3304,7 +3304,7 @@ class API
      *
      * @property int $weight 20
      *
-     * @param string $symbol (mandatory) the symbol to get the trade information for
+     * @param string $symbol (mandatory) the symbol to get the trade information for, e.g. ETHUSDT
      * @param int    $fromId (optional) ID to get aggregate trades from INCLUSIVE
      * @param int    $startTime (optional) timestamp in ms to get aggregate trades from INCLUSIVE
      * @param int    $endTime (optional) timestamp in ms to get aggregate trades until INCLUSIVE
@@ -3348,7 +3348,7 @@ class API
      * for limit <= 1000 - weight 5
      * for limit > 1000 - weight 10
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) the symbol to query, e.g. ETHUSDT
      * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
      * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
      * @param int    $startTime (optional) string request candle information starting from here
@@ -3376,7 +3376,7 @@ class API
      * for limit <= 1000 - weight 5
      * for limit > 1000 - weight 10
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
      * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
      * @param int    $startTime (optional) string request candle information starting from here
@@ -3405,7 +3405,7 @@ class API
      * for limit <= 1000 - weight 5
      * for limit > 1000 - weight 10
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
      * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
      * @param int    $startTime (optional) string request candle information starting from here
@@ -3433,7 +3433,7 @@ class API
      * for limit <= 1000 - weight 5
      * for limit > 1000 - weight 10
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
      * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
      * @param int    $startTime (optional) string request candle information starting from here
@@ -3461,7 +3461,7 @@ class API
      * for limit <= 1000 - weight 5
      * for limit > 1000 - weight 10
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
      * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
      * @param int    $startTime (optional) string request candle information starting from here
@@ -3540,7 +3540,7 @@ class API
      *
      * @property int $weight 1
      *
-     * @param string $symbol (optional) string to query
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3564,7 +3564,7 @@ class API
      * $fundingRate = $api->futuresFundingRateHistory();
      * $fundingRate = $api->futuresFundingRateHistory("ETHBTC");
      *
-     * @param string $symbol (optional) string to query
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      * @param int    $limit  (optional) int limit the amount of funding rate history (default 100, max 1000)
      * @param int    $startTime (optional) string request funding rate history starting from here
      * @param int    $endTime (optional) string request funding rate history ending here
@@ -3622,7 +3622,7 @@ class API
      *
      * @property int $weight 1
      *
-     * @param string $symbol (optional) string to query
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3649,7 +3649,7 @@ class API
      * @property int $weight 1
      * 2 when the symbol parameter is omitted
      *
-     * @param string $symbol (optional) string to query
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3676,7 +3676,7 @@ class API
      * @property int $weight 1
      * 2 when the symbol parameter is omitted
      *
-     * @param string $symbol (optional) string to query
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3703,7 +3703,7 @@ class API
      * @property int $weight 2
      * 5 when the symbol parameter is omitted
      *
-     * @param string $symbol (optional) string to query
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3726,7 +3726,7 @@ class API
      *
      * $price = $api->futuresDeliveryPrice("ETHBTC");
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3750,7 +3750,7 @@ class API
      *
      * @property int $weight 1
      *
-     * @param string $symbol (mandatory) string to query
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
@@ -3794,8 +3794,8 @@ class API
      *
      * $openInterest = $api->futuresOpenInterestHistory("ETHBTC", 5m);
      *
-     * @param string $symbol (mandatory) string to query
-     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 100, max 1000)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
@@ -3815,8 +3815,8 @@ class API
      *
      * $ratio = $api->futuresTopLongShortPositionRatio("ETHBTC", 5m);
      *
-     * @param string $symbol (mandatory) string to query
-     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
@@ -3836,8 +3836,8 @@ class API
      *
      * $ratio = $api->futuresTopLongShortAccountRatio("ETHBTC", 5m);
      *
-     * @param string $symbol (mandatory) string to query
-     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
@@ -3857,8 +3857,8 @@ class API
      *
      * $ratio = $api->futuresGlobalLongShortAccountRatio("ETHBTC", 5m);
      *
-     * @param string $symbol (mandatory) string to query
-     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
@@ -3878,8 +3878,8 @@ class API
      *
      * $ratio = $api->futuresTakerLongShortRatio("ETHBTC", 5m);
      *
-     * @param string $symbol (mandatory) string to query
-     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
@@ -3899,12 +3899,12 @@ class API
      *
      * $basis = $api->futuresBasis("ETHBTC", 5m);
      *
-     * @param string $symbol (mandatory) string to query
-     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
      * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
      * @param int    $startTime (optional) string request open interest history starting from here
      * @param int    $endTime (optional) string request open interest history ending here
-     * @param string $contractType (optional) string to query - PERPETUAL, CURRENT_QUARTER, NEXT_QUARTER (default PERPETUAL)
+     * @param string $contractType (optional) string of period to query - PERPETUAL, CURRENT_QUARTER, NEXT_QUARTER (default PERPETUAL)
      *
      * @return array containing the response
      * @throws \Exception
@@ -3927,5 +3927,76 @@ class API
             $parameters['endTime'] = $endTime;
         }
         return $this->httpRequest('basis', 'GET', $parameters);
+    }
+
+    /**
+     * futuresIndexInfo get composite index symbol information
+     * only for composite index symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Composite-Index-Symbol-Information
+     *
+     * $indexInfo = $api->futuresIndexInfo("DEFIUSDT");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. DEFIUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresIndexInfo(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest('v1/indexInfo', 'GET', $parameters);
+    }
+
+    /**
+     * asset assetIndex get the asset index for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Multi-Assets-Mode-Asset-Index
+     *
+     * $assetIndex = $api->futuresAssetIndex();
+     * $assetIndex = $api->futuresAssetIndex("USDCUSD");
+     *
+     * @property int $weight 1
+     * with symbol parameter omitted weight is 10
+     *
+     * @param string $symbol (optional) market symbol to get the response for, e.g. USDCUSD
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresAssetIndex(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest('v1/assetIndex', 'GET', $parameters);
+    }
+
+    /**
+     * futuresConstituents get the index price constituents
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Index-Constituents
+     *
+     * $constituents = $api->futuresConstituents("BTCUSDT");
+     *
+     * @property int $weight 2
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     */
+    public function futuresConstituents(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest('v1/indexInfo', 'GET', $parameters);
     }
 }
