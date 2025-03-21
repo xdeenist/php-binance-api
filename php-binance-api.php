@@ -3765,6 +3765,32 @@ class API
     }
 
     /**
+     * symbolPeriodLimitStartEndContractTypeRequest
+     * helper for routing methods that require symbol, period, limit, startTime, endTime and contractType
+     */
+    private function symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'period' => $period,
+        ];
+        $parameters[$base] = true;
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        if ($contractType) {
+            $parameters['contractType'] = $contractType;
+        }
+        return $this->httpRequest($url, 'GET', $parameters);
+    }
+
+    /**
      * futuresOpenInterestHistory get the open interest history for a symbol
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Open-Interest-Statistics
@@ -3782,20 +3808,27 @@ class API
      */
     public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
-        $parameters = [
-            'symbol'=> $symbol,
-            'period'=> $period,
-            'fapiData' => true,
-        ];
-        if ($limit) {
-            $parameters['limit'] = $limit;
-        }
-        if ($startTime) {
-            $parameters['startTime'] = $startTime;
-        }
-        if ($endTime) {
-            $parameters['endTime'] = $endTime;
-        }
-        return $this->httpRequest('openInterestHist', 'GET', $parameters);
+        return $this->symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', 'fapiData');
+    }
+
+    /**
+     * futuresTopLongShortPositionRatio get the proportion of net long and net short positions to total open positions of the top 20% users with the highest margin balance
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Top-Trader-Long-Short-Ratio
+     *
+     * $openInterest = $api->futuresTopLongShortPositionRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $period (optional) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', 'fapiData');
     }
 }
