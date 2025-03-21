@@ -3664,4 +3664,137 @@ class API
         }
         return $this->httpRequest("v1/ticker/price", "GET", $parameters);
     }
+
+    /**
+     * futuresSymbolPriceTickerV2 get the latest price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker-v2
+     *
+     * $price = $api->futuresSymbolPriceTicker();
+     * $price = $api->futuresSymbolPriceTicker("ETHBTC");
+     *
+     * @property int $weight 1
+     * 2 when the symbol parameter is omitted
+     *
+     * @param string $symbol (optional) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSymbolPriceTickerV2(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v2/ticker/price", "GET", $parameters);
+    }
+
+    /**
+     * futuresSymbolOrderBookTicker get the best price/qty on the order book for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Order-Book-Ticker
+     *
+     * $ticker = $api->futuresSymbolOrderBookTicker();
+     * $ticker = $api->futuresSymbolOrderBookTicker("ETHBTC");
+     *
+     * @property int $weight 2
+     * 5 when the symbol parameter is omitted
+     *
+     * @param string $symbol (optional) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSymbolOrderBookTicker(string $symbol = null): array
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/ticker/bookTicker", "GET", $parameters);
+    }
+
+    /**
+     * futuresDeliveryPrice get the latest delivery price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Delivery-Price
+     *
+     * $price = $api->futuresDeliveryPrice("ETHBTC");
+     *
+     * @param string $symbol (mandatory) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresDeliveryPrice(string $symbol): array
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest('futures/data/delivery-price', 'GET', $parameters);
+    }
+
+    /**
+     * futuresOpenInterest get the open interest for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Open-Interest
+     *
+     * $openInterest = $api->futuresOpenInterest("ETHBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) string to query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOpenInterest(string $symbol): array
+    {
+        $parameters = [
+            'symbol'=> $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest('v1/openInterest', 'GET', $parameters);
+    }
+
+    /**
+     * futuresOpenInterestStatistics get the open interest history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Open-Interest-Statistics
+     *
+     * $openInterest = $api->futuresOpenInterestStatistics("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) string to query
+     * @param string $period (mandatory) string to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d
+     * @param int    $limit (optional) int limit the amount of open interest history (default 100, max 1000)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOpenInterestStatistics(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        $parameters = [
+            'symbol'=> $symbol,
+            'period'=> $period,
+            'fapi' => true,
+        ];
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        return $this->httpRequest('futures/data/openInterestHist', 'GET', $parameters);
+    }
 }
