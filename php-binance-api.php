@@ -3613,21 +3613,22 @@ class API
     }
 
     /**
-     * futures24hrTickerPrice get 24 hour price change statistics for a symbol
+     * futuresPrevDay get 24 hour price change statistics for a symbol
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/24hr-Ticker-Price-Change-Statistics
      *
-     * $ticker = $api->futures24hrTickerPrice();
-     * $ticker = $api->futures24hrTickerPrice("ETHBTC");
+     * $ticker = $api->futuresPrevDay();
+     * $ticker = $api->futuresPrevDay("ETHBTC");
      *
      * @property int $weight 1
+     * if the symbol parameter is omitted weight is 40
      *
      * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futures24hrTickerPrice(string $symbol = null)
+    public function futuresPrevDay(string $symbol = null)
     {
         $parameters = [
             'fapi' => true,
@@ -3639,57 +3640,91 @@ class API
     }
 
     /**
-     * futuresSymbolPriceTicker get the latest price for a symbol
+     * futuresPrice get the latest price for a symbol
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker
      *
-     * $price = $api->futuresSymbolPriceTicker();
-     * $price = $api->futuresSymbolPriceTicker("ETHBTC");
+     * $price = $api->futuresPrice('ETHUSDT');
      *
      * @property int $weight 1
-     * 2 when the symbol parameter is omitted
      *
-     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSymbolPriceTicker(string $symbol = null)
+    public function futuresPrice(string $symbol)
     {
         $parameters = [
+            'symbol' => $symbol,
             'fapi' => true,
         ];
-        if ($symbol) {
-            $parameters['symbol'] = $symbol;
-        }
-        return $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        return $ticker['price'];
     }
 
     /**
-     * futuresSymbolPriceTickerV2 get the latest price for a symbol
+     * futuresPrices get the latest price for all symbols
      *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker-v2
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker
      *
-     * $price = $api->futuresSymbolPriceTicker();
-     * $price = $api->futuresSymbolPriceTicker("ETHBTC");
+     * $price = $api->futuresPrices();
      *
-     * @property int $weight 1
-     * 2 when the symbol parameter is omitted
-     *
-     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
+     * @property int $weight 2
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSymbolPriceTickerV2(string $symbol = null)
+    public function futuresPrices()
     {
         $parameters = [
             'fapi' => true,
         ];
-        if ($symbol) {
-            $parameters['symbol'] = $symbol;
-        }
-        return $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        return $this->priceData($this->httpRequest("v1/ticker/price", "GET", $parameters));
+    }
+
+    /**
+     * futuresPriceV2 get the latest price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker-v2
+     *
+     * $price = $api->futuresPriceV2('ETHBTC');
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPriceV2(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        return $ticker['price'];
+    }
+
+    /**
+     * futuresPricesV2 get the latest price for all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker-v2
+     *
+     * $price = $api->futuresPricesV2();
+     *
+     * @property int $weight 2
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPricesV2()
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        return $this->priceData($this->httpRequest("v2/ticker/price", "GET", $parameters));
     }
 
     /**
