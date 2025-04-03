@@ -4067,11 +4067,10 @@ class API
      * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
      * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
      * - @param string $flags['recvWindow']
-     * @param $test bool whether to test or not, test only validates the query
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = "MARKET", array $flags = [], bool $test = false)
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = "MARKET", array $flags = [])
     {
         $opt = [
             'symbol' => $symbol,
@@ -4113,23 +4112,77 @@ class API
             $opt['positionSide'] = $flags['$positionSide'];
         }
 
-        if (isset($flags['stopPrice'])) {
-            $opt['stopPrice'] = $flags['stopPrice'];
+        if (isset($flags['timeInForce'])) {
+            $opt['timeInForce'] = $flags['timeInForce'];
         }
 
-        if (isset($flags['icebergQty'])) {
-            $opt['icebergQty'] = $flags['icebergQty'];
-        }
-
-        if (isset($flags['newOrderRespType'])) {
-            $opt['newOrderRespType'] = $flags['newOrderRespType'];
+        if (isset($flags['reduceOnly'])) {
+            $reduceOnly = $flags['reduceOnly'];
+            if ($reduceOnly === true) {
+                $opt['reduceOnly'] = 'true';
+            } else {
+                $opt['reduceOnly'] = 'false';
+            }
         }
 
         if (isset($flags['newClientOrderId'])) {
             $opt['newClientOrderId'] = $flags['newClientOrderId'];
         }
 
-        $qstring = ($test === false) ? "v3/order" : "v3/order/test";
-        return $this->httpRequest($qstring, "POST", $opt, true);
+        if (isset($flags['stopPrice'])) {
+            $opt['stopPrice'] = $flags['stopPrice'];
+        }
+
+        if (isset($flags['closePosition'])) {
+            $closePosition = $flags['closePosition'];
+            if ($closePosition === true) {
+                $opt['closePosition'] = 'true';
+            } else {
+                $opt['closePosition'] = 'false';
+            }
+        }
+
+        if (isset($flags['activationPrice'])) {
+            $opt['activationPrice'] = $flags['activationPrice'];
+        }
+
+        if (isset($flags['callbackRate'])) {
+            $opt['callbackRate'] = $flags['callbackRate'];
+        }
+
+        if (isset($flags['workingType'])) {
+            $opt['workingType'] = $flags['workingType'];
+        }
+
+        if (isset($flags['priceProtect'])) {
+            $priceProtect = $flags['priceProtect'];
+            if ($priceProtect === true) {
+                $opt['priceProtect'] = 'TRUE';
+            } else {
+                $opt['priceProtect'] = 'FALSE';
+            }
+        }
+
+        if (isset($flags['newOrderRespType'])) {
+            $opt['newOrderRespType'] = $flags['newOrderRespType'];
+        }
+
+        if (isset($flags['priceMatch'])) {
+            $opt['priceMatch'] = $flags['priceMatch'];
+        }
+
+        if (isset($flags['selfTradePreventionMode'])) {
+            $opt['selfTradePreventionMode'] = $flags['selfTradePreventionMode'];
+        }
+
+        if (isset($flags['goodTillDate'])) {
+            $opt['goodTillDate'] = $flags['goodTillDate'];
+        }
+
+        if (isset($flags['recvWindow'])) {
+            $opt['recvWindow'] = $flags['recvWindow'];
+        }
+
+        return $this->httpRequest("v1/order", "POST", $opt, true);
     }
 }
