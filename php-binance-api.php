@@ -4034,4 +4034,102 @@ class API
         ];
         return $this->httpRequest('v1/indexInfo', 'GET', $parameters);
     }
+
+    /**
+     * futuresOrder formats the orders before sending them to the curl wrapper function
+     * You can call this function directly or use the helper functions
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api
+     *
+     * @see buy()
+     * @see sell()
+     * @see marketBuy()
+     * @see marketSell()
+     *
+     * @param string $side (mandatory) typically "BUY" or "SELL"
+     * @param string $symbol (mandatory) market symbol
+     * @param string $quantity (optional) of the order (Cannot be sent with closePosition=true (Close-All))
+     * @param string $price (optional) of for the order
+     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is MARKET)
+     * @param array $flags (optional) additional transaction options
+     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $flags['timeInForce']
+     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $flags['newClientOrderId'] new client order id
+     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param string $flags['recvWindow']
+     * @param $test bool whether to test or not, test only validates the query
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = "MARKET", array $flags = [], bool $test = false)
+    {
+        $opt = [
+            'symbol' => $symbol,
+            'side' => $side,
+            'type' => $type,
+            'fapi' => true,
+        ];
+
+        // someone has preformated there 8 decimal point double already
+        // dont do anything, leave them do whatever they want
+        if ($price && gettype($price) !== 'string') {
+            // for every other type, lets format it appropriately
+            $price = number_format($price, 8, '.', '');
+        }
+
+        if ($quantity) {
+            if (is_numeric($quantity) === false) {
+                // WPCS: XSS OK.
+                echo "warning: quantity expected numeric got " . gettype($quantity) . PHP_EOL;
+            }
+            if (isset($flags['closePosition']) && $flags['closePosition'] === true) {
+                // WPCS: XSS OK.
+                echo "warning: closePosition is set to true, quantity will be ignored" . PHP_EOL;
+            } else {
+                $opt['quantity'] = $quantity;
+            }
+        }
+
+        if ($price && is_string($price) === false) {
+            // WPCS: XSS OK.
+            echo "warning: price expected string got " . gettype($price) . PHP_EOL;
+        }
+
+        if ($type === "LIMIT" || $type === "STOP_LOSS_LIMIT" || $type === "TAKE_PROFIT_LIMIT") {
+            $opt["price"] = $price;
+        }
+
+        if (isset($flags['$positionSide'])) {
+            $opt['positionSide'] = $flags['$positionSide'];
+        }
+
+        if (isset($flags['stopPrice'])) {
+            $opt['stopPrice'] = $flags['stopPrice'];
+        }
+
+        if (isset($flags['icebergQty'])) {
+            $opt['icebergQty'] = $flags['icebergQty'];
+        }
+
+        if (isset($flags['newOrderRespType'])) {
+            $opt['newOrderRespType'] = $flags['newOrderRespType'];
+        }
+
+        if (isset($flags['newClientOrderId'])) {
+            $opt['newClientOrderId'] = $flags['newClientOrderId'];
+        }
+
+        $qstring = ($test === false) ? "v3/order" : "v3/order/test";
+        return $this->httpRequest($qstring, "POST", $opt, true);
+    }
 }
