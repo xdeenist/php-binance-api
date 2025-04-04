@@ -4301,23 +4301,16 @@ class API
     }
 
     /**
-     * futuresBatchOrders creates multiple orders in a single request
-     * max 5 orders
-     *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Place-Multiple-Orders
-     *
+     * createBatchOrdersRequest
+     * helper for creating the request for futuresBatchOrders
      * @param array $orders (mandatory) array of orders to be placed
      * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
      *
-     * @return array containing the response or error message
+     * @return array containing the request
      * @throws \Exception
      */
-    public function futuresBatchOrders(array $orders, $recvWindow = null)
+    protected function createBatchOrdersRequest(array $orders)
     {
-        $params = [
-            'fapi' => true,
-        ];
         $formatedOrders = [];
         for ($index = 0; $index < count($orders); $index++) {
             $order = $orders[$index];
@@ -4339,14 +4332,38 @@ class API
                 $order['flags']
             );
             if (isset($formatedOrder['recvWindow'])) {
-                if (!$recvWindow) {
-                    $recvWindow = $formatedOrder['recvWindow']; // set recvWindow from the order
-                }
                 // remove recvWindow from the order
                 unset($formatedOrder['recvWindow']);
             }
-            print_r ($formatedOrder);
             $formatedOrders[$index] = $formatedOrder;
+        }
+        return $formatedOrders;
+    }
+
+    /**
+     * futuresBatchOrders creates multiple orders in a single request
+     * max 5 orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Place-Multiple-Orders
+     *
+     * @param array $orders (mandatory) array of orders to be placed
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response or error message
+     * @throws \Exception
+     */
+    public function futuresBatchOrders(array $orders, $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        $formatedOrders = $this->createBatchOrdersRequest($orders);
+        if (count($formatedOrders) > 5) {
+            throw new \Exception('futuresBatchOrders: max 5 orders allowed');
+        }
+        if (count($formatedOrders) < 1) {
+            throw new \Exception('futuresBatchOrders: at least 1 order required');
         }
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
@@ -4354,7 +4371,6 @@ class API
         // current endpoint accepts orders list as a json string in the query string
         $encodedOrders = json_encode($formatedOrders);
         $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
-        print($url . PHP_EOL);
         return $this->httpRequest($url, 'POST', $params, true);
     }
 }
