@@ -4106,10 +4106,13 @@ class API
 
         if ($type === "LIMIT" || $type === "STOP_LOSS_LIMIT" || $type === "TAKE_PROFIT_LIMIT") {
             $opt["price"] = $price;
+            if (!isset($flags['timeInForce'])) {
+                $opt['timeInForce'] = 'GTC';
+            }
         }
 
-        if (isset($flags['$positionSide'])) {
-            $opt['positionSide'] = $flags['$positionSide'];
+        if (isset($flags['positionSide'])) {
+            $opt['positionSide'] = $flags['positionSide'];
         }
 
         if (isset($flags['timeInForce'])) {
