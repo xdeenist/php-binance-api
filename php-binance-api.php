@@ -4040,8 +4040,7 @@ class API
 
     /**
      * createFuturesOrderRequest
-     * helper for creating the request for futuresOrder and futuresBatchOrders
-     *
+     * helper for creating the request for futures order
      * @return array containing the request
      * @throws \Exception
      */
@@ -4302,7 +4301,7 @@ class API
 
     /**
      * createBatchOrdersRequest
-     * helper for creating the request for futuresBatchOrders and futuresModifyOrders
+     * helper for creating the request for multiple futures orders
      * @param array $orders (mandatory) array of orders to be placed
      * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
      *
@@ -4353,7 +4352,7 @@ class API
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Place-Multiple-Orders
      *
      * @param array $orders (mandatory) array of orders to be placed
-     * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the $flags['recvWindow']
      * @param string $recvWindow (optional) the time in milliseconds to wait for a response
      *
      * @return array containing the response or error message
@@ -4414,5 +4413,32 @@ class API
         unset($opt['type']);
         $opt['fapi'] = true;
         return $this->httpRequest($qstring, 'PUT', $opt, true);
+    }
+
+    /**
+     * futuresEditOrders edits the multiple limit orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Multiple-Orders
+     *
+     * @param array $orders (mandatory) array of orders to be modified
+     * objects in the array should contain literally the same keys as the @see futuresEditOrder but without the $flags['recvWindow']
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response or error message
+     * @throws \Exception
+     */
+    public function futuresEditOrders(array $orders, $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        $formatedOrders = $this->createBatchOrdersRequest($orders);
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        // current endpoint accepts orders list as a json string in the query string
+        $encodedOrders = json_encode($formatedOrders);
+        $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
+        return $this->httpRequest($url, 'PUT', $params, true);
     }
 }
