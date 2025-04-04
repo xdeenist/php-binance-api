@@ -4025,6 +4025,9 @@ class API
      * @property int $weight 2
      *
      * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
      */
     public function futuresConstituents(string $symbol)
     {
@@ -4036,42 +4039,13 @@ class API
     }
 
     /**
-     * futuresOrder formats the orders before sending them to the curl wrapper function
-     * You can call this function directly or use the helper functions
+     * createFuturesOrderRequest
+     * helper for creating the request for futuresOrder and futuresBatchOrders
      *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api
-     *
-     * @see futuresBuy()
-     * @see sell()
-     * @see marketBuy()
-     * @see marketSell()
-     *
-     * @param string $side (mandatory) typically "BUY" or "SELL"
-     * @param string $symbol (mandatory) market symbol
-     * @param string $quantity (optional) of the order (Cannot be sent with closePosition=true (Close-All))
-     * @param string $price (optional) price per unit
-     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is MARKET)
-     * @param array $flags (optional) additional transaction options
-     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
-     * - @param string $flags['timeInForce']
-     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
-     * - @param string $flags['newClientOrderId'] new client order id
-     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
-     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
-     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
-     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
-     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
-     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
-     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
-     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
-     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
-     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param string $flags['recvWindow']
-     * @return array containing the response
+     * @return array containing the request
      * @throws \Exception
      */
-    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'MARKET', array $flags = [])
-    {
+    protected function createFuturesOrderRequest(string $side, string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = []) {
         $opt = [
             'symbol' => $symbol,
             'side' => $side,
@@ -4186,6 +4160,47 @@ class API
             $opt['recvWindow'] = $flags['recvWindow'];
         }
 
+        return $opt;
+    }
+
+    /**
+     * futuresOrder formats the orders before sending them to the curl wrapper function
+     * You can call this function directly or use the helper functions
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api
+     *
+     * @see futuresBuy()
+     * @see sell()
+     * @see marketBuy()
+     * @see marketSell()
+     *
+     * @param string $side (mandatory) typically "BUY" or "SELL"
+     * @param string $symbol (mandatory) market symbol
+     * @param string $quantity (optional) of the order (Cannot be sent with closePosition=true (Close-All))
+     * @param string $price (optional) price per unit
+     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is MARKET)
+     * @param array $flags (optional) additional transaction options
+     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $flags['timeInForce']
+     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $flags['newClientOrderId'] new client order id
+     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param string $flags['recvWindow']
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = [])
+    {
+        $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $flags);
         return $this->httpRequest('v1/order', 'POST', $opt, true);
     }
 
@@ -4231,9 +4246,9 @@ class API
      * - @param string $flags['recvWindow']
      * @return array with error message or the order details
      */
-    public function futuresBuy(string $symbol, $quantity = null, $price = null, string $type = 'MARKET', array $flags = [])
+    public function futuresBuy(string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = [])
     {
-        return $this->order('BUY', $symbol, $quantity, $price, $type, $flags);
+        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags);
     }
 
     /**
@@ -4278,8 +4293,8 @@ class API
      * - @param string $flags['recvWindow']
      * @return array with error message or the order details
      */
-    public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'MARKET', array $flags = [])
+    public function futuresSell(string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = [])
     {
-        return $this->order('SELL', $symbol, $quantity, $price, $type, $flags);
+        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags);
     }
 }
