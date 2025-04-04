@@ -4302,7 +4302,7 @@ class API
 
     /**
      * createBatchOrdersRequest
-     * helper for creating the request for futuresBatchOrders
+     * helper for creating the request for futuresBatchOrders and futuresModifyOrders
      * @param array $orders (mandatory) array of orders to be placed
      * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
      *
@@ -4334,6 +4334,12 @@ class API
             if (isset($formatedOrder['recvWindow'])) {
                 // remove recvWindow from the order
                 unset($formatedOrder['recvWindow']);
+            }
+            if (isset($order['orderId'])) {
+                $formatedOrder['orderId'] = $order['orderId'];
+            }
+            if (isset($order['origClientOrderId'])) {
+                $formatedOrder['origClientOrderId'] = $order['origClientOrderId'];
             }
             $formatedOrders[$index] = $formatedOrder;
         }
@@ -4372,5 +4378,41 @@ class API
         $encodedOrders = json_encode($formatedOrders);
         $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
         return $this->httpRequest($url, 'POST', $params, true);
+    }
+
+    /**
+     * futuresEditOrder edits the limit order
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Order
+     *
+     * @param string $orderId (optional) order id to be modified (mandatory if $flags['origClientOrderId'] is not set)
+     * @param string $side (mandatory) "BUY" or "SELL"
+     * @param string $symbol (mandatory) market symbol
+     * @param string $quantity (optional) of the order (Cannot be sent for orders with closePosition=true (Close-All))
+     * @param string $price (mandatory) price per unit
+     * @param array $flags (optional) additional transaction options
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $flags['recvWindow']
+     * - @param string $flags['origClientOrderId'] client order id to be modified (mandatory if $orderId is not set)
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresEditOrder($orderId = null, string $side, string $symbol, $quantity = null, string $price, array $flags = [])
+    {
+        $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $flags);
+        $origClientOrderId = null;
+        if (isset($flags['origClientOrderId'])) {
+            $origClientOrderId = $flags['origClientOrderId'];
+            $opt['origClientOrderId'] = $origClientOrderId;
+        }
+        if (!$origClientOrderId && !$orderId) {
+            throw new \Exception('futuresEditOrder: either orderId or origClientOrderId must be set');
+        }
+        if ($orderId) {
+            $opt['orderId'] = $orderId;
+        }
+        unset($opt['type']);
+        $opt['fapi'] = true;
+        return $this->httpRequest($qstring, 'PUT', $opt, true);
     }
 }
