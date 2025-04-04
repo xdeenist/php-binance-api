@@ -4045,12 +4045,11 @@ class API
      * @return array containing the request
      * @throws \Exception
      */
-    protected function createFuturesOrderRequest(string $side, string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = []) {
+    protected function createFuturesOrderRequest(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = []) {
         $opt = [
             'symbol' => $symbol,
             'side' => $side,
             'type' => $type,
-            'fapi' => true,
         ];
 
         // someone has preformated there 8 decimal point double already
@@ -4178,7 +4177,7 @@ class API
      * @param string $symbol (mandatory) market symbol
      * @param string $quantity (optional) of the order (Cannot be sent with closePosition=true (Close-All))
      * @param string $price (optional) price per unit
-     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is MARKET)
+     * @param string $type (mandatory) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc.
      * @param array $flags (optional) additional transaction options
      * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
      * - @param string $flags['timeInForce']
@@ -4198,9 +4197,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = [])
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
     {
         $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $flags);
+        $opt['fapi'] = true;
         return $this->httpRequest('v1/order', 'POST', $opt, true);
     }
 
@@ -4226,9 +4226,9 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $quantity (optional) the quantity required
-     * @param string $price price per unit
-     * @param string $type type of order (default is MARKET)
-     * @param array $flags addtional options for order type
+     * @param string $price (optional) price per unit
+     * @param string $type (mandatory) type of order
+     * @param array $flags (optional) addtional options for order type
      * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
      * - @param string $flags['timeInForce']
      * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
@@ -4246,7 +4246,7 @@ class API
      * - @param string $flags['recvWindow']
      * @return array with error message or the order details
      */
-    public function futuresBuy(string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = [])
+    public function futuresBuy(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
     {
         return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags);
     }
@@ -4273,9 +4273,9 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $quantity (optional) the quantity required
-     * @param string $price price per unit
-     * @param string $type type of order (default is MARKET)
-     * @param array $flags addtional options for order type
+     * @param string $price (optional) price per unit
+     * @param string $type (mandatory) type of order
+     * @param array $flags (optional) addtional options for order type
      * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
      * - @param string $flags['timeInForce']
      * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
@@ -4293,8 +4293,66 @@ class API
      * - @param string $flags['recvWindow']
      * @return array with error message or the order details
      */
-    public function futuresSell(string $symbol, $quantity = null, $price = null, $type = 'MARKET', array $flags = [])
+    public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
     {
         return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags);
+    }
+
+    /**
+     * futuresBatchOrders creates multiple orders in a single request
+     * max 5 orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Place-Multiple-Orders
+     *
+     * @param array $orders (mandatory) array of orders to be placed
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response or error message
+     * @throws \Exception
+     */
+    public function futuresBatchOrders(array $orders, $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        $formatedOrders = [];
+        for ($index = 0; $index < count($orders); $index++) {
+            $order = $orders[$index];
+            if (!isset($order['quantity'])) {
+                $order['quantity'] = null;
+            }
+            if (!isset($order['price'])) {
+                $order['price'] = null;
+            }
+            if (!isset($order['flags'])) {
+                $order['flags'] = [];
+            }
+            $formatedOrder = $this->createFuturesOrderRequest(
+                $order['side'],
+                $order['symbol'],
+                $order['quantity'],
+                $order['price'],
+                $order['type'],
+                $order['flags']
+            );
+            if (isset($formatedOrder['recvWindow'])) {
+                if (!$recvWindow) {
+                    $recvWindow = $formatedOrder['recvWindow']; // set recvWindow from the order
+                }
+                // remove recvWindow from the order
+                unset($formatedOrder['recvWindow']);
+            }
+            print_r ($formatedOrder);
+            $formatedOrders[$index] = $formatedOrder;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        // current endpoint accepts orders list as a json string in the query string
+        $encodedOrders = json_encode($formatedOrders);
+        $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
+        print($url . PHP_EOL);
+        return $this->httpRequest($url, 'POST', $params, true);
     }
 }
