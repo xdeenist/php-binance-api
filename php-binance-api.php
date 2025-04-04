@@ -4253,7 +4253,19 @@ class API
     }
 
     /**
-     * futuresSell attempts to create a sell order
+     * futuresBuyTest attempts to create a TEST futures buy order
+     *
+     * @see futuresBuy()
+     *
+     * params and return value are the same as @see futuresBuy()
+     */
+    public function futuresBuyTest(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    {
+        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags, true);
+    }
+
+    /**
+     * futuresSell creates a futures sell order
      * each market supports a number of order types, such as
      * -LIMIT
      * -MARKET
@@ -4297,6 +4309,18 @@ class API
     public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
     {
         return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags);
+    }
+
+    /**
+     * futuresSellTest attempts to create a TEST futures sell order
+     *
+     * @see futuresSell()
+     *
+     * params and return value are the same as @see futuresSell()
+     */
+    public function futuresSellTest(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    {
+        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags, true);
     }
 
     /**
