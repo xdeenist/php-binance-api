@@ -4194,14 +4194,16 @@ class API
      * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
      * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
      * - @param string $flags['recvWindow']
+     * @param $test bool whether to test or not, test only validates the query
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [], $test = false)
     {
         $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $flags);
         $opt['fapi'] = true;
-        return $this->httpRequest('v1/order', 'POST', $opt, true);
+        $qstring = ($test === false) ? 'v1/order' : 'v1/order/test';
+        return $this->httpRequest($qstring, 'POST', $opt, true);
     }
 
     /**
