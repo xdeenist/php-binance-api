@@ -4408,19 +4408,19 @@ class API
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Order
      *
-     * @param string $side (mandatory) "BUY" or "SELL"
      * @param string $symbol (mandatory) market symbol
+     * @param string $side (mandatory) "BUY" or "SELL"
      * @param string $orderId (optional) order id to be modified (mandatory if $flags['origClientOrderId'] is not set)
      * @param string $quantity (optional) of the order (Cannot be sent for orders with closePosition=true (Close-All))
      * @param string $price (mandatory) price per unit
-     * @param array $flags (optional) additional transaction options
+     * @param array $flags (optional) additional options
      * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
      * - @param string $flags['recvWindow']
      * - @param string $flags['origClientOrderId'] client order id to be modified (mandatory if $orderId is not set)
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresEditOrder(string $side, string $symbol, string $orderId = null, string $quantity = null, string $price = null, array $flags = [])
+    public function futuresEditOrder(string $symbol, string $side, string $quantity, string $price, string $orderId = null, array $flags = [])
     {
         $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $flags);
         $origClientOrderId = null;
@@ -4436,7 +4436,7 @@ class API
         }
         unset($opt['type']);
         $opt['fapi'] = true;
-        return $this->httpRequest($qstring, 'PUT', $opt, true);
+        return $this->httpRequest('v1/order', 'PUT', $opt, true);
     }
 
     /**
@@ -4509,5 +4509,36 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest('v1/orderAmendment', 'GET', $params, true);
+    }
+
+    /**
+     * futuresCancel attempts to cancel a futures order
+     *
+     * $orderid = "123456789";
+     * $order = $api->futuresCancel("BNBBTC", $orderid);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $orderid (optional) the orderid to cancel (mandatory if $flags['origClientOrderId'] is not set)
+     * @param array  $flags (optional) additional options
+     * - @param string $flags['origClientOrderId'] original client order id to cancel
+     * - @param string $flags['recvWindow'] the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresCancel(string $symbol, $orderid, $flags = [])
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderid) {
+            $params['orderId'] = $orderid;
+        } else if (isset($flags['origClientOrderId'])) {
+            $params['origClientOrderId'] = $flags['origClientOrderId'];
+        } else {
+            throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
+        }
+        return $this->httpRequest('v1/order', 'DELETE', array_merge($params, $flags), true);
     }
 }
