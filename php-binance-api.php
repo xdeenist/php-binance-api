@@ -4408,9 +4408,9 @@ class API
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Order
      *
-     * @param string $orderId (optional) order id to be modified (mandatory if $flags['origClientOrderId'] is not set)
      * @param string $side (mandatory) "BUY" or "SELL"
      * @param string $symbol (mandatory) market symbol
+     * @param string $orderId (optional) order id to be modified (mandatory if $flags['origClientOrderId'] is not set)
      * @param string $quantity (optional) of the order (Cannot be sent for orders with closePosition=true (Close-All))
      * @param string $price (mandatory) price per unit
      * @param array $flags (optional) additional transaction options
@@ -4420,7 +4420,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresEditOrder($orderId = null, string $side, string $symbol, $quantity = null, string $price, array $flags = [])
+    public function futuresEditOrder(string $side, string $symbol, string $orderId = null, string $quantity = null, string $price = null, array $flags = [])
     {
         $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $flags);
         $origClientOrderId = null;
@@ -4464,5 +4464,50 @@ class API
         $encodedOrders = json_encode($formatedOrders);
         $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
         return $this->httpRequest($url, 'PUT', $params, true);
+    }
+
+    /**
+     * futuresOrderAmendment get order modification history
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Get-Order-Modify-History
+     *
+     * $amendment = $api->futuresOrderAmendment("ETHUSDT");
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $orderId (optional) order id to get the response for
+     * @param string $origClientOrderId (optional) original client order id to get the response for
+     * @param int    $startTime (optional) timestamp in ms to get modification history from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get modification history until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of open interest history (default 50, max 100)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOrderAmendment(string $symbol, string $orderId = null, string $origClientOrderId = null, int $startTime = null, int $endTime = null, int $limit = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        }
+        if ($origClientOrderId) {
+            $params['origClientOrderId'] = $origClientOrderId;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/orderAmendment', 'GET', $params, true);
     }
 }
