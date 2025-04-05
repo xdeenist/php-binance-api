@@ -4192,7 +4192,7 @@ class API
      * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
      * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
      * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param string $flags['recvWindow']
+     * - @param int    $flags['recvWindow']
      * @param $test bool whether to test or not, test only validates the query
      * @return array containing the response
      * @throws \Exception
@@ -4244,7 +4244,7 @@ class API
      * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
      * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
      * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param string $flags['recvWindow']
+     * - @param int    $flags['recvWindow']
      * @return array with error message or the order details
      */
     public function futuresBuy(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
@@ -4303,7 +4303,7 @@ class API
      * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
      * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
      * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param string $flags['recvWindow']
+     * - @param int    $flags['recvWindow']
      * @return array with error message or the order details
      */
     public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
@@ -4415,7 +4415,7 @@ class API
      * @param string $price (mandatory) price per unit
      * @param array $flags (optional) additional options
      * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
-     * - @param string $flags['recvWindow']
+     * - @param int    $flags['recvWindow']
      * - @param string $flags['origClientOrderId'] client order id to be modified (mandatory if $orderId is not set)
      * @return array containing the response
      * @throws \Exception
@@ -4512,7 +4512,7 @@ class API
     }
 
     /**
-     * futuresCancel attempts to cancel a futures order
+     * futuresCancel cancels a futures order
      *
      * $orderid = "123456789";
      * $order = $api->futuresCancel("BNBBTC", $orderid);
@@ -4521,7 +4521,7 @@ class API
      * @param string $orderid (optional) the orderid to cancel (mandatory if $flags['origClientOrderId'] is not set)
      * @param array  $flags (optional) additional options
      * - @param string $flags['origClientOrderId'] original client order id to cancel
-     * - @param string $flags['recvWindow'] the time in milliseconds to wait for a response
+     * - @param int    $flags['recvWindow'] the time in milliseconds to wait for a response
      *
      * @return array with error message or the order details
      * @throws \Exception
@@ -4534,11 +4534,45 @@ class API
         ];
         if ($orderid) {
             $params['orderId'] = $orderid;
-        } else if (isset($flags['origClientOrderId'])) {
-            $params['origClientOrderId'] = $flags['origClientOrderId'];
-        } else {
+        } else if (!isset($flags['origClientOrderId'])) {
             throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
         }
         return $this->httpRequest('v1/order', 'DELETE', array_merge($params, $flags), true);
+    }
+
+    /**
+     * futuresCancelBatchOrders canceles multiple futures orders
+     *
+     * $orderIds = ["123456789", "987654321"];
+     * $order = $api->futuresCancelBatchOrders("BNBBTC", $orderIds);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param array  $orderIdList (optional) list of ids to cancel (mandatory if origClientOrderIdList is not set)
+     * @param array  $origClientOrderIdList (optional) list of client order ids to cancel (mandatory if orderIdList is not set)
+     * @param int    $recvWindow the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresCancelBatchOrders(string $symbol, array $orderIdList = null, array $origClientOrderIdList = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderIdList) {
+            $idsString = json_encode($orderIdList);
+            // remove quotes and spaces
+            $params['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
+        } else if ($origClientOrderIdList) {
+            // remove spaces
+            $params['origClientOrderIdList'] = str_replace(' ', '', json_encode($origClientOrderIdList));
+        } else {
+            throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/batchOrders', 'DELETE', $params, true);
     }
 }
