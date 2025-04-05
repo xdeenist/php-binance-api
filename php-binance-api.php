@@ -1449,7 +1449,7 @@ class API
         }
 
         if (isset($json['msg']) && !empty($json['msg'])) {
-            if ( $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html') {
+            if ( $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html' && $url != 'v1/allOpenOrders') {
                 // should always output error, not only on httpdebug
                 // not outputing errors, hides it from users and ends up with tickets on github
                 throw new \Exception('signedRequest error: '.print_r($output, true));
@@ -4549,9 +4549,9 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param array  $orderIdList (optional) list of ids to cancel (mandatory if origClientOrderIdList is not set)
      * @param array  $origClientOrderIdList (optional) list of client order ids to cancel (mandatory if orderIdList is not set)
-     * @param int    $recvWindow the time in milliseconds to wait for a response
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
      *
-     * @return array with error message or the order details
+     * @return array with error message or the orders details
      * @throws \Exception
      */
     public function futuresCancelBatchOrders(string $symbol, array $orderIdList = null, array $origClientOrderIdList = null, int $recvWindow = null)
@@ -4574,5 +4574,30 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest('v1/batchOrders', 'DELETE', $params, true);
+    }
+
+    /**
+     * futuresCancelOpenOrders cancels all open futures orders for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-All-Open-Orders
+     *
+     * $orders = $api->futuresCancelOpenOrders("BNBBTC");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresCancelOpenOrders(string $symbol, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/allOpenOrders', 'DELETE', $params, true);
     }
 }
