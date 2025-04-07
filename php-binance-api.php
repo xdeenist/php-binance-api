@@ -577,6 +577,8 @@ class API
 
     /**
      * history Get the complete account trade history for all or a specific currency
+     * @deprecated
+     * use myTrades() instead
      *
      * $BNBHistory = $api->history("BNBBTC");
      * $limitBNBHistory = $api->history("BNBBTC",5);
@@ -607,6 +609,19 @@ class API
         }
 
         return $this->httpRequest("v3/myTrades", "GET", $parameters, true);
+    }
+
+    /**
+     * myTrades
+     * another name for history
+     * @see history()
+     *
+     * @return array with error message or array of orderDetails array
+     * @throws \Exception
+     */
+    public function myTrades(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null)
+    {
+        return $this->history($symbol, $limit, $fromTradeId, $startTime, $endTime);
     }
 
     /**
@@ -4809,5 +4824,89 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest('v1/forceOrders', 'GET', $params, true);
+    }
+
+    /**
+     * futuresMyTrades gets all futures trades for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Account-Trade-List
+     *
+     * $trades = $api->futuresMyTrades("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get trades from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get trades until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of trades (default 500, max 1000)
+     * @param string $orderId (optional) order id to get the trades for
+     * @param string $fromId (optional) trade id to get the trades from (if is set it will get trades >= that Id)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the trades details
+     * @throws \Exception
+     */
+    public function futuresMyTrades(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        }
+        if ($fromId) {
+            $params['fromId'] = $fromId;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/userTrades', 'GET', $params, true);
+    }
+
+    /**
+     * futuresHistory
+     * another name for futuresMyTrades (for naming compatibility with spot)
+     * @deprecated
+     */
+    public function futuresHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    {
+        return $this->futuresMyTrades($symbol, $startTime, $endTime, $limit, $orderId, $fromId, $recvWindow);
+    }
+
+    /**
+     * futuresSetMarginMode sets the margin mode for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Margin-Type
+     *
+     * $api->futuresSetMarginMode("BNBBTC", "ISOLATED");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $marginType (mandatory) margin type, "CROSSED" or "ISOLATED"
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetMarginMode(string $symbol, string $marginType, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'marginType' => $marginType,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/marginType', 'POST', $params, true);
     }
 }
