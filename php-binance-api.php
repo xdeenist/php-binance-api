@@ -4890,6 +4890,8 @@ class API
      *
      * $api->futuresSetMarginMode("BNBBTC", "ISOLATED");
      *
+     * @property int $weight 1
+     *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $marginType (mandatory) margin type, "CROSSED" or "ISOLATED"
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
@@ -4908,5 +4910,32 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest('v1/marginType', 'POST', $params, true);
+    }
+
+    /**
+     * futuresSetPositionMode sets the position mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Position-Mode
+     *
+     * $api->futuresSetPositionMode(true);
+     *
+     * @property int $weight 1
+     *
+     * @param bool $dualSidePosition (mandatory) true for Hedge Mode, false for One-way Mode
+     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetPositionMode(bool $dualSidePosition, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'dualSidePosition' => $dualSidePosition ? 'true' : 'false',
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/positionSide/dual', 'POST', $params, true);
     }
 }
