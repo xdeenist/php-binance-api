@@ -4995,4 +4995,73 @@ class API
         }
         return $this->httpRequest('v1/multiAssetsMarginMode', 'POST', $params, true);
     }
+
+    /**
+     * modifyMarginHelper helper for adding or removing margin
+     *
+     * @see futuresAddMargin() and futuresReduceMargin()
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    protected function modifyMarginHelper(string $symbol, string $amount, $addOrReduce, $positionSide = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'amount' => $amount,
+            'type' => $addOrReduce,
+        ];
+        if ($positionSide) {
+            $params['positionSide'] = $positionSide;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/positionMargin', 'POST', $params, true);
+    }
+
+    /**
+     * futuresAddMargin adds margin to a position
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Isolated-Position-Margin
+     *
+     * $response = $api->futuresAddMargin("BNBBTC", 10);
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $amount (mandatory) amount to be added
+     * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresAddMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    {
+        return $this->modifyMarginHelper($symbol, $amount, 1, $positionSide, $recvWindow);
+    }
+
+    /**
+     * futuresReduceMargin removes margin from a position
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Isolated-Position-Margin
+     *
+     * $response = $api->futuresReduceMargin("BNBBTC", 10);
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $amount (mandatory) amount to be removed
+     * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresReduceMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    {
+        return $this->modifyMarginHelper($symbol, $amount, 2, $positionSide, $recvWindow);
+    }
 }
