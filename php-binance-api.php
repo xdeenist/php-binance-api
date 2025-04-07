@@ -4968,4 +4968,31 @@ class API
         }
         return $this->httpRequest('v1/leverage', 'POST', $params, true);
     }
+
+    /**
+     * futuresSetMultiAssetsMarginMode sets the multi-assets margin mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Multi-Assets-Mode
+     *
+     * $response = $api->futuresSetMultiAssetsMarginMode(true);
+     *
+     * @property int $weight 1
+     *
+     * @param bool $multiAssetsMarginMode (mandatory) true for multi-assets mode, false for single-asset mode
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetMultiAssetsMarginMode(bool $multiAssetsMarginMode, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'multiAssetsMarginMode' => $multiAssetsMarginMode ? 'true' : 'false',
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/multiAssetsMarginMode', 'POST', $params, true);
+    }
 }
