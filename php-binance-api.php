@@ -4703,4 +4703,32 @@ class API
         }
         return $this->httpRequest('v1/allOrders', 'GET', $params, true);
     }
+
+    /**
+     * futuresOpenOrders gets all open orders for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Current-All-Open-Orders
+     *
+     * $orders = $api->futuresOpenOrders();
+     * $orders = $api->futuresOpenOrders("BNBBTC");
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresOpenOrders($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/openOrders', 'GET', $params, true);
+    }
 }
