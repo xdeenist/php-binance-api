@@ -502,7 +502,7 @@ class API
      * $order = $api->orderStatus("BNBBTC", $orderid);
      *
      * @param $symbol string the currency symbol
-     * @param $orderid string the orderid to cancel
+     * @param $orderid string the orderid to fetch
      * @return array with error message or the order details
      * @throws \Exception
      */
@@ -4626,5 +4626,39 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest('v1/countdownCancelAll', 'POST', $params, true);
+    }
+
+    /**
+     * futuresOrderStatus gets the details of a futures order
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Query-Order
+     *
+     * $order = $api->futuresOrderStatus("BNBBTC", "123456789");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
+     * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresOrderStatus(string $symbol, string $orderId = null, string $origClientOrderId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        } else if ($origClientOrderId) {
+            $params['origClientOrderId'] = $origClientOrderId;
+        } else {
+            throw new \Exception('futuresOrderStatus: either orderId or origClientOrderId must be set');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/order', 'GET', $params, true);
     }
 }
