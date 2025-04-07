@@ -60,8 +60,10 @@ class API
     protected $requestCount = 0; // /< This stores the amount of API requests
     protected $httpDebug = false; // /< If you enable this, curl will output debugging information
     protected $subscriptions = []; // /< View all websocket subscriptions
-    protected $btc_value = 0.00; // /< value of available assets
+    protected $btc_value = 0.00; // /< value of available spot assets
     protected $btc_total = 0.00;
+    protected $futures_btc_value = 0.00; // /< value of available futures assets
+    protected $futures_btc_total = 0.00;
 
     // /< value of available onOrder assets
 
@@ -1225,30 +1227,47 @@ class API
     /**
      * balances get balances for the account assets
      *
-     * $balances = $api->balances($ticker);
+     * $balances = $api->balances();
      *
-     * @param bool $priceData array of the symbols balances are required for
+     * @param bool   $priceData array of the symbols balances are required for
+     * @param string $market_type (optional) market type - "spot" or "futures" (default is "spot")
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
+     * @param string $api_version (optional) not for spot - the api version to use (default is v2)
+     *
      * @return array with error message or array of balances
      * @throws \Exception
      */
-    public function balances($priceData = false)
+    public function balances($priceData = false, string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2')
     {
         if (is_array($priceData) === false) {
             $priceData = false;
         }
-
-        $account = $this->httpRequest("v3/account", "GET", [], true);
-
-        if (is_array($account) === false) {
+        $is_spot = $market_type === 'spot';
+        $params = [];
+        if ($is_spot) {
+            $url = "v3/account";
+        } else {
+            $params['fapi'] = true;
+            if ($recvWindow) {
+                $params['recvWindow'] = $recvWindow;
+            }
+            if ($api_version === 'v2') {
+                $url = "v2/balance";
+            } else if ($api_version === 'v3') {
+                $url = "v3/balance";
+            } else {
+                throw new \Exception("Invalid API version specified. Use 'v2' or 'v3'.");
+            }
+        }
+        $response = $this->httpRequest($url, "GET", $params, true);
+        if (is_array($response) === false) {
             echo "Error: unable to fetch your account details" . PHP_EOL;
         }
-
-        if (isset($account['balances']) === false || empty($account['balances'])) {
+        if (empty($response) || ($is_spot && (isset($response['balances']) === false || empty($response['balances'])))) {
             echo "Error: your balances were empty or unset" . PHP_EOL;
             return [];
         }
-
-        return $this->balanceData($account, $priceData);
+        return $this->balanceData($response, $priceData, $market_type);
     }
 
     /**
@@ -1502,11 +1521,11 @@ class API
 
         $output = curl_exec($curl);
         // Check if any error occurred
-        if (curl_errno($curl) > 0) {
-            // should always output error, not only on httpdebug
-            // not outputing errors, hides it from users and ends up with tickets on github
-            throw new \Exception('Curl error: ' . curl_error($curl));
-        }
+        // if (curl_errno($curl) > 0) {
+        //     // should always output error, not only on httpdebug
+        //     // not outputing errors, hides it from users and ends up with tickets on github
+        //     throw new \Exception('Curl error: ' . curl_error($curl));
+        // }
 
         $header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
         $header = $this->get_headers_from_curl_response($output);
@@ -1735,47 +1754,58 @@ class API
      * @param $priceData array of prices
      * @return array containing the response
      */
-    protected function balanceData(array $array, $priceData)
+    protected function balanceData(array $array, $priceData, string $marketType = 'spot')
     {
         $balances = [];
-
+        $is_spot = $marketType === 'spot';
         if (is_array($priceData)) {
             $btc_value = $btc_total = 0.00;
         }
-
-        if (empty($array) || empty($array['balances'])) {
+        if (empty($array) || ($is_spot && empty($array['balances']))) {
             // WPCS: XSS OK.
             echo "balanceData error: Please make sure your system time is synchronized: call \$api->useServerTime() before this function" . PHP_EOL;
             echo "ERROR: Invalid request. Please double check your API keys and permissions." . PHP_EOL;
             return [];
         }
-
-        foreach ($array['balances'] as $obj) {
+        $rawBalances = $is_spot ? $array['balances'] : $array;
+        foreach ($rawBalances as $obj) {
             $asset = $obj['asset'];
+            $avaliable = 0.00000000;
+            $onOrder = 0.00000000;
+            if ($is_spot) {
+                $avaliable = $obj['free'];
+                $onOrder = $obj['locked'];
+                $total = $avaliable + $onOrder;
+            } else {
+                $avaliable = $obj['availableBalance'];
+                $total = $obj['balance'];
+                $onOrder = $total - $avaliable;
+            }
             $balances[$asset] = [
-                "available" => $obj['free'],
-                "onOrder" => $obj['locked'],
                 "btcValue" => 0.00000000,
                 "btcTotal" => 0.00000000,
+                "available" => $avaliable,
+                "onOrder" => $onOrder,
+                "total" => $total,
             ];
 
             if (is_array($priceData) === false) {
                 continue;
             }
 
-            if ($obj['free'] + $obj['locked'] < 0.00000001) {
+            if ($total < 0.00000001) {
                 continue;
             }
 
             if ($asset === 'BTC') {
-                $balances[$asset]['btcValue'] = $obj['free'];
-                $balances[$asset]['btcTotal'] = $obj['free'] + $obj['locked'];
-                $btc_value += $obj['free'];
-                $btc_total += $obj['free'] + $obj['locked'];
+                $balances[$asset]['btcValue'] = $avaliable;
+                $balances[$asset]['btcTotal'] = $total;
+                $btc_value += $avaliable;
+                $btc_total += $total;
                 continue;
             } elseif ($asset === 'USDT' || $asset === 'USDC' || $asset === 'PAX' || $asset === 'BUSD') {
-                $btcValue = $obj['free'] / $priceData['BTCUSDT'];
-                $btcTotal = ($obj['free'] + $obj['locked']) / $priceData['BTCUSDT'];
+                $btcValue = $avaliable / $priceData['BTCUSDT'];
+                $btcTotal = $total / $priceData['BTCUSDT'];
                 $balances[$asset]['btcValue'] = $btcValue;
                 $balances[$asset]['btcTotal'] = $btcTotal;
                 $btc_value += $btcValue;
@@ -1786,13 +1816,13 @@ class API
             $symbol = $asset . 'BTC';
 
             if ($symbol === 'BTCUSDT') {
-                $btcValue = number_format($obj['free'] / $priceData['BTCUSDT'], 8, '.', '');
-                $btcTotal = number_format(($obj['free'] + $obj['locked']) / $priceData['BTCUSDT'], 8, '.', '');
+                $btcValue = number_format($avaliable / $priceData['BTCUSDT'], 8, '.', '');
+                $btcTotal = number_format($total / $priceData['BTCUSDT'], 8, '.', '');
             } elseif (isset($priceData[$symbol]) === false) {
                 $btcValue = $btcTotal = 0;
             } else {
-                $btcValue = number_format($obj['free'] * $priceData[$symbol], 8, '.', '');
-                $btcTotal = number_format(($obj['free'] + $obj['locked']) * $priceData[$symbol], 8, '.', '');
+                $btcValue = number_format($avaliable * $priceData[$symbol], 8, '.', '');
+                $btcTotal = number_format($total * $priceData[$symbol], 8, '.', '');
             }
 
             $balances[$asset]['btcValue'] = $btcValue;
