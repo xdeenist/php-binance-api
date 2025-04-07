@@ -5097,4 +5097,64 @@ class API
         $version = $apiVersion === 'v3' ? 'v3' : 'v2';
         return $this->httpRequest($version . '/positionRisk', 'GET', $params, true);
     }
+
+    /**
+     * futuresPosition gets the position information for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V2
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
+     *
+     * $position = $api->futuresPosition("BNBBTC");
+     * $position = $api->futuresPosition("BNBBTC", "v3);
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $apiVersion (optional) API version, "v2" or "v3" (default is "v2")
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the position details
+     * @throws \Exception
+     */
+    public function futuresPosition(string $symbol, $apiVersion = 'v2', int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        $version = $apiVersion === 'v3' ? 'v3' : 'v2';
+        return $this->httpRequest($version . '/positionRisk', 'GET', $params, true);
+    }
+
+    /**
+     * futuresAdlQuantile gets the ADL quantile estimation for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-ADL-Quantile-Estimation
+     *
+     * $response = $api->futuresAdlQuantile("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the ADL quantile details
+     * @throws \Exception
+     */
+    public function futuresAdlQuantile($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/adlQuantile', 'GET', $params, true);
+    }
 }
