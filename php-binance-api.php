@@ -4938,4 +4938,34 @@ class API
         }
         return $this->httpRequest('v1/positionSide/dual', 'POST', $params, true);
     }
+
+    /**
+     * futuresSetLeverage sets the leverage for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Initial-Leverage
+     *
+     * $leverage = $api->futuresSetLeverage(10, "BTCUSDT");
+     *
+     * @property int $weight 1
+     *
+     *
+     * @param int    $leverage (mandatory) leverage to be set (min 1, max 125)
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetLeverage(int $leverage, string $symbol, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'leverage' => $leverage,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/leverage', 'POST', $params, true);
+    }
 }
