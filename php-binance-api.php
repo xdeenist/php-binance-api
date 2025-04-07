@@ -1229,7 +1229,7 @@ class API
      *
      * $balances = $api->balances();
      *
-     * @param bool   $priceData array of the symbols balances are required for
+     * @param bool   $priceData (optional) array of the symbols and their prices that balances are required for (supported only for spot)
      * @param string $market_type (optional) market type - "spot" or "futures" (default is "spot")
      * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
      * @param string $api_version (optional) not for spot - the api version to use (default is v2)
@@ -1782,8 +1782,6 @@ class API
                 $onOrder = $total - $avaliable;
             }
             $balances[$asset] = [
-                "btcValue" => 0.00000000,
-                "btcTotal" => 0.00000000,
                 "available" => $avaliable,
                 "onOrder" => $onOrder,
                 "total" => $total,
@@ -1797,40 +1795,42 @@ class API
                 continue;
             }
 
-            if ($asset === 'BTC') {
-                $balances[$asset]['btcValue'] = $avaliable;
-                $balances[$asset]['btcTotal'] = $total;
-                $btc_value += $avaliable;
-                $btc_total += $total;
-                continue;
-            } elseif ($asset === 'USDT' || $asset === 'USDC' || $asset === 'PAX' || $asset === 'BUSD') {
-                $btcValue = $avaliable / $priceData['BTCUSDT'];
-                $btcTotal = $total / $priceData['BTCUSDT'];
+            if ($is_spot) {
+                if ($asset === 'BTC') {
+                    $balances[$asset]['btcValue'] = $avaliable;
+                    $balances[$asset]['btcTotal'] = $total;
+                    $btc_value += $avaliable;
+                    $btc_total += $total;
+                    continue;
+                } elseif ($asset === 'USDT' || $asset === 'USDC' || $asset === 'PAX' || $asset === 'BUSD') {
+                    $btcValue = $avaliable / $priceData['BTCUSDT'];
+                    $btcTotal = $total / $priceData['BTCUSDT'];
+                    $balances[$asset]['btcValue'] = $btcValue;
+                    $balances[$asset]['btcTotal'] = $btcTotal;
+                    $btc_value += $btcValue;
+                    $btc_total += $btcTotal;
+                    continue;
+                }
+
+                $symbol = $asset . 'BTC';
+
+                if ($symbol === 'BTCUSDT') {
+                    $btcValue = number_format($avaliable / $priceData['BTCUSDT'], 8, '.', '');
+                    $btcTotal = number_format($total / $priceData['BTCUSDT'], 8, '.', '');
+                } elseif (isset($priceData[$symbol]) === false) {
+                    $btcValue = $btcTotal = 0;
+                } else {
+                    $btcValue = number_format($avaliable * $priceData[$symbol], 8, '.', '');
+                    $btcTotal = number_format($total * $priceData[$symbol], 8, '.', '');
+                }
+
                 $balances[$asset]['btcValue'] = $btcValue;
                 $balances[$asset]['btcTotal'] = $btcTotal;
                 $btc_value += $btcValue;
                 $btc_total += $btcTotal;
-                continue;
             }
-
-            $symbol = $asset . 'BTC';
-
-            if ($symbol === 'BTCUSDT') {
-                $btcValue = number_format($avaliable / $priceData['BTCUSDT'], 8, '.', '');
-                $btcTotal = number_format($total / $priceData['BTCUSDT'], 8, '.', '');
-            } elseif (isset($priceData[$symbol]) === false) {
-                $btcValue = $btcTotal = 0;
-            } else {
-                $btcValue = number_format($avaliable * $priceData[$symbol], 8, '.', '');
-                $btcTotal = number_format($total * $priceData[$symbol], 8, '.', '');
-            }
-
-            $balances[$asset]['btcValue'] = $btcValue;
-            $balances[$asset]['btcTotal'] = $btcTotal;
-            $btc_value += $btcValue;
-            $btc_total += $btcTotal;
         }
-        if (is_array($priceData)) {
+        if (is_array($priceData) && $is_spot) {
             uasort($balances, function ($opA, $opB) {
                 if ($opA == $opB)
                     return 0;
@@ -5342,5 +5342,43 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest("v1/positionMargin/history", 'GET', $params, true);
+    }
+
+    /**
+     * futuresBalances gets the balance information futures account
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Futures-Account-Balance-V2
+     *
+     * $balances = $api->futuresBalances();
+     *
+     * @property int $weight 5
+     *
+     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the balance details
+     * @throws \Exception
+     */
+    public function futuresBalances(int $recvWindow = null)
+    {
+        return $this->balances(false, 'futures', $recvWindow, 'v2');
+    }
+
+    /**
+     * futuresBalancesV3 gets the balance information futures account
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Futures-Account-Balance-V3
+     *
+     * $balances = $api->futuresBalancesV3();
+     *
+     * @property int $weight 5
+     *
+     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the balance details
+     * @throws \Exception
+     */
+    public function futuresBalancesV3(int $recvWindow = null)
+    {
+        return $this->balances(false, 'futures', $recvWindow, 'v3');
     }
 }
