@@ -5069,21 +5069,18 @@ class API
      * futuresPositions gets the position information for a symbol or all symbols
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V2
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
      *
      * $position = $api->futuresPositions("BNBBTC");
-     * $position = $api->futuresPositions("BNBBTC", "v3);
      *
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param string $apiVersion (optional) API version, "v2" or "v3" (default is "v2")
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPositions($symbol = null, $apiVersion = 'v2', int $recvWindow = null)
+    public function futuresPositions($symbol = null, int $recvWindow = null)
     {
         $params = [
             'fapi' => true,
@@ -5094,39 +5091,76 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        $version = $apiVersion === 'v3' ? 'v3' : 'v2';
-        return $this->httpRequest($version . '/positionRisk', 'GET', $params, true);
+        return $this->httpRequest('v2/positionRisk', 'GET', $params, true);
     }
 
     /**
      * futuresPosition gets the position information for a symbol
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V2
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
      *
      * $position = $api->futuresPosition("BNBBTC");
-     * $position = $api->futuresPosition("BNBBTC", "v3);
      *
      * @property int $weight 5
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param string $apiVersion (optional) API version, "v2" or "v3" (default is "v2")
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPosition(string $symbol, $apiVersion = 'v2', int $recvWindow = null)
+    public function futuresPosition(string $symbol, int $recvWindow = null)
+    {
+        return $this->futuresPositions($symbol, $recvWindow);
+    }
+
+    /**
+     * futuresPositionsV3 gets the position information for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
+     *
+     * $position = $api->futuresPositionsV3("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the position details
+     * @throws \Exception
+     */
+    public function futuresPositionsV3($symbol = null, int $recvWindow = null)
     {
         $params = [
-            'symbol' => $symbol,
             'fapi' => true,
         ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        $version = $apiVersion === 'v3' ? 'v3' : 'v2';
-        return $this->httpRequest($version . '/positionRisk', 'GET', $params, true);
+        return $this->httpRequest('v3/positionRisk', 'GET', $params, true);
+    }
+
+    /**
+     * futuresPositionV3 gets the position information for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
+     *
+     * $position = $api->futuresPositionV3("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the position details
+     * @throws \Exception
+     */
+    public function futuresPositionV3(string $symbol, int $recvWindow = null)
+    {
+        return $this->futuresPositionsV3($symbol, $recvWindow);
     }
 
     /**
