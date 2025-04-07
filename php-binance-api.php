@@ -4765,4 +4765,49 @@ class API
         }
         return $this->httpRequest('v1/openOrder', 'GET', $params, true);
     }
+    /**
+     * futuresForceOrders gets all futures force orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Users-Force-Orders
+     *
+     * $orders = $api->futuresForceOrders("BNBBTC");
+     *
+     * @property int $weight 50
+     * 20 if symbol is not passed
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get orders from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
+     * @param string $autoCloseType (optional) "LIQUIDATION" for liquidation orders, "ADL" for ADL orders
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresForceOrders($symbol = null, $startTime = null, $endTime = null, $limit = null, $autoCloseType = null, $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($autoCloseType) {
+            $params['autoCloseType'] = $autoCloseType;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/forceOrders', 'GET', $params, true);
+    }
 }
