@@ -1055,7 +1055,7 @@ class API
             'asset' => $asset,
             'amount' => $amount,
         ];
-
+        // todo: check this method with real account
         if ($fromSymbol) {
             $params['fromSymbol'] = $fromSymbol;
         }
@@ -1068,6 +1068,57 @@ class API
 
         return $this->httpRequest("v1/asset/transfer", 'POST', $params, true);
     }
+
+    /**
+     * transfersHistory - get the transfer history between accounts
+     *
+     * @link https://developers.binance.com/docs/wallet/asset/query-user-universal-transfer
+     *
+     * @property int $weight 1
+     *
+     * @param string $type (optional) type of transfer, e.g. MAIN_MARGIN (@see transfer())
+     * @param string $startTime (optional) start time in milliseconds
+     * @param string $endTime (optional) end time in milliseconds
+     * @param int    $limit (optional) the number of records to return (default 10, max 100)
+     * @param int    $current (optional) default 1
+     * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, $recvWindow = null)
+    {
+        $params = [
+            'type' => $type,
+        ];
+        // todo: check this method with real account
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['size'] = $limit;
+        }
+        if ($current) {
+            $params['current'] = $current;
+        }
+        if ($fromSymbol) {
+            $params['fromSymbol'] = $fromSymbol;
+        }
+        if ($toSymbol) {
+            $params['toSymbol'] = $toSymbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+
+        return $this->httpRequest("v1/asset/transfer", 'GET', $params, true);
+    }
+
     /**
      * prices get all the current prices
      *
