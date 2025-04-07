@@ -4318,8 +4318,11 @@ class API
      *
      * params and return value are the same as @see futuresSell()
      */
-    public function futuresSellTest(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    public function futuresSellTest(string $symbol, $quantity = null, $price = null, $type = null, array $flags = [])
     {
+        if ($type === null) {
+            $type = 'LIMIT';
+        }
         return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags, true);
     }
 
@@ -4382,7 +4385,7 @@ class API
      * @return array containing the response or error message
      * @throws \Exception
      */
-    public function futuresBatchOrders(array $orders, $recvWindow = null)
+    public function futuresBatchOrders(array $orders, int $recvWindow = null)
     {
         $params = [
             'fapi' => true,
@@ -4420,7 +4423,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresEditOrder(string $symbol, string $side, string $quantity, string $price, string $orderId = null, array $flags = [])
+    public function futuresEditOrder(string $symbol, string $side, string $quantity, string $price, $orderId = null, array $flags = [])
     {
         $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $flags);
         $origClientOrderId = null;
@@ -4484,7 +4487,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrderAmendment(string $symbol, string $orderId = null, string $origClientOrderId = null, int $startTime = null, int $endTime = null, int $limit = null, int $recvWindow = null)
+    public function futuresOrderAmendment(string $symbol, $orderId = null, $origClientOrderId = null, $startTime = null, $endTime = null, $limit = null, int $recvWindow = null)
     {
         $params = [
             'symbol' => $symbol,
@@ -4554,7 +4557,7 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCancelBatchOrders(string $symbol, array $orderIdList = null, array $origClientOrderIdList = null, int $recvWindow = null)
+    public function futuresCancelBatchOrders(string $symbol, $orderIdList = null, $origClientOrderIdList = null, int $recvWindow = null)
     {
         $params = [
             'symbol' => $symbol,
@@ -4643,7 +4646,7 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function futuresOrderStatus(string $symbol, string $orderId = null, string $origClientOrderId = null, int $recvWindow = null)
+    public function futuresOrderStatus(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
     {
         $params = [
             'symbol' => $symbol,
@@ -4660,5 +4663,44 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest('v1/order', 'GET', $params, true);
+    }
+
+    /**
+     * futuresAllOrders gets all orders for a symbol
+     * query time period must be less then 7 days (default as the recent 7 days)
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/All-Orders
+     *
+     * $orders = $api->futuresAllOrders("BNBBTC");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get orders from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
+     * @param string $orderId (optional) order id to get the response from (if is set it will get orders >= that orderId)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     */
+    public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/allOrders', 'GET', $params, true);
     }
 }
