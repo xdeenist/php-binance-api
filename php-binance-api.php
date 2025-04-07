@@ -4600,4 +4600,31 @@ class API
         }
         return $this->httpRequest('v1/allOpenOrders', 'DELETE', $params, true);
     }
+
+    /**
+     * futuresCountdownCancelAllOrders cancels all open futures orders for a symbol at the end of the specified countdown
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Auto-Cancel-All-Open-Orders
+     *
+     * $orders = $api->futuresCountdownCancelAllOrders("BNBBTC", 10);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $countdownTime (mandatory) countdown in milliseconds (0 to stop the timer)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresCountdownCancelAllOrders(string $symbol, int $countdownTime, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'countdownTime' => $countdownTime,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/countdownCancelAll', 'POST', $params, true);
+    }
 }
