@@ -4731,4 +4731,38 @@ class API
         }
         return $this->httpRequest('v1/openOrders', 'GET', $params, true);
     }
+
+    /**
+     * futuresOpenOrder gets an open futures order
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Query-Current-Open-Order
+     *
+     * $order = $api->futuresOpenOrder("BNBBTC", "123456789");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
+     * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresOpenOrder(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        } else if ($origClientOrderId) {
+            $params['origClientOrderId'] = $origClientOrderId;
+        } else {
+            throw new \Exception('futuresOpenOrder: either orderId or origClientOrderId must be set');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/openOrder', 'GET', $params, true);
+    }
 }
