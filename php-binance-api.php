@@ -5168,6 +5168,7 @@ class API
      * futuresPositions gets the position information for a symbol or all symbols
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V2
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
      *
      * $position = $api->futuresPositions("BNBBTC");
      *
@@ -5175,11 +5176,12 @@ class API
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPositions($symbol = null, int $recvWindow = null)
+    public function futuresPositions($symbol = null, $recvWindow = null, $api_version = 'v3')
     {
         $params = [
             'fapi' => true,
@@ -5190,7 +5192,27 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest("v2/positionRisk", 'GET', $params, true);
+        if ($api_version !== 'v2' && $api_version !== 'v3') {
+            throw new \Exception('futuresPositions: api_version must be either v2 or v3');
+        }
+        return $this->httpRequest($api_version . "/positionRisk", 'GET', $params, true);
+    }
+
+    /** futuresPositionsV2
+     * @see futuresPositions
+     */
+    public function futuresPositionsV2($symbol = null, int $recvWindow = null)
+    {
+        return $this->futuresPositions($symbol, $recvWindow, 'v2');
+    }
+
+    /**
+     * futuresPositionsV3
+     * @see futuresPositions
+     */
+    public function futuresPositionsV3($symbol = null, int $recvWindow = null)
+    {
+        return $this->futuresPositions($symbol, $recvWindow, 'v3');
     }
 
     /**
@@ -5204,62 +5226,32 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPosition(string $symbol, int $recvWindow = null)
+    public function futuresPosition(string $symbol, $recvWindow = null, string $api_version = 'v3')
     {
-        return $this->futuresPositions($symbol, $recvWindow);
+        return $this->futuresPositions($symbol, $recvWindow, $api_version);
     }
 
     /**
-     * futuresPositionsV3 gets the position information for a symbol or all symbols
-     *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
-     *
-     * $position = $api->futuresPositionsV3("BNBBTC");
-     *
-     * @property int $weight 5
-     *
-     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
-     *
-     * @return array with error message or the position details
-     * @throws \Exception
+     * futuresPositionV2
+     * @see futuresPosition
      */
-    public function futuresPositionsV3($symbol = null, int $recvWindow = null)
+    public function futuresPositionV2(string $symbol, int $recvWindow = null)
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($symbol) {
-            $params['symbol'] = $symbol;
-        }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v3/positionRisk", 'GET', $params, true);
+        return $this->futuresPositionsV2($symbol, $recvWindow, 'v2');
     }
 
     /**
-     * futuresPositionV3 gets the position information for a symbol
-     *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
-     *
-     * $position = $api->futuresPositionV3("BNBBTC");
-     *
-     * @property int $weight 5
-     *
-     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
-     *
-     * @return array with error message or the position details
-     * @throws \Exception
+     * futuresPositionV3
+     * @see futuresPosition
      */
     public function futuresPositionV3(string $symbol, int $recvWindow = null)
     {
-        return $this->futuresPositionsV3($symbol, $recvWindow);
+        return $this->futuresPositionsV3($symbol, $recvWindow, 'v3');
     }
 
     /**
@@ -5353,32 +5345,83 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the balance details
      * @throws \Exception
      */
-    public function futuresBalances(int $recvWindow = null)
+    public function futuresBalances($recvWindow = null, string $api_version = 'v3')
     {
-        return $this->balances(false, 'futures', $recvWindow, 'v2');
+        if ($api_version !== 'v2' && $api_version !== 'v3') {
+            throw new \Exception('futuresBalances: api_version must be either v2 or v3');
+        }
+        return $this->balances(false, 'futures', $recvWindow, 'v3');
     }
 
     /**
-     * futuresBalancesV3 gets the balance information futures account
-     *
-     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Futures-Account-Balance-V3
-     *
-     * $balances = $api->futuresBalancesV3();
-     *
-     * @property int $weight 5
-     *
-     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
-     *
-     * @return array with error message or the balance details
-     * @throws \Exception
+     * futuresBalancesV2
+     * see futuresBalances
+     */
+    public function futuresBalancesV2(int $recvWindow = null)
+    {
+        return $this->futuresBalances($recvWindow, 'v2');
+    }
+
+    /**
+     * futuresBalancesV3
+     * see futuresBalances
      */
     public function futuresBalancesV3(int $recvWindow = null)
     {
-        return $this->balances(false, 'futures', $recvWindow, 'v3');
+        return $this->futuresBalances($recvWindow, 'v3');
+    }
+
+    /**
+     * futuresAccount get all information about the api account
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V2
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V3
+     *
+     * $account = $api->futuresAccount();
+     *
+     * @property int $weight 5
+     *
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
+     *
+     * @return array with error message or array of all the account information
+     * @throws \Exception
+     */
+    public function futuresAccount($recvWindow = null, string $api_version = 'v3')
+    {
+        if ($api_version !== 'v2' && $api_version !== 'v3') {
+            throw new \Exception('futuresAccount: api_version must be either v2 or v3');
+        }
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($api_version . "/account", "GET", $params, true);
+    }
+
+    /**
+     * futuresAccountV2
+     * see futuresAccount
+     */
+    public function futuresAccountV2(int $recvWindow = null)
+    {
+        return $this->futuresAccount($recvWindow, 'v2');
+    }
+
+    /**
+     * futuresAccountV3
+     * see futuresAccount
+     */
+    public function futuresAccountV3(int $recvWindow = null)
+    {
+        return $this->futuresAccount($recvWindow, 'v3');
     }
 }
