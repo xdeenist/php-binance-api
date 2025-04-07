@@ -5157,4 +5157,57 @@ class API
         }
         return $this->httpRequest('v1/adlQuantile', 'GET', $params, true);
     }
+
+    /**
+     * futuresPositionMarginChangeHistory gets the position margin change history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Get-Position-Margin-Change-History
+     *
+     * $history = $api->futuresPositionMarginChangeHistory("BNBBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get history from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get history until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of history (default 500)
+     * @param string $addOrReduce (optional) "ADD" or "REDUCE" to filter the history
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     */
+    public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($addOrReduce) {
+            if (is_numeric($addOrReduce)) {
+                $params['addOrReduce'] = $addOrReduce;
+            } else if (is_string($addOrReduce)) {
+                $addOrReduce = strtoupper($addOrReduce);
+                if ($addOrReduce === 'ADD' || $addOrReduce === '1') {
+                    $params['addOrReduce'] = 1;
+                } else if ($addOrReduce === 'REDUCE' || $addOrReduce === '2') {
+                    $params['addOrReduce'] = 2;
+                } else {
+                    throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
+                }
+            } else {
+                throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
+            }
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest('v1/positionMargin/history', 'GET', $params, true);
+    }
 }
