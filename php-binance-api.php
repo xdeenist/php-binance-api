@@ -684,7 +684,7 @@ class API
                     $arr = $this->httpRequest("v3/exchangeInfo", "GET", $parameters);
                 }
                 if (gettype($symbols) == "array")  {
-                    $arr = $this->httpRequest('v3/exchangeInfo?symbols=' . '["' . implode('","', $symbols) . '"]');
+                    $arr = $this->httpRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]');
                 }
             } else {
                 $arr = $this->httpRequest("v3/exchangeInfo");
@@ -998,6 +998,75 @@ class API
     }
 
     /**
+     * transfer - Transfer asset between accounts
+     * possible types of transfer are:
+     * - MAIN_UMFUTURE - Spot account transfer to USDⓈ-M Futures account
+     * - MAIN_CMFUTURE - Spot account transfer to COIN-M Futures account
+     * - MAIN_MARGIN - Spot account transfer to Margin（cross）account
+     * - UMFUTURE_MAIN - USDⓈ-M Futures account transfer to Spot account
+     * - UMFUTURE_MARGIN - USDⓈ-M Futures account transfer to Margin（cross）account
+     * - CMFUTURE_MAIN - COIN-M Futures account transfer to Spot account
+     * - CMFUTURE_MARGIN - COIN-M Futures account transfer to Margin(cross) account
+     * - MARGIN_MAIN - Margin（cross）account transfer to Spot account
+     * - MARGIN_UMFUTURE - Margin（cross）account transfer to USDⓈ-M Futures
+     * - MARGIN_CMFUTURE - Margin（cross）account transfer to COIN-M Futures
+     * - ISOLATEDMARGIN_MARGIN - Isolated margin account transfer to Margin(cross) account
+     * - MARGIN_ISOLATEDMARGIN - Margin(cross) account transfer to Isolated margin account
+     * - ISOLATEDMARGIN_ISOLATEDMARGIN - Isolated margin account transfer to Isolated margin account
+     * - MAIN_FUNDING - Spot account transfer to Funding account
+     * - FUNDING_MAIN - Funding account transfer to Spot account
+     * - FUNDING_UMFUTURE - Funding account transfer to UMFUTURE account
+     * - UMFUTURE_FUNDING - UMFUTURE account transfer to Funding account
+     * - MARGIN_FUNDING - MARGIN account transfer to Funding account
+     * - FUNDING_MARGIN - Funding account transfer to Margin account
+     * - FUNDING_CMFUTURE - Funding account transfer to CMFUTURE account
+     * - CMFUTURE_FUNDING - CMFUTURE account transfer to Funding account
+     * - MAIN_OPTION - Spot account transfer to Options account
+     * - OPTION_MAIN - Options account transfer to Spot account
+     * - UMFUTURE_OPTION - USDⓈ-M Futures account transfer to Options account
+     * - OPTION_UMFUTURE - Options account transfer to USDⓈ-M Futures account
+     * - MARGIN_OPTION - Margin（cross）account transfer to Options account
+     * - OPTION_MARGIN - Options account transfer to Margin（cross）account
+     * - FUNDING_OPTION - Funding account transfer to Options account
+     * - OPTION_FUNDING - Options account transfer to Funding account
+     * - MAIN_PORTFOLIO_MARGIN - Spot account transfer to Portfolio Margin account
+     * - PORTFOLIO_MARGIN_MAIN - Portfolio Margin account transfer to Spot account
+     *
+     * @link https://developers.binance.com/docs/wallet/asset/user-universal-transfer
+     *
+     * @property int $weight 900
+     *
+     * @param string $type (mandatory) type of transfer, e.g. MAIN_MARGIN
+     * @param string $asset (mandatory) an asset, e.g. BTC
+     * @param string $amount (mandatory) the amount to transfer
+     * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'type' => $type,
+            'asset' => $asset,
+            'amount' => $amount,
+        ];
+
+        if ($fromSymbol) {
+            $params['fromSymbol'] = $fromSymbol;
+        }
+        if ($toSymbol) {
+            $params['toSymbol'] = $toSymbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+
+        return $this->httpRequest("v1/asset/transfer", 'POST', $params, true);
+    }
+    /**
      * prices get all the current prices
      *
      * $ticker = $api->prices();
@@ -1191,7 +1260,7 @@ class API
      */
     public function coins()
     {
-        return $this->httpRequest('v1/capital/config/getall', 'GET', [ 'sapi' => true ], true);
+        return $this->httpRequest("v1/capital/config/getall", 'GET', [ 'sapi' => true ], true);
     }
 
     /**
@@ -3811,7 +3880,7 @@ class API
             'symbol'=> $symbol,
             'fapi' => true,
         ];
-        return $this->httpRequest('v1/openInterest', 'GET', $parameters);
+        return $this->httpRequest("v1/openInterest", 'GET', $parameters);
     }
 
     /**
@@ -3976,7 +4045,7 @@ class API
         if ($endTime) {
             $parameters['endTime'] = $endTime;
         }
-        return $this->httpRequest('basis', 'GET', $parameters);
+        return $this->httpRequest("basis", 'GET', $parameters);
     }
 
     /**
@@ -4000,7 +4069,7 @@ class API
             'symbol' => $symbol,
             'fapi' => true,
         ];
-        return $this->httpRequest('v1/indexInfo', 'GET', $parameters);
+        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
     }
 
     /**
@@ -4027,7 +4096,7 @@ class API
         if ($symbol) {
             $parameters['symbol'] = $symbol;
         }
-        return $this->httpRequest('v1/assetIndex', 'GET', $parameters);
+        return $this->httpRequest("v1/assetIndex", 'GET', $parameters);
     }
 
     /**
@@ -4050,7 +4119,7 @@ class API
             'symbol' => $symbol,
             'fapi' => true,
         ];
-        return $this->httpRequest('v1/indexInfo', 'GET', $parameters);
+        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
     }
 
     /**
@@ -4454,7 +4523,7 @@ class API
         }
         unset($opt['type']);
         $opt['fapi'] = true;
-        return $this->httpRequest('v1/order', 'PUT', $opt, true);
+        return $this->httpRequest("v1/order", 'PUT', $opt, true);
     }
 
     /**
@@ -4526,7 +4595,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/orderAmendment', 'GET', $params, true);
+        return $this->httpRequest("v1/orderAmendment", 'GET', $params, true);
     }
 
     /**
@@ -4555,7 +4624,7 @@ class API
         } else if (!isset($flags['origClientOrderId'])) {
             throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
         }
-        return $this->httpRequest('v1/order', 'DELETE', array_merge($params, $flags), true);
+        return $this->httpRequest("v1/order", 'DELETE', array_merge($params, $flags), true);
     }
 
     /**
@@ -4591,7 +4660,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/batchOrders', 'DELETE', $params, true);
+        return $this->httpRequest("v1/batchOrders", 'DELETE', $params, true);
     }
 
     /**
@@ -4616,7 +4685,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/allOpenOrders', 'DELETE', $params, true);
+        return $this->httpRequest("v1/allOpenOrders", 'DELETE', $params, true);
     }
 
     /**
@@ -4643,7 +4712,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/countdownCancelAll', 'POST', $params, true);
+        return $this->httpRequest("v1/countdownCancelAll", 'POST', $params, true);
     }
 
     /**
@@ -4677,7 +4746,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/order', 'GET', $params, true);
+        return $this->httpRequest("v1/order", 'GET', $params, true);
     }
 
     /**
@@ -4716,7 +4785,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/allOrders', 'GET', $params, true);
+        return $this->httpRequest("v1/allOrders", 'GET', $params, true);
     }
 
     /**
@@ -4744,7 +4813,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/openOrders', 'GET', $params, true);
+        return $this->httpRequest("v1/openOrders", 'GET', $params, true);
     }
 
     /**
@@ -4778,7 +4847,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/openOrder', 'GET', $params, true);
+        return $this->httpRequest("v1/openOrder", 'GET', $params, true);
     }
     /**
      * futuresForceOrders gets all futures force orders
@@ -4823,7 +4892,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/forceOrders', 'GET', $params, true);
+        return $this->httpRequest("v1/forceOrders", 'GET', $params, true);
     }
 
     /**
@@ -4870,7 +4939,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/userTrades', 'GET', $params, true);
+        return $this->httpRequest("v1/userTrades", 'GET', $params, true);
     }
 
     /**
@@ -4909,7 +4978,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/marginType', 'POST', $params, true);
+        return $this->httpRequest("v1/marginType", 'POST', $params, true);
     }
 
     /**
@@ -4936,7 +5005,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/positionSide/dual', 'POST', $params, true);
+        return $this->httpRequest("v1/positionSide/dual", 'POST', $params, true);
     }
 
     /**
@@ -4966,7 +5035,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/leverage', 'POST', $params, true);
+        return $this->httpRequest("v1/leverage", 'POST', $params, true);
     }
 
     /**
@@ -4993,7 +5062,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/multiAssetsMarginMode', 'POST', $params, true);
+        return $this->httpRequest("v1/multiAssetsMarginMode", 'POST', $params, true);
     }
 
     /**
@@ -5018,7 +5087,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/positionMargin', 'POST', $params, true);
+        return $this->httpRequest("v1/positionMargin", 'POST', $params, true);
     }
 
     /**
@@ -5091,7 +5160,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v2/positionRisk', 'GET', $params, true);
+        return $this->httpRequest("v2/positionRisk", 'GET', $params, true);
     }
 
     /**
@@ -5140,7 +5209,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v3/positionRisk', 'GET', $params, true);
+        return $this->httpRequest("v3/positionRisk", 'GET', $params, true);
     }
 
     /**
@@ -5189,7 +5258,7 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/adlQuantile', 'GET', $params, true);
+        return $this->httpRequest("v1/adlQuantile", 'GET', $params, true);
     }
 
     /**
@@ -5242,6 +5311,6 @@ class API
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest('v1/positionMargin/history', 'GET', $params, true);
+        return $this->httpRequest("v1/positionMargin/history", 'GET', $params, true);
     }
 }
