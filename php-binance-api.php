@@ -5931,4 +5931,31 @@ class API
     {
         return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/trade/asyn/id");
     }
+
+    /**
+     * futuresFeeBurn change user's BNB Fee Discount (Fee Discount On or Fee Discount Off ) on EVERY symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Toggle-BNB-Burn-On-Futures-Trade
+     *
+     * $response = $api->futuresFeeBurn(true);
+     *
+     * @property int $weight 1
+     *
+     * @param bool $flag (mandatory) true for BNB Fee Discount On, false for BNB Fee Discount Off
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFeeBurn(bool $flag, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'feeBurn' => $flag ? 'true' : 'false',
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/feeBurn", 'POST', $params, true);
+    }
 }
