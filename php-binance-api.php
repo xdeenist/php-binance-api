@@ -1603,7 +1603,7 @@ class API
         }
 
         if (isset($json['msg']) && !empty($json['msg'])) {
-            if ( $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html' && $url != 'v1/allOpenOrders') {
+            if ($json['msg'] !== 'success' && $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html' && $url != 'v1/allOpenOrders') {
                 // should always output error, not only on httpdebug
                 // not outputing errors, hides it from users and ends up with tickets on github
                 throw new \Exception('signedRequest error: '.print_r($output, true));
@@ -5771,7 +5771,7 @@ class API
      * futuresDownloadId
      * helper for other metods for getting download id
      */
-    protected function futuresDownloadId($startTime, $endTime, $recvWindow = null, string $url)
+    protected function futuresDownloadId($startTime, $endTime, $recvWindow = null, string $url = '')
     {
         $params = [
             'fapi' => true,
@@ -5788,7 +5788,7 @@ class API
      * futuresDownloadLinkByDownloadId
      * helper for other metods for getting download link by download id
      */
-    protected function futuresDownloadLinkByDownloadId(string $downloadId, $recvWindow = null, $url)
+    protected function futuresDownloadLinkByDownloadId(string $downloadId, $recvWindow = null, string $url = '')
     {
         $params = [
             'fapi' => true,
@@ -5942,7 +5942,7 @@ class API
      * @property int $weight 1
      *
      * @param bool $flag (mandatory) true for BNB Fee Discount On, false for BNB Fee Discount Off
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5957,5 +5957,30 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest("v1/feeBurn", 'POST', $params, true);
+    }
+
+    /**
+     * futuresFeeBurnStatus gets the BNB Fee Discount status
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-BNB-Burn-Status
+     *
+     * $response = $api->futuresFeeBurnStatus();
+     *
+     * @property int $weight 30
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFeeBurnStatus(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/feeBurn", 'GET', $params, true);
     }
 }
