@@ -74,6 +74,9 @@ class API
     protected $xMbxUsedWeight = 0;
     protected $xMbxUsedWeight1m = 0;
 
+    private $SPOT_ORDER_PREFIX     = "x-HNA2TXFJ";
+	private $CONTRACT_ORDER_PREFIX = "x-Cb7ytekJ";
+
     /**
      * Constructor for the class,
      * send as many argument as you want.
@@ -226,6 +229,20 @@ class API
         if (isset($contents['pass'])) {
             $this->proxyConf['pass'] = isset($contents['pass']) ? $contents['pass'] : "";
         }
+    }
+
+    public static function uuid22($length = 22) {
+        return bin2hex(random_bytes(intval($length / 2)));
+    }
+
+    protected function generateSpotClientOrderId()
+    {
+        return $this->SPOT_ORDER_PREFIX . self::uuid22();
+    }
+
+    protected function generateFuturesClientOrderId()
+    {
+        return $this->CONTRACT_ORDER_PREFIX . self::uuid22();;
     }
 
     /**
@@ -1749,6 +1766,8 @@ class API
 
         if (isset($flags['newClientOrderId'])) {
             $opt['newClientOrderId'] = $flags['newClientOrderId'];
+        } else {
+            $opt['newClientOrderId'] = $this->generateSpotClientOrderId();
         }
 
         $qstring = ($test === false) ? "v3/order" : "v3/order/test";
@@ -4281,6 +4300,8 @@ class API
 
         if (isset($flags['newClientOrderId'])) {
             $opt['newClientOrderId'] = $flags['newClientOrderId'];
+        } else {
+            $opt['newClientOrderId'] = $this->generateFuturesClientOrderId();
         }
 
         if (isset($flags['stopPrice'])) {
