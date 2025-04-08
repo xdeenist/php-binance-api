@@ -5502,4 +5502,29 @@ class API
         }
         return $this->httpRequest("v1/commissionRate", 'GET', $params, true);
     }
+
+    /**
+     * futuresAccountConfig gets the account configuration information
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Config
+     *
+     * $accountConfig = $api->futuresAccountConfig();
+     *
+     * @property int $weight 5
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the account configuration details
+     * @throws \Exception
+     */
+    public function futuresAccountConfig(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/accountConfig", 'GET', $params, true);
+    }
 }
