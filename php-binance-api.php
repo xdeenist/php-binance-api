@@ -5768,12 +5768,46 @@ class API
     }
 
     /**
+     * futuresDownloadId
+     * helper for other metods for getting download id
+     */
+    protected function futuresDownloadId($startTime, $endTime, $recvWindow = null, string $url)
+    {
+        $params = [
+            'fapi' => true,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($url, 'GET', $params, true);
+    }
+
+    /**
+     * futuresDownloadLinkByDownloadId
+     * helper for other metods for getting download link by download id
+     */
+    protected function futuresDownloadLinkByDownloadId(string $downloadId, $recvWindow = null, $url)
+    {
+        $params = [
+            'fapi' => true,
+            'downloadId' => $downloadId,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($url, 'GET', $params, true);
+    }
+
+    /**
      * futuresDownloadIdForTransactions gets the download id for transactions
-     * request Limitation is 5 times per month, shared by front end download page and rest api
+     * request limitation is 5 times per month, shared by front end download page and rest api
+     * the time between startTime and endTime can not be longer than 1 year
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Transaction-History
      *
-     * $downloadId = $api->futuresDownloadIdForTransactions();
+     * $downloadId = $api->futuresDownloadIdForTransactions(1744105700000, 1744105722122);
      *
      * @property int $weight 1000
      *
@@ -5786,14 +5820,115 @@ class API
      */
     public function futuresDownloadIdForTransactions(int $startTime, int $endTime, int $recvWindow = null)
     {
-        $params = [
-            'fapi' => true,
-            'startTime' => $startTime,
-            'endTime' => $endTime,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/income/asyn", 'GET', $params, true);
+        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/income/asyn");
+    }
+
+    /**
+     * futuresDownloadTransactionsByDownloadId get futures transaction history download link by Id
+     * download link expiration: 24h
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Futures-Transaction-History-Download-Link-by-Id
+     *
+     * $downloadLink = $api->futuresDownloadTransactionsByDownloadId("downloadId");
+     *
+     * @property int $weight 10
+     *
+     * @param string $downloadId (mandatory) download id
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the download link
+     * @throws \Exception
+     */
+    public function futuresDownloadTransactionsByDownloadId(string $downloadId, int $recvWindow = null)
+    {
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/income/asyn/id");
+    }
+
+    /**
+     * futuresDownloadIdForOrders gets the download id for orders
+     * request limitation is 10 times per month, shared by front end download page and rest api
+     * the time between startTime and endTime can not be longer than 1 year
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Order-History
+     *
+     * $downloadId = $api->futuresDownloadIdForOrders(1744105700000, 1744105722122);
+     *
+     * @property int $weight 1000
+     *
+     * @param int $startTime (optional) timestamp in ms to get orders from INCLUSIVE
+     * @param int $endTime (optional) timestamp in ms to get orders until INCLUSIVE
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the response
+     * @throws \Exception
+     */
+    public function futuresDownloadIdForOrders(int $startTime, int $endTime, int $recvWindow = null)
+    {
+        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/order/asyn");
+    }
+
+    /**
+     * futuresDownloadOrdersByDownloadId get futures orders history download link by Id
+     * download link expiration: 24h
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Futures-Order-History-Download-Link-by-Id
+     *
+     * $downloadLink = $api->futuresDownloadOrdersByDownloadId("downloadId");
+     *
+     * @property int $weight 10
+     *
+     * @param string $downloadId (mandatory) download id
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the download link
+     * @throws \Exception
+     */
+    public function futuresDownloadOrdersByDownloadId(string $downloadId, int $recvWindow = null)
+    {
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/order/asyn/id");
+    }
+
+    /**
+     * futuresDownloadIdForTrades gets the download id for trades
+     * request limitation is 5 times per month, shared by front end download page and rest api
+     * the time between startTime and endTime can not be longer than 1 year
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Trade-History
+     *
+     * $downloadId = $api->futuresDownloadIdForTrades(1744105700000, 1744105722122);
+     *
+     * @property int $weight 1000
+     *
+     * @param int $startTime (optional) timestamp in ms to get trades from INCLUSIVE
+     * @param int $endTime (optional) timestamp in ms to get trades until INCLUSIVE
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the response
+     * @throws \Exception
+     */
+    public function futuresDownloadIdForTrades(int $startTime, int $endTime, int $recvWindow = null)
+    {
+        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/trade/asyn");
+    }
+
+    /**
+     * futuresDownloadTradesByDownloadId get futures trades history download link by Id
+     * download link expiration: 24h
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Futures-Trade-Download-Link-by-Id
+     *
+     * $downloadLink = $api->futuresDownloadTradesByDownloadId("downloadId");
+     *
+     * @property int $weight 10
+     *
+     * @param string $downloadId (mandatory) download id
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the download link
+     * @throws \Exception
+     */
+    public function futuresDownloadTradesByDownloadId(string $downloadId, int $recvWindow = null)
+    {
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/trade/asyn/id");
     }
 }
