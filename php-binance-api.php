@@ -1397,6 +1397,20 @@ class API
         $this->proxyConf = $proxyconf;
     }
 
+
+    protected function curl_exec($curl)
+    {
+        return curl_exec($curl);
+    }
+
+    protected function curl_set_url($curl, $endpoint) {
+        curl_setopt($curl, CURLOPT_URL, $endpoint);
+    }
+
+    protected function curl_set_body($curl, $option, $query) {
+        curl_setopt($curl, $option, $query);
+    }
+
     /**
      * httpRequest curl wrapper for all http api requests.
      * You can't call this function directly, use the helper functions
@@ -1515,18 +1529,18 @@ class API
                 $endpoint = $base . $url . '?' . $query . '&signature=' . $signature;
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
+            $this->curl_set_url($curl, $endpoint);
             curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'X-MBX-APIKEY: ' . $this->api_key,
             ));
         }
         // params so buildquery string and append to url
         elseif (count($params) > 0) {
-            curl_setopt($curl, CURLOPT_URL, $base . $url . '?' . $query);
+            $this->curl_set_url($curl, $base . $url . '?' . $query);
         }
         // no params so just the base url
         else {
-            curl_setopt($curl, CURLOPT_URL, $base . $url);
+            $this->curl_set_url($curl,  $base . $url);
             curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'X-MBX-APIKEY: ' . $this->api_key,
             ));
@@ -1535,7 +1549,7 @@ class API
         // Post and postfields
         if ($method === "POST") {
             curl_setopt($curl, CURLOPT_POST, true);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
+            $this->curl_set_body($curl, CURLOPT_POSTFIELDS, $query);
         }
         // Delete Method
         if ($method === "DELETE") {
@@ -1570,7 +1584,7 @@ class API
             }
         }
 
-        $output = curl_exec($curl);
+        $output = $this->curl_exec($curl);
         // Check if any error occurred
         // if (curl_errno($curl) > 0) {
         //     // should always output error, not only on httpdebug
