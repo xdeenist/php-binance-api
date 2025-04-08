@@ -5063,6 +5063,31 @@ class API
     }
 
     /**
+     * futuresPositionMode gets the position mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Current-Position-Mode
+     *
+     * $response = $api->futuresPositionMode();
+     *
+     * @property int $weight 30
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPositionMode(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/positionSide/dual", 'GET', $params, true);
+    }
+
+    /**
      * futuresSetPositionMode sets the position mode for ALL symbols
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Position-Mode
@@ -5117,6 +5142,31 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest("v1/leverage", 'POST', $params, true);
+    }
+
+    /**
+     * futuresMultiAssetsMarginMode gets the multi-assets margin mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Current-Multi-Assets-Mode
+     *
+     * $response = $api->futuresMultiAssetsMarginMode();
+     *
+     * @property int $weight 30
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresMultiAssetsMarginMode(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/multiAssetsMargin", 'GET', $params, true);
     }
 
     /**
@@ -5556,5 +5606,60 @@ class API
             $params['recvWindow'] = $recvWindow;
         }
         return $this->httpRequest("v1/symbolConfig", 'GET', $params, true);
+    }
+
+    /**
+     * futuresOrderRateLimit gets the user rate limit
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Query-Rate-Limit
+     *
+     * $rateLimit = $api->futuresOrderRateLimit();
+     *
+     * @property int $weight 1
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function futuresOrderRateLimit(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/rateLimit/order", 'GET', $params, true);
+    }
+
+    /**
+     * futuresLeverages gets the leverage information for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Notional-and-Leverage-Brackets
+     *
+     * $leverage = $api->futuresLeverages("BNBBTC");
+     * $leverages = $api->futuresLeverages();
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the leverage details
+     * @throws \Exception
+     */
+    public function futuresLeverages($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/leverageBracket", 'GET', $params, true);
     }
 }
