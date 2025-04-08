@@ -1458,7 +1458,7 @@ class API
 
         $base = $this->base;
         if ($this->useTestnet) {
-            $base = $this->testnet;
+            $base = $this->baseTestnet;
         }
 
         if (isset($params['wapi'])) {

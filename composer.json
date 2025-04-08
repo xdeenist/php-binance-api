@@ -29,6 +29,7 @@
         ]
     },
     "scripts": {
-        "test": "phpunit tests/BinanceApiTest.php"
+        "test": "phpunit tests/BinanceStaticTests.php",
+        "live-tests": "phpunit tests/BinanceLiveTests.php"
     }
 }
