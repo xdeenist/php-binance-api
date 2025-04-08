@@ -5983,4 +5983,34 @@ class API
         }
         return $this->httpRequest("v1/feeBurn", 'GET', $params, true);
     }
+
+    /**
+     * futuresConvertExchangeInfo get all convertible token pairs and the tokens’ respective upper/lower limits
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert
+     *
+     * $converInfo = $api->futuresConvertExchangeInfo();
+     * $converInfo = $api->futuresConvertExchangeInfo("ETH", "DOGE");
+     *
+     * @property int $weight 20
+     *
+     * @param string $fromAsset (optional) the asset to convert from
+     * @param string $toAsset (optional) the asset to convert to
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresConvertExchangeInfo($fromAsset = null, $toAsset = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($fromAsset) {
+            $params['fromAsset'] = $fromAsset;
+        }
+        if ($toAsset) {
+            $params['toAsset'] = $toAsset;
+        }
+        return $this->httpRequest("v1/convert/exchangeInfo", 'GET', $params);
+    }
 }
