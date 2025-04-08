@@ -5475,4 +5475,31 @@ class API
     {
         return $this->futuresAccount($recvWindow, 'v3');
     }
+
+    /**
+     * futuresTradeFee gets the trade fee information for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/User-Commission-Rate
+     *
+     * $tradeFee = $api->futuresTradeFee("BNBBTC");
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the trade fee details
+     * @throws \Exception
+     */
+    public function futuresTradeFee(string $symbol, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/commissionRate", 'GET', $params, true);
+    }
 }
