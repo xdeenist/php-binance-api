@@ -5985,12 +5985,12 @@ class API
     }
 
     /**
-     * futuresConvertExchangeInfo get all convertible token pairs and the tokens’ respective upper/lower limits
+     * convertExchangeInfo get all convertible token pairs and the tokens’ respective upper/lower limits
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert
      *
-     * $converInfo = $api->futuresConvertExchangeInfo();
-     * $converInfo = $api->futuresConvertExchangeInfo("ETH", "DOGE");
+     * $converInfo = $api->convertExchangeInfo();
+     * $converInfo = $api->convertExchangeInfo("ETH", "DOGE");
      *
      * @property int $weight 20
      *
@@ -6000,7 +6000,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresConvertExchangeInfo($fromAsset = null, $toAsset = null)
+    public function convertExchangeInfo($fromAsset = null, $toAsset = null)
     {
         $params = [
             'fapi' => true,
@@ -6012,5 +6012,104 @@ class API
             $params['toAsset'] = $toAsset;
         }
         return $this->httpRequest("v1/convert/exchangeInfo", 'GET', $params);
+    }
+
+    /**
+     * convertSend send a convert request
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert/Send-quote-request
+     *
+     * $convertRequest = $api->convertSend("ETH", "DOGE", 0.1);
+     *
+     * @property int $weight 50
+     *
+     * @param string $fromAsset (mandatory) the asset to convert from
+     * @param string $toAsset (mandatory) the asset to convert to
+     * @param string $fromAmount (optional) mandatory if $toAmount is not set
+     * @param string $toAmount (optional) mandatory if $fromAmount is not set
+     * @param string $validTime (optional) deafault "10s"
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertSend(string $fromAsset, string $toAsset, $fromAmount = null, $toAmount = null, $validTime = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'fromAsset' => $fromAsset,
+            'toAsset' => $toAsset,
+        ];
+        if ($fromAmount) {
+            $params['fromAmount'] = $fromAmount;
+        } else if ($toAmount) {
+            $params['toAmount'] = $toAmount;
+        } else {
+            throw new \Exception('convertSendRequest: fromAmount or toAmount must be set');
+        }
+        if ($validTime) {
+            $params['validTime'] = $validTime;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/convert/getQuote", 'POST', $params, true);
+    }
+
+    /**
+     * convertAccept accept the offered quote by quote ID
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert/Accept-Quote
+     *
+     * $convertAccept = $api->convertAccept("quoteId");
+     *
+     * @property int $weight 200
+     *
+     * @param string $quoteId (mandatory) the quote ID to accept
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertAccept(string $quoteId, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'quoteId' => $quoteId,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/cconvert/acceptQuote", 'POST', $params, true);
+    }
+
+    /**
+     * convertStatus get the status of a convert request by orderId or quoteId
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert/Order-Status
+     *
+     * $status = $api->convertStatus("orderId");
+     *
+     * @property int $weight 50
+     *
+     * @param string $orderId (optional) the order ID to get the status of (mandatory if $quoteId is not set)
+     * @param string $quoteId (optional) the quote ID to get the status of (mandatory if $orderId is not set)
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertStatus($orderId = null, $quoteId = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        } else if ($quoteId) {
+            $params['quoteId'] = $quoteId;
+        } else {
+            throw new \Exception('convertStatus: orderId or quoteId must be set');
+        }
+        return $this->httpRequest("v1/convert/orderStatus", 'GET', $params, true);
     }
 }
