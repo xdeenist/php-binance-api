@@ -5662,4 +5662,78 @@ class API
         }
         return $this->httpRequest("v1/leverageBracket", 'GET', $params, true);
     }
+
+    /**
+     * futuresLedger fetch the history of changes, actions done by the user or operations that altered the balance of the user
+     * possible values for incomeType:
+     * - TRANSFER
+     * - TRANSFER
+     * - WELCOME_BONUS
+     * - REALIZED_PNL
+     * - FUNDING_FEE
+     * - COMMISSION
+     * - INSURANCE_CLEAR
+     * - REFERRAL_KICKBACK
+     * - COMMISSION_REBATE
+     * - API_REBATE
+     * - CONTEST_REWARD
+     * - CROSS_COLLATERAL_TRANSFER
+     * - OPTIONS_PREMIUM_FEE
+     * - OPTIONS_SETTLE_PROFIT
+     * - INTERNAL_TRANSFER
+     * - AUTO_EXCHANGE
+     * - DELIVERED_SETTELMENT
+     * - COIN_SWAP_DEPOSIT
+     * - COIN_SWAP_WITHDRAW
+     * - POSITION_LIMIT_INCREASE_FEE
+     * - STRATEGY_UMFUTURES_TRANSFER
+     * - FEE_RETURN
+     * - BFUSD_REWARD
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Income-History
+     *
+     * $income = $api->futuresLedger("BNBBTC");
+     * $income = $api->futuresLedger("BNBBTC", "FUNDING_FEE");
+     *
+     * @property int $weight 30
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param string $incomeType (optional) income type to filter the response
+     * @param int    $startTime (optional) timestamp in ms to get income from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get income until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of income (default 100, max 1000)
+     * @param int    $page (optional) number of page to get
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the income details
+     * @throws \Exception
+     */
+    public function futuresLedger($symbol = null, $incomeType = null, $startTime = null, $endTime = null, $limit = null, $page = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($incomeType) {
+            $params['incomeType'] = $incomeType;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($page) {
+            $params['page'] = $page;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/income", 'GET', $params, true);
+    }
 }
