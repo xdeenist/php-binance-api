@@ -5527,4 +5527,34 @@ class API
         }
         return $this->httpRequest("v1/accountConfig", 'GET', $params, true);
     }
+
+    /**
+     * futuresMarginModes gets the margin mode for all symbols or specific symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Symbol-Config
+     *
+     * $marginMode = $api->futuresMarginModes();
+     * $marginModes = $api->futuresMarginModes("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the margin mode details
+     * @throws \Exception
+     */
+    public function futuresMarginModes($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/symbolConfig", 'GET', $params, true);
+    }
 }
