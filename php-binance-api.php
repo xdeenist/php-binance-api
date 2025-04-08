@@ -5736,4 +5736,34 @@ class API
         }
         return $this->httpRequest("v1/income", 'GET', $params, true);
     }
+
+    /**
+     * futuresTradingStatus get the futures trading quantitative rules indicators
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Futures-Trading-Quantitative-Rules-Indicators
+     *
+     * $tradingStatus = $api->futuresTradingStatus();
+     *
+     * @property int $weight 10
+     * weigth is 1 if symbol is provided
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the trading status details
+     * @throws \Exception
+     */
+    public function futuresTradingStatus($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/apiTradingStatus", 'GET', $params, true);
+    }
 }
