@@ -5766,4 +5766,34 @@ class API
         }
         return $this->httpRequest("v1/apiTradingStatus", 'GET', $params, true);
     }
+
+    /**
+     * futuresDownloadIdForTransactions gets the download id for transactions
+     * request Limitation is 5 times per month, shared by front end download page and rest api
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Transaction-History
+     *
+     * $downloadId = $api->futuresDownloadIdForTransactions();
+     *
+     * @property int $weight 1000
+     *
+     * @param int $startTime (optional) timestamp in ms to get transactions from INCLUSIVE
+     * @param int $endTime (optional) timestamp in ms to get transactions until INCLUSIVE
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the response
+     * @throws \Exception
+     */
+    public function futuresDownloadIdForTransactions(int $startTime, int $endTime, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/income/asyn", 'GET', $params, true);
+    }
 }
