@@ -6111,20 +6111,29 @@ class API
      *
      * @param string $quoteId (mandatory) the quote ID to accept
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) additional parameters
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertAccept(string $quoteId, int $recvWindow = null)
+    public function convertAccept(string $quoteId, int $recvWindow = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'quoteId' => $quoteId,
         ];
+        return $this->fapiRequest("v1/cconvert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
+    }
+
+    /**
+     * fapiRequest helper for creating a fapi httpRequest
+     */
+    protected function fapiRequest(string $url, string $method, array $params = [], $signed = false, int $recvWindow = null)
+    {
+        $params['fapi'] = true;
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
-        return $this->httpRequest("v1/cconvert/acceptQuote", 'POST', $params, true);
+        return $this->httpRequest($url, $method, $params, $signed);
     }
 
     /**
