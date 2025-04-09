@@ -74,6 +74,8 @@ class API
     protected $xMbxUsedWeight = 0;
     protected $xMbxUsedWeight1m = 0;
 
+    public $headers = [];
+
     private $SPOT_ORDER_PREFIX     = "x-HNA2TXFJ";
 	private $CONTRACT_ORDER_PREFIX = "x-Cb7ytekJ";
 
@@ -1521,6 +1523,13 @@ class API
 
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_VERBOSE, $this->httpDebug);
+
+        //set custom headers if any
+        curl_setopt_array($curl, [
+            CURLOPT_HTTPHEADER => $this->headers,
+            // Optional: other cURL options
+        ]);
+
         $query = $this->binance_build_query($params);
 
         // signed with params
