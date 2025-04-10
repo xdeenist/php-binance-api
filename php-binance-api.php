@@ -60,10 +60,6 @@ class API
     protected $requestCount = 0; // /< This stores the amount of API requests
     protected $httpDebug = false; // /< If you enable this, curl will output debugging information
     protected $subscriptions = []; // /< View all websocket subscriptions
-    protected $btc_value = 0.00; // /< value of available spot assets
-    protected $btc_total = 0.00;
-    protected $futures_btc_value = 0.00; // /< value of available futures assets
-    protected $futures_btc_total = 0.00;
 
     // /< value of available onOrder assets
 
@@ -1299,7 +1295,6 @@ class API
      *
      * $balances = $api->balances();
      *
-     * @param bool   $priceData (optional) array of the symbols and their prices that balances are required for (supported only for spot)
      * @param string $market_type (optional) market type - "spot" or "futures" (default is "spot")
      * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
      * @param string $api_version (optional) not for spot - the api version to use (default is v2)
@@ -1307,11 +1302,8 @@ class API
      * @return array with error message or array of balances
      * @throws \Exception
      */
-    public function balances($priceData = false, string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2')
+    public function balances(string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2')
     {
-        if (is_array($priceData) === false) {
-            $priceData = false;
-        }
         $is_spot = $market_type === 'spot';
         $params = [];
         if ($is_spot) {
@@ -1337,7 +1329,7 @@ class API
             echo "Error: your balances were empty or unset" . PHP_EOL;
             return [];
         }
-        return $this->balanceData($response, $priceData, $market_type);
+        return $this->balanceData($response, $market_type);
     }
 
     /**
@@ -1838,22 +1830,14 @@ class API
 
     /**
      * balanceData Converts all your balances into a nice array
-     * If priceData is passed from $api->prices() it will add btcValue & btcTotal to each symbol
-     * This function sets $btc_value which is your estimated BTC value of all assets combined and $btc_total which includes amount on order
      *
-     * $candles = $api->candlesticks("BNBBTC", "5m");
-     *
-     * @param $array array of your balances
      * @param $priceData array of prices
      * @return array containing the response
      */
-    protected function balanceData(array $array, $priceData, string $marketType = 'spot')
+    protected function balanceData(array $array, string $marketType = 'spot')
     {
         $balances = [];
         $is_spot = $marketType === 'spot';
-        if (is_array($priceData)) {
-            $btc_value = $btc_total = 0.00;
-        }
         if (empty($array) || ($is_spot && empty($array['balances']))) {
             // WPCS: XSS OK.
             echo "balanceData error: Please make sure your system time is synchronized: call \$api->useServerTime() before this function" . PHP_EOL;
@@ -1878,59 +1862,8 @@ class API
                 "available" => $avaliable,
                 "onOrder" => $onOrder,
                 "total" => $total,
+                "info" => $obj,
             ];
-
-            if (is_array($priceData) === false) {
-                continue;
-            }
-
-            if ($total < 0.00000001) {
-                continue;
-            }
-
-            if ($is_spot) {
-                if ($asset === 'BTC') {
-                    $balances[$asset]['btcValue'] = $avaliable;
-                    $balances[$asset]['btcTotal'] = $total;
-                    $btc_value += $avaliable;
-                    $btc_total += $total;
-                    continue;
-                } elseif ($asset === 'USDT' || $asset === 'USDC' || $asset === 'PAX' || $asset === 'BUSD') {
-                    $btcValue = $avaliable / $priceData['BTCUSDT'];
-                    $btcTotal = $total / $priceData['BTCUSDT'];
-                    $balances[$asset]['btcValue'] = $btcValue;
-                    $balances[$asset]['btcTotal'] = $btcTotal;
-                    $btc_value += $btcValue;
-                    $btc_total += $btcTotal;
-                    continue;
-                }
-
-                $symbol = $asset . 'BTC';
-
-                if ($symbol === 'BTCUSDT') {
-                    $btcValue = number_format($avaliable / $priceData['BTCUSDT'], 8, '.', '');
-                    $btcTotal = number_format($total / $priceData['BTCUSDT'], 8, '.', '');
-                } elseif (isset($priceData[$symbol]) === false) {
-                    $btcValue = $btcTotal = 0;
-                } else {
-                    $btcValue = number_format($avaliable * $priceData[$symbol], 8, '.', '');
-                    $btcTotal = number_format($total * $priceData[$symbol], 8, '.', '');
-                }
-
-                $balances[$asset]['btcValue'] = $btcValue;
-                $balances[$asset]['btcTotal'] = $btcTotal;
-                $btc_value += $btcValue;
-                $btc_total += $btcTotal;
-            }
-        }
-        if (is_array($priceData) && $is_spot) {
-            uasort($balances, function ($opA, $opB) {
-                if ($opA == $opB)
-                    return 0;
-                return ($opA['btcValue'] < $opB['btcValue']) ? 1 : -1;
-            });
-            $this->btc_value = $btc_value;
-            $this->btc_total = $btc_total;
         }
         return $balances;
     }
@@ -5501,7 +5434,7 @@ class API
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresBalances: api_version must be either v2 or v3');
         }
-        return $this->balances(false, 'futures', $recvWindow, 'v3');
+        return $this->balances('futures', $recvWindow, 'v3');
     }
 
     /**
