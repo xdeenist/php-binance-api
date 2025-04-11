@@ -33,7 +33,13 @@ class API
     protected $baseTestnet = 'https://testnet.binance.vision/api/'; // /< Testnet REST endpoint for the currency exchange
     protected $wapi = 'https://api.binance.com/wapi/'; // /< REST endpoint for the withdrawals
     protected $sapi = 'https://api.binance.com/sapi/'; // /< REST endpoint for the supporting network API
-    protected $fapi = 'https://fapi.binance.com/'; // /< REST endpoint for the futures API
+    protected $fapi = 'https://fapi.binance.com/fapi/'; // /< REST endpoint for the futures API
+    protected $fapiData = 'https://fapi.binance.com/futures/data/'; // /< REST endpoint for the futures API
+    protected $fapiTestnet = 'https://testnet.binancefuture.com/fapi/'; // /< Testnet REST endpoint for the futures API
+    protected $dapi = 'https://dapi.binance.com/dapi/'; // /< REST endpoint for the delivery API
+    protected $dapiData = 'https://dapi.binance.com/futures/data/'; // /< REST endpoint for the delivery API
+    protected $dapiTestnet = 'https://testnet.binancefuture.com/dapi/'; // /< Testnet REST endpoint for the delivery API
+    protected $papi = 'https://papi.binance.com/papi/'; // /< REST endpoint for the options API
     protected $bapi = 'https://www.binance.com/bapi/'; // /< REST endpoint for the internal Binance API
     protected $stream = 'wss://stream.binance.com:9443/ws/'; // /< Endpoint for establishing websocket connections
     protected $streamTestnet = 'wss://testnet.binance.vision/ws/'; // /< Testnet endpoint for establishing websocket connections
@@ -54,16 +60,20 @@ class API
     protected $requestCount = 0; // /< This stores the amount of API requests
     protected $httpDebug = false; // /< If you enable this, curl will output debugging information
     protected $subscriptions = []; // /< View all websocket subscriptions
-    protected $btc_value = 0.00; // /< value of available assets
-    protected $btc_total = 0.00;
 
     // /< value of available onOrder assets
-    
+
     protected $exchangeInfo = null;
+    protected $futuresExchangeInfo = null;
     protected $lastRequest = [];
 
     protected $xMbxUsedWeight = 0;
     protected $xMbxUsedWeight1m = 0;
+
+    public $headers = [];
+
+    private $SPOT_ORDER_PREFIX     = "x-HNA2TXFJ";
+	private $CONTRACT_ORDER_PREFIX = "x-Cb7ytekJ";
 
     /**
      * Constructor for the class,
@@ -217,6 +227,20 @@ class API
         if (isset($contents['pass'])) {
             $this->proxyConf['pass'] = isset($contents['pass']) ? $contents['pass'] : "";
         }
+    }
+
+    public static function uuid22($length = 22) {
+        return bin2hex(random_bytes(intval($length / 2)));
+    }
+
+    protected function generateSpotClientOrderId()
+    {
+        return $this->SPOT_ORDER_PREFIX . self::uuid22();
+    }
+
+    protected function generateFuturesClientOrderId()
+    {
+        return $this->CONTRACT_ORDER_PREFIX . self::uuid22();;
     }
 
     /**
@@ -378,8 +402,8 @@ class API
     {
         return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $flags, true);
     }
-    
-    
+
+
     /**
      * numberOfDecimals() returns the signifcant digits level based on the minimum order amount.
      *
@@ -495,7 +519,7 @@ class API
      * $order = $api->orderStatus("BNBBTC", $orderid);
      *
      * @param $symbol string the currency symbol
-     * @param $orderid string the orderid to cancel
+     * @param $orderid string the orderid to fetch
      * @return array with error message or the order details
      * @throws \Exception
      */
@@ -570,6 +594,8 @@ class API
 
     /**
      * history Get the complete account trade history for all or a specific currency
+     * @deprecated
+     * use myTrades() instead
      *
      * $BNBHistory = $api->history("BNBBTC");
      * $limitBNBHistory = $api->history("BNBBTC",5);
@@ -603,6 +629,19 @@ class API
     }
 
     /**
+     * myTrades
+     * another name for history
+     * @see history()
+     *
+     * @return array with error message or array of orderDetails array
+     * @throws \Exception
+     */
+    public function myTrades(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null)
+    {
+        return $this->history($symbol, $limit, $fromTradeId, $startTime, $endTime);
+    }
+
+    /**
      * useServerTime adds the 'useServerTime'=>true to the API request to avoid time errors
      *
      * $api->useServerTime();
@@ -633,7 +672,7 @@ class API
 
     /**
      * exchangeInfo -  Gets the complete exchange info, including limits, currency options etc.
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#exchange-information
      *
      * $info = $api->exchangeInfo();
@@ -660,32 +699,32 @@ class API
                 if (gettype($symbols) == "string") {
                     $parameters["symbol"] = $symbols;
                     $arr = $this->httpRequest("v3/exchangeInfo", "GET", $parameters);
-                }                    
+                }
                 if (gettype($symbols) == "array")  {
-                    $arr = $this->httpRequest('v3/exchangeInfo?symbols=' . '["' . implode('","', $symbols) . '"]');
+                    $arr = $this->httpRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]');
                 }
             } else {
                 $arr = $this->httpRequest("v3/exchangeInfo");
             }
-            
+
             $this->exchangeInfo = $arr;
             $this->exchangeInfo['symbols'] = null;
-            
+
             foreach ($arr['symbols'] as $key => $value) {
                 $this->exchangeInfo['symbols'][$value['symbol']] = $value;
             }
         }
-        
+
         return $this->exchangeInfo;
     }
-    
+
     /**
      * assetDetail - Fetch details of assets supported on Binance
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#asset-detail-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $asset  (optional)  Should be an asset, e.g. BNB or empty to get the full list
      *
      * @return array containing the response
@@ -711,10 +750,10 @@ class API
                 'success'     => 0,
                 'assetDetail' => array(),
                 );
-            
+
         }
     }
-    
+
     /**
      * userAssetDribbletLog - Log of the conversion of the dust assets to BNB
      * @deprecated
@@ -725,17 +764,17 @@ class API
         trigger_error('Deprecated - function will disappear on 2021-08-01 from Binance. Please switch to $api->dustLog().', E_USER_DEPRECATED);
         return $this->httpRequest("v3/userAssetDribbletLog.html", 'GET', $params, true);
     }
-    
+
     /**
      * dustLog - Log of the conversion of the dust assets to BNB
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#dustlog-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param long  $startTime  (optional)  Start time, e.g. 1617580799000
      * @param long  $endTime    (optional)  End time, e.g. 1617580799000. Endtime is mandatory if startTime is set.
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -752,13 +791,13 @@ class API
 
     /**
      * dustTransfer - Convert dust assets ( < 0.001 BTC) to BNB
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#dust-transfer-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string|array  $assets  (mandatory)  Asset(s), e.g. IOST or array like ['IOST','AAVE','CHZ']
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -769,7 +808,7 @@ class API
 
         return $this->httpRequest("v1/asset/dust", 'POST', $params, true);
     }
-    
+
     /**
      * Fetch current(daily) trade fee of symbol, values in percentage.
      * for more info visit binance official api document
@@ -789,16 +828,16 @@ class API
 
     /**
      * commissionFee - Fetch commission trade fee
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#trade-fee-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $symbol  (optional)  Should be a symbol, e.g. BNBUSDT or empty to get the full list
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
-     */    
+     */
     public function commissionFee($symbol = '')
     {
         $params = array('sapi' => true);
@@ -810,23 +849,23 @@ class API
 
     /**
      * withdraw - Submit a withdraw request to move an asset to another wallet
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#withdraw-sapi
-     * 
+     *
      * @example https://github.com/jaggedsoft/php-binance-api#withdraw   Standard withdraw
      * @example https://github.com/jaggedsoft/php-binance-api#withdraw-with-addresstag   Withdraw with addressTag for e.g. XRP
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $asset               (mandatory)  An asset, e.g. BTC
      * @param string $address             (mandatory)  The address where to send, e.g. 1C5gqLRs96Xq4V2ZZAR1347yUCpHie7sa or 44tLjmXrQNrWJ5NBsEj2R77ZBEgDa3fEe9GLpSf2FRmhexPvfYDUAB7EXX1Hdb3aMQ9FLqdJ56yaAhiXoRsceGJCRS3Jxkn
      * @param string $amount              (mandatory)  The amount, e.g. 0.2
      * @param string $addressTag          (optional)   Mandatory secondary address for some assets (XRP,XMR,etc), e.g. 0e5e38a01058dbf64e53a4333a5acf98e0d5feb8e523d32e3186c664a9c762c1
      * @param string $addressName         (optional)   Description of the address
      * @param string $transactionFeeFlag  (optional)   When making internal transfer, true for returning the fee to the destination account; false for returning the fee back to the departure account.
-     * @param string $network             (optional)   
+     * @param string $network             (optional)
      * @param string $orderId             (optional)   Client id for withdraw
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -846,7 +885,7 @@ class API
             $options['addressTag'] = $addressTag;
         }
         if ($transactionFeeFlag) $options['transactionFeeFlag'] = true;
-        
+
         if (is_null($network) === false && empty($network) === false) {
             $options['network'] = $network;
         }
@@ -858,14 +897,14 @@ class API
 
     /**
      * depositAddress - Get the deposit address for an asset
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#deposit-address-supporting-network-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $asset    (mandatory)  An asset, e.g. BTC
-     * @param string $network  (optional)   You can get network in networkList from /sapi/v1/capital/config/getall   
-     * 
+     * @param string $network  (optional)   You can get network in networkList from /sapi/v1/capital/config/getall
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -878,13 +917,13 @@ class API
         if (is_null($network) === false && empty($network) === false) {
             $params['network'] = $network;
         }
-        
+
         $return = $this->httpRequest("v1/capital/deposit/address", "GET", $params, true);
 
         // Adding for backwards compatibility with wapi
         $return['asset'] = $return['coin'];
         $return['addressTag'] = $return['tag'];
-        
+
         if (!empty($return['address'])) {
             $return['success'] = 1;
         } else {
@@ -896,14 +935,14 @@ class API
 
     /**
      * depositHistory - Get the deposit history for one or all assets
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#deposit-history-supporting-network-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $asset    (optional)  An asset, e.g. BTC - or leave empty for all
-     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows   
-     * 
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -919,21 +958,21 @@ class API
         foreach ($return as $key=>$item) {
             $return[$key]['asset'] = $item['coin'];
         }
-        
+
         return $return;
-        
+
     }
 
     /**
      * withdrawHistory - Get the withdraw history for one or all assets
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#withdraw-history-supporting-network-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $asset    (optional)  An asset, e.g. BTC - or leave empty for all
-     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows: status, offset, limit, startTime, endTime  
-     * 
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows: status, offset, limit, startTime, endTime
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -947,7 +986,7 @@ class API
         $return = array(
             'withdrawList' => $this->httpRequest("v1/capital/withdraw/history", "GET", $params, true)
             );
-        
+
         // Adding for backwards compatibility with wapi
         $return['success'] = 1;
 
@@ -956,11 +995,11 @@ class API
 
     /**
      * withdrawFee - Get the withdrawal fee for an asset
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $asset    (mandatory)  An asset, e.g. BTC
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -973,6 +1012,126 @@ class API
         } else {
             return array();
         }
+    }
+
+    /**
+     * transfer - Transfer asset between accounts
+     * possible types of transfer are:
+     * - MAIN_UMFUTURE - Spot account transfer to USDⓈ-M Futures account
+     * - MAIN_CMFUTURE - Spot account transfer to COIN-M Futures account
+     * - MAIN_MARGIN - Spot account transfer to Margin（cross）account
+     * - UMFUTURE_MAIN - USDⓈ-M Futures account transfer to Spot account
+     * - UMFUTURE_MARGIN - USDⓈ-M Futures account transfer to Margin（cross）account
+     * - CMFUTURE_MAIN - COIN-M Futures account transfer to Spot account
+     * - CMFUTURE_MARGIN - COIN-M Futures account transfer to Margin(cross) account
+     * - MARGIN_MAIN - Margin（cross）account transfer to Spot account
+     * - MARGIN_UMFUTURE - Margin（cross）account transfer to USDⓈ-M Futures
+     * - MARGIN_CMFUTURE - Margin（cross）account transfer to COIN-M Futures
+     * - ISOLATEDMARGIN_MARGIN - Isolated margin account transfer to Margin(cross) account
+     * - MARGIN_ISOLATEDMARGIN - Margin(cross) account transfer to Isolated margin account
+     * - ISOLATEDMARGIN_ISOLATEDMARGIN - Isolated margin account transfer to Isolated margin account
+     * - MAIN_FUNDING - Spot account transfer to Funding account
+     * - FUNDING_MAIN - Funding account transfer to Spot account
+     * - FUNDING_UMFUTURE - Funding account transfer to UMFUTURE account
+     * - UMFUTURE_FUNDING - UMFUTURE account transfer to Funding account
+     * - MARGIN_FUNDING - MARGIN account transfer to Funding account
+     * - FUNDING_MARGIN - Funding account transfer to Margin account
+     * - FUNDING_CMFUTURE - Funding account transfer to CMFUTURE account
+     * - CMFUTURE_FUNDING - CMFUTURE account transfer to Funding account
+     * - MAIN_OPTION - Spot account transfer to Options account
+     * - OPTION_MAIN - Options account transfer to Spot account
+     * - UMFUTURE_OPTION - USDⓈ-M Futures account transfer to Options account
+     * - OPTION_UMFUTURE - Options account transfer to USDⓈ-M Futures account
+     * - MARGIN_OPTION - Margin（cross）account transfer to Options account
+     * - OPTION_MARGIN - Options account transfer to Margin（cross）account
+     * - FUNDING_OPTION - Funding account transfer to Options account
+     * - OPTION_FUNDING - Options account transfer to Funding account
+     * - MAIN_PORTFOLIO_MARGIN - Spot account transfer to Portfolio Margin account
+     * - PORTFOLIO_MARGIN_MAIN - Portfolio Margin account transfer to Spot account
+     *
+     * @link https://developers.binance.com/docs/wallet/asset/user-universal-transfer
+     *
+     * @property int $weight 900
+     *
+     * @param string $type (mandatory) type of transfer, e.g. MAIN_MARGIN
+     * @param string $asset (mandatory) an asset, e.g. BTC
+     * @param string $amount (mandatory) the amount to transfer
+     * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'type' => $type,
+            'asset' => $asset,
+            'amount' => $amount,
+        ];
+        // todo: check this method with real account
+        if ($fromSymbol) {
+            $params['fromSymbol'] = $fromSymbol;
+        }
+        if ($toSymbol) {
+            $params['toSymbol'] = $toSymbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+
+        return $this->httpRequest("v1/asset/transfer", 'POST', $params, true);
+    }
+
+    /**
+     * transfersHistory - get the transfer history between accounts
+     *
+     * @link https://developers.binance.com/docs/wallet/asset/query-user-universal-transfer
+     *
+     * @property int $weight 1
+     *
+     * @param string $type (optional) type of transfer, e.g. MAIN_MARGIN (@see transfer())
+     * @param string $startTime (optional) start time in milliseconds
+     * @param string $endTime (optional) end time in milliseconds
+     * @param int    $limit (optional) the number of records to return (default 10, max 100)
+     * @param int    $current (optional) default 1
+     * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, $recvWindow = null)
+    {
+        $params = [
+            'type' => $type,
+        ];
+        // todo: check this method with real account
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['size'] = $limit;
+        }
+        if ($current) {
+            $params['current'] = $current;
+        }
+        if ($fromSymbol) {
+            $params['fromSymbol'] = $fromSymbol;
+        }
+        if ($toSymbol) {
+            $params['toSymbol'] = $toSymbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+
+        return $this->httpRequest("v1/asset/transfer", 'GET', $params, true);
     }
 
     /**
@@ -1064,7 +1223,7 @@ class API
             "symbol" => $symbol,
         ]));
     }
-    
+
     /**
      * historicalTrades - Get historical trades for a specific currency
      *
@@ -1134,30 +1293,43 @@ class API
     /**
      * balances get balances for the account assets
      *
-     * $balances = $api->balances($ticker);
+     * $balances = $api->balances();
      *
-     * @param bool $priceData array of the symbols balances are required for
+     * @param string $market_type (optional) market type - "spot" or "futures" (default is "spot")
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
+     * @param string $api_version (optional) not for spot - the api version to use (default is v2)
+     *
      * @return array with error message or array of balances
      * @throws \Exception
      */
-    public function balances($priceData = false)
+    public function balances(string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2')
     {
-        if (is_array($priceData) === false) {
-            $priceData = false;
+        $is_spot = $market_type === 'spot';
+        $params = [];
+        if ($is_spot) {
+            $url = "v3/account";
+        } else {
+            $params['fapi'] = true;
+            if ($recvWindow) {
+                $params['recvWindow'] = $recvWindow;
+            }
+            if ($api_version === 'v2') {
+                $url = "v2/balance";
+            } else if ($api_version === 'v3') {
+                $url = "v3/balance";
+            } else {
+                throw new \Exception("Invalid API version specified. Use 'v2' or 'v3'.");
+            }
         }
-
-        $account = $this->httpRequest("v3/account", "GET", [], true);
-
-        if (is_array($account) === false) {
+        $response = $this->httpRequest($url, "GET", $params, true);
+        if (is_array($response) === false) {
             echo "Error: unable to fetch your account details" . PHP_EOL;
         }
-
-        if (isset($account['balances']) === false || empty($account['balances'])) {
+        if (empty($response) || ($is_spot && (isset($response['balances']) === false || empty($response['balances'])))) {
             echo "Error: your balances were empty or unset" . PHP_EOL;
             return [];
         }
-
-        return $this->balanceData($account, $priceData);
+        return $this->balanceData($response, $market_type);
     }
 
     /**
@@ -1169,7 +1341,7 @@ class API
      */
     public function coins()
     {
-        return $this->httpRequest('v1/capital/config/getall', 'GET', [ 'sapi' => true ], true);
+        return $this->httpRequest("v1/capital/config/getall", 'GET', [ 'sapi' => true ], true);
     }
 
     /**
@@ -1236,6 +1408,20 @@ class API
         $this->proxyConf = $proxyconf;
     }
 
+
+    protected function curl_exec($curl)
+    {
+        return curl_exec($curl);
+    }
+
+    protected function curl_set_url($curl, $endpoint) {
+        curl_setopt($curl, CURLOPT_URL, $endpoint);
+    }
+
+    protected function curl_set_body($curl, $option, $query) {
+        curl_setopt($curl, $option, $query);
+    }
+
     /**
      * httpRequest curl wrapper for all http api requests.
      * You can't call this function directly, use the helper functions
@@ -1264,8 +1450,78 @@ class API
             }
         }
 
+        $base = $this->base;
+        if ($this->useTestnet) {
+            $base = $this->baseTestnet;
+        }
+
+        if (isset($params['wapi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("wapi endpoints are not available in testnet");
+            }
+            unset($params['wapi']);
+            $base = $this->wapi;
+        }
+
+        if (isset($params['sapi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("sapi endpoints are not available in testnet");
+            }
+            unset($params['sapi']);
+            $base = $this->sapi;
+        }
+
+        if (isset($params['fapi'])) {
+            unset($params['fapi']);
+            $base = $this->useTestnet ? $this->fapiTestnet : $this->fapi;
+        }
+
+        if (isset($params['fapiData'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("fapiData endpoints are not available in testnet");
+            }
+            unset($params['fapiData']);
+            $base = $this->fapiData;
+        }
+
+        if (isset($params['dapi'])) {
+            unset($params['dapi']);
+            $base = $this->useTestnet ? $this->dapiTestnet : $this->dapi;
+        }
+
+        if (isset($params['dapiData'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("dapiData endpoints are not available in testnet");
+            }
+            unset($params['dapiData']);
+            $base = $this->dapiData;
+        }
+
+        if (isset($params['papi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("papi endpoints are not available in testnet");
+            }
+            unset($params['papi']);
+            $base = $this->papi;
+        }
+
+        if (isset($params['bapi'])) {
+            if ($this->useTestnet) {
+                throw new \Exception("bapi endpoints are not available in testnet");
+            }
+            unset($params['bapi']);
+            $base = $this->bapi;
+        }
+
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_VERBOSE, $this->httpDebug);
+
+        //set custom headers if any
+        curl_setopt_array($curl, [
+            CURLOPT_HTTPHEADER => $this->headers,
+            // Optional: other cURL options
+        ]);
+
         $query = $this->binance_build_query($params);
 
         // signed with params
@@ -1278,34 +1534,8 @@ class API
                 throw new \Exception("signedRequest error: API Secret not set!");
             }
 
-            $base = $this->getRestEndpoint();
             $ts = (microtime(true) * 1000) + $this->info['timeOffset'];
             $params['timestamp'] = number_format($ts, 0, '.', '');
-            if (isset($params['wapi'])) {
-                if ($this->useTestnet) {
-                    throw new \Exception("wapi endpoints are not available in testnet");
-                }
-                unset($params['wapi']);
-                $base = $this->wapi;
-            }
-        
-            if (isset($params['sapi'])) {
-                if ($this->useTestnet) {
-                    throw new \Exception("sapi endpoints are not available in testnet");
-                }
-                unset($params['sapi']);
-                $base = $this->sapi;
-            }
-
-            if (isset($params['fapi'])) {
-                unset($params['fapi']);
-                $base = $this->fapi;
-            }
-
-            if (isset($params['bapi'])) {
-                unset($params['bapi']);
-                $base = $this->bapi;
-            }
             $query = $this->binance_build_query($params);
             $query = str_replace([ '%40' ], [ '@' ], $query);//if send data type "e-mail" then binance return: [Signature for this request is not valid.]
             $signature = hash_hmac('sha256', $query, $this->api_secret);
@@ -1317,18 +1547,18 @@ class API
                 $endpoint = $base . $url . '?' . $query . '&signature=' . $signature;
             }
 
-            curl_setopt($curl, CURLOPT_URL, $endpoint);
+            $this->curl_set_url($curl, $endpoint);
             curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'X-MBX-APIKEY: ' . $this->api_key,
             ));
         }
         // params so buildquery string and append to url
         elseif (count($params) > 0) {
-            curl_setopt($curl, CURLOPT_URL, $this->getRestEndpoint() . $url . '?' . $query);
+            $this->curl_set_url($curl, $base . $url . '?' . $query);
         }
         // no params so just the base url
         else {
-            curl_setopt($curl, CURLOPT_URL, $this->getRestEndpoint() . $url);
+            $this->curl_set_url($curl,  $base . $url);
             curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'X-MBX-APIKEY: ' . $this->api_key,
             ));
@@ -1337,7 +1567,7 @@ class API
         // Post and postfields
         if ($method === "POST") {
             curl_setopt($curl, CURLOPT_POST, true);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
+            $this->curl_set_body($curl, CURLOPT_POSTFIELDS, $query);
         }
         // Delete Method
         if ($method === "DELETE") {
@@ -1372,22 +1602,22 @@ class API
             }
         }
 
-        $output = curl_exec($curl);
+        $output = $this->curl_exec($curl);
         // Check if any error occurred
-        if (curl_errno($curl) > 0) {
-            // should always output error, not only on httpdebug
-            // not outputing errors, hides it from users and ends up with tickets on github
-            throw new \Exception('Curl error: ' . curl_error($curl));
-        }
-    
+        // if (curl_errno($curl) > 0) {
+        //     // should always output error, not only on httpdebug
+        //     // not outputing errors, hides it from users and ends up with tickets on github
+        //     throw new \Exception('Curl error: ' . curl_error($curl));
+        // }
+
         $header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
         $header = $this->get_headers_from_curl_response($output);
         $output = substr($output, $header_size);
-        
+
         curl_close($curl);
-        
+
         $json = json_decode($output, true);
-        
+
         $this->lastRequest = [
             'url' => $url,
             'method' => $method,
@@ -1405,7 +1635,7 @@ class API
         }
 
         if (isset($json['msg']) && !empty($json['msg'])) {
-            if ( $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html') {
+            if ($json['msg'] !== 'success' && $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html' && $url != 'v1/allOpenOrders') {
                 // should always output error, not only on httpdebug
                 // not outputing errors, hides it from users and ends up with tickets on github
                 throw new \Exception('signedRequest error: '.print_r($output, true));
@@ -1418,11 +1648,11 @@ class API
 
     /**
      * binance_build_query - Wrapper for http_build_query to allow arrays as parameters
-     * 
+     *
      * sapi v1/asset/dust can have an array, so it needs a conversion
-     * 
+     *
      * @param array  $params  (mandatory)   Parameters to convert to http query
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -1443,8 +1673,8 @@ class API
         $query = $query_add . $query;
 
         return $query;
-    }    
-    
+    }
+
     /**
      * Converts the output of the CURL header to an array
      *
@@ -1534,11 +1764,13 @@ class API
         if (isset($flags['newOrderRespType'])) {
             $opt['newOrderRespType'] = $flags['newOrderRespType'];
         }
-        
+
         if (isset($flags['newClientOrderId'])) {
             $opt['newClientOrderId'] = $flags['newClientOrderId'];
+        } else {
+            $opt['newClientOrderId'] = $this->generateSpotClientOrderId();
         }
-        
+
         $qstring = ($test === false) ? "v3/order" : "v3/order/test";
         return $this->httpRequest($qstring, "POST", $opt, true);
     }
@@ -1549,7 +1781,7 @@ class API
      *
      * $candles = $api->candlesticks("BNBBTC", "5m");
      *
-     * @param $symbol string to query
+     * @param $symbol market symbol to get the response for, e.g. ETHUSDT
      * @param $interval string to request
      * @param $limit int limit the amount of candles
      * @param $startTime string request candle information starting from here
@@ -1598,88 +1830,40 @@ class API
 
     /**
      * balanceData Converts all your balances into a nice array
-     * If priceData is passed from $api->prices() it will add btcValue & btcTotal to each symbol
-     * This function sets $btc_value which is your estimated BTC value of all assets combined and $btc_total which includes amount on order
      *
-     * $candles = $api->candlesticks("BNBBTC", "5m");
-     *
-     * @param $array array of your balances
      * @param $priceData array of prices
      * @return array containing the response
      */
-    protected function balanceData(array $array, $priceData)
+    protected function balanceData(array $array, string $marketType = 'spot')
     {
         $balances = [];
-
-        if (is_array($priceData)) {
-            $btc_value = $btc_total = 0.00;
-        }
-
-        if (empty($array) || empty($array['balances'])) {
+        $is_spot = $marketType === 'spot';
+        if (empty($array) || ($is_spot && empty($array['balances']))) {
             // WPCS: XSS OK.
             echo "balanceData error: Please make sure your system time is synchronized: call \$api->useServerTime() before this function" . PHP_EOL;
             echo "ERROR: Invalid request. Please double check your API keys and permissions." . PHP_EOL;
             return [];
         }
-
-        foreach ($array['balances'] as $obj) {
+        $rawBalances = $is_spot ? $array['balances'] : $array;
+        foreach ($rawBalances as $obj) {
             $asset = $obj['asset'];
-            $balances[$asset] = [
-                "available" => $obj['free'],
-                "onOrder" => $obj['locked'],
-                "btcValue" => 0.00000000,
-                "btcTotal" => 0.00000000,
-            ];
-
-            if (is_array($priceData) === false) {
-                continue;
-            }
-
-            if ($obj['free'] + $obj['locked'] < 0.00000001) {
-                continue;
-            }
-
-            if ($asset === 'BTC') {
-                $balances[$asset]['btcValue'] = $obj['free'];
-                $balances[$asset]['btcTotal'] = $obj['free'] + $obj['locked'];
-                $btc_value += $obj['free'];
-                $btc_total += $obj['free'] + $obj['locked'];
-                continue;
-            } elseif ($asset === 'USDT' || $asset === 'USDC' || $asset === 'PAX' || $asset === 'BUSD') {
-                $btcValue = $obj['free'] / $priceData['BTCUSDT'];
-                $btcTotal = ($obj['free'] + $obj['locked']) / $priceData['BTCUSDT'];
-                $balances[$asset]['btcValue'] = $btcValue;
-                $balances[$asset]['btcTotal'] = $btcTotal;
-                $btc_value += $btcValue;
-                $btc_total += $btcTotal;
-                continue;
-            }
-
-            $symbol = $asset . 'BTC';
-
-            if ($symbol === 'BTCUSDT') {
-                $btcValue = number_format($obj['free'] / $priceData['BTCUSDT'], 8, '.', '');
-                $btcTotal = number_format(($obj['free'] + $obj['locked']) / $priceData['BTCUSDT'], 8, '.', '');
-            } elseif (isset($priceData[$symbol]) === false) {
-                $btcValue = $btcTotal = 0;
+            $avaliable = 0.00000000;
+            $onOrder = 0.00000000;
+            if ($is_spot) {
+                $avaliable = $obj['free'];
+                $onOrder = $obj['locked'];
+                $total = $avaliable + $onOrder;
             } else {
-                $btcValue = number_format($obj['free'] * $priceData[$symbol], 8, '.', '');
-                $btcTotal = number_format(($obj['free'] + $obj['locked']) * $priceData[$symbol], 8, '.', '');
+                $avaliable = $obj['availableBalance'];
+                $total = $obj['balance'];
+                $onOrder = $total - $avaliable;
             }
-
-            $balances[$asset]['btcValue'] = $btcValue;
-            $balances[$asset]['btcTotal'] = $btcTotal;
-            $btc_value += $btcValue;
-            $btc_total += $btcTotal;
-        }
-        if (is_array($priceData)) {
-            uasort($balances, function ($opA, $opB) {
-                if ($opA == $opB)
-                    return 0;
-                return ($opA['btcValue'] < $opB['btcValue']) ? 1 : -1;
-            });
-            $this->btc_value = $btc_value;
-            $this->btc_total = $btc_total;
+            $balances[$asset] = [
+                "available" => $avaliable,
+                "onOrder" => $onOrder,
+                "total" => $total,
+                "info" => $obj,
+            ];
         }
         return $balances;
     }
@@ -1780,16 +1964,8 @@ class API
      * @param $ticks array of the canbles array
      * @return array object of the chartdata
      */
-    protected function chartData(string $symbol, string $interval, array $ticks)
+    protected function chartData(string $symbol, string $interval, array $ticks, string $market_type = "spot", string $kline_type = 'klines')
     {
-        if (!isset($this->info[$symbol])) {
-            $this->info[$symbol] = [];
-        }
-
-        if (!isset($this->info[$symbol][$interval])) {
-            $this->info[$symbol][$interval] = [];
-        }
-
         $output = [];
         foreach ($ticks as $tick) {
             list($openTime, $open, $high, $low, $close, $assetVolume, $closeTime, $baseVolume, $trades, $assetBuyVolume, $takerBuyVolume, $ignored) = $tick;
@@ -1810,8 +1986,32 @@ class API
             ];
         }
 
-        if (isset($openTime)) {
-            $this->info[$symbol][$interval]['firstOpen'] = $openTime;
+        if ($market_type !== "spot") {
+            if (!isset($this->info[$market_type])) {
+                $this->info[$market_type] = [];
+            }
+            if (!isset($this->info[$market_type][$symbol])) {
+                $this->info[$market_type][$symbol] = [];
+            }
+            if (!isset($this->info[$market_type][$symbol][$kline_type])) {
+                $this->info[$market_type][$symbol][$kline_type] = [];
+            }
+            if (!isset($this->info[$market_type][$symbol][$kline_type][$interval])) {
+                $this->info[$market_type][$symbol][$kline_type][$interval] = [];
+            }
+            if (isset($openTime)) {
+                $this->info[$market_type][$symbol][$kline_type][$interval]['firstOpen'] = $openTime;
+            }
+        } else {
+            if (!isset($this->info[$symbol])) {
+                $this->info[$symbol] = [];
+            }
+            if (!isset($this->info[$symbol][$interval])) {
+                $this->info[$symbol][$interval] = [];
+            }
+            if (isset($openTime)) {
+                $this->info[$symbol][$interval]['firstOpen'] = $openTime;
+            }
         }
 
         return $output;
@@ -2017,7 +2217,7 @@ class API
      * @param $json array of the depth infomration
      * @return array of the depth information
      */
-    protected function depthData(string $symbol, array $json)
+    protected function depthData(string $symbol, array $json, string $product_type = null)
     {
         $bids = $asks = [];
         foreach ($json['bids'] as $obj) {
@@ -2026,10 +2226,16 @@ class API
         foreach ($json['asks'] as $obj) {
             $asks[$obj[0]] = $obj[1];
         }
-        return $this->depthCache[$symbol] = [
+        $result = [
             "bids" => $bids,
             "asks" => $asks,
         ];
+        if (isset($product_type)) {
+            $this->depthCache[$symbol][$product_type] = $result;
+        } else {
+            $this->depthCache[$symbol] = $result;
+        }
+        return $result;
     }
 
     /**
@@ -2808,7 +3014,7 @@ class API
         fwrite($fp, $result);
         fclose($fp);
     }
-    
+
     protected function floorDecimal($n, $decimals=2)
     {
         return floor($n * pow(10, $decimals)) / pow(10, $decimals);
@@ -2835,11 +3041,6 @@ class API
         return $this->xMbxUsedWeight1m;
     }
 
-    private function getRestEndpoint() : string
-    {
-        return $this->useTestnet ? $this->baseTestnet : $this->base;
-    }
-
     private function getWsEndpoint() : string
     {
         return $this->useTestnet ? $this->streamTestnet : $this->stream;
@@ -2855,9 +3056,10 @@ class API
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#test-connectivity
      * @link https://binance-docs.github.io/apidocs/spot/en/#system-status-system
-     * 
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api
+     *
      * @property int $weight 2
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -2866,27 +3068,34 @@ class API
         $arr = array();
         $api_status = $this->httpRequest("v3/ping", 'GET');
         if ( empty($api_status) ) {
-            $arr['api']['status']  = 'ping ok';    
+            $arr['api']['status']  = 'ping ok';
         } else {
-            $arr['api']['status']  = $api_status;    
+            $arr['api']['status']  = $api_status;
         }
-         
-        $arr['sapi'] = $this->httpRequest("v1/system/status", 'GET', [ 'sapi' => true ], true);
+
+        $fapi_status = $this->httpRequest("v1/ping", 'GET', [ 'fapi' => true ]);
+        if ( empty($fapi_status) ) {
+            $arr['fapi']['status'] = 'ping ok';
+        } else {
+            $arr['fapi']['status'] = $fapi_status;
+        }
+
+        $arr['sapi'] = $this->httpRequest("v1/system/status", 'GET', [ 'sapi' => true ]);
         return $arr;
     }
-    
+
     /**
      * accountSnapshot - Daily Account Snapshot at 00:00:00 UTC
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#daily-account-snapshot-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $type      (mandatory) Should be SPOT, MARGIN or FUTURES
      * @param int    $nbrDays   (optional)  Number of days. Default 5, min 5, max 30
      * @param long   $startTime (optional)  Start time, e.g. 1617580799000
      * @param long   $endTime   (optional)  End time, e.g. 1617667199000
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -2894,29 +3103,29 @@ class API
     {
         if ($nbrDays < 5 || $nbrDays > 30)
             $nbrDays = 5;
-            
+
         $params = [
             'sapi' => true,
             'type' => $type,
             ];
-            
+
         if ($startTime > 0)
             $params['startTime'] = $startTime;
         if ($endTime > 0)
             $params['endTime'] = $startTime;
         if ($nbrDays != 5)
             $params['limit'] = $nbrDays;
-            
+
         return $this->httpRequest("v1/accountSnapshot", 'GET', $params, true);
     }
-    
+
     /**
      * accountStatus - Fetch account status detail.
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#account-status-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -2941,14 +3150,14 @@ class API
     {
         return $this->httpRequest("v1/account/apiRestrictions", 'GET', ['sapi' => true], true);
     }
-    
+
     /**
      * apiTradingStatus - Fetch account API trading status detail.
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#account-api-trading-status-user_data
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -2958,14 +3167,14 @@ class API
         $arr['sapi'] = $this->httpRequest("v1/account/apiTradingStatus", 'GET', [ 'sapi' => true ], true);
         return $arr;
     }
-    
+
     /**
      * ocoOrder - Create a new OCO order
-     * 
+     *
      * @link https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade
-     * 
+     *
      * @property int $weight 1
-     * 
+     *
      * @param string $side       (mandatory)   Should be SELL or BUY
      * @param string $symbol     (mandatory)   The symbol, e.g. BTCBUSD
      * @param float  $quantity   (mandatory)   Quantity to buy/sell
@@ -2974,7 +3183,7 @@ class API
      * @param int    $stoplimitprice        (optional)   Stop Limit Price
      * @param int    $stoplimittimeinforce  (optional)   GTC, FOK or IOC
      * @param array  $flags                 (optional)   Extra flags/parameters
-     * 
+     *
      * @return array containing the response
      * @throws \Exception
      */
@@ -3023,7 +3232,7 @@ class API
         }
 
         return $this->httpRequest("v3/order/oco", "POST", $opt, true);
-    }    
+    }
 
     /**
     * avgPrice - get the average price of a symbol based on the last 5 minutes
@@ -3043,13 +3252,13 @@ class API
         return $ticker['price'];
     }
 
-      
+
     /*********************************************
-     * 
+     *
      * Binance Liquid Swap (bswap) functions
-     * 
+     *
      * https://binance-docs.github.io/apidocs/spot/en/#bswap-endpoints
-     * 
+     *
      *********************************************/
 
     /**
@@ -3071,7 +3280,2822 @@ class API
             'baseAsset'  => $baseAsset,
             'quoteQty'   => $quoteQty,
         ];
-      
+
         return $this->httpRequest("v1/bswap/quote", 'GET', $opt, true);
+    }
+
+    /*********************************************
+    *
+    * Binance futures (fapi) functions
+    *
+    * https://developers.binance.com/docs/derivatives/usds-margined-futures/general-info
+    *
+    *********************************************/
+
+    /**
+     * futuresTime Gets the server time
+     *
+     * $time = $api->futuresTime();
+     *
+     * @return array with error message or array with server time key
+     * @throws \Exception
+     */
+    public function futuresTime()
+    {
+        return $this->httpRequest("v1/time", "GET", [ 'fapi' => true ]);
+    }
+
+    /**
+     * futuresExchangeInfo -  Gets the complete exchange info, including limits, currency options etc. for futures
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Exchange-Information
+     *
+     * $info = $api->futuresExchangeInfo();
+     *
+     * @property int $weight 1
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresExchangeInfo()
+    {
+        if (!$this->futuresExchangeInfo) {
+            $arr = array();
+            $arr['symbols'] = array();
+
+            $arr = $this->httpRequest("v1/exchangeInfo", "GET", [ 'fapi' => true ]);
+
+            $this->futuresExchangeInfo = $arr;
+            $this->futuresExchangeInfo['symbols'] = null;
+
+            foreach ($arr['symbols'] as $key => $value) {
+                $this->futuresExchangeInfo['symbols'][$value['symbol']] = $value;
+            }
+        }
+
+        return $this->futuresExchangeInfo;
+    }
+
+    /**
+     * futuresDepth get Market depth for futures
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Order-Book
+     *
+     * $depth = $api->futuresDepth("ETHBTC");
+     *
+     * @property int $weight 10
+     * for limit 5, 10, 20, 50 - weight 2
+     * for limit 100 - weight 5
+     * for limit 500 (default) - weight 10
+     * for limit 1000 - weight 20
+     *
+     * @param string $symbol (mandatory) the symbol to get the depth information for, e.g. ETHUSDT
+     * @param int    $limit (optional) $limit set limition for number of market depth data, default 500, max 1000 (possible values are 5, 10, 20, 50, 100, 500, 1000)
+     * @return array with error message or array of market depth
+     * @throws \Exception
+     */
+    public function futuresDepth(string $symbol, int $limit = null)
+    {
+        if (isset($symbol) === false || is_string($symbol) === false) {
+            // WPCS: XSS OK.
+            echo "asset: expected bool false, " . gettype($symbol) . " given" . PHP_EOL;
+        }
+
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        $json = $this->httpRequest("v1/depth", "GET", $params);
+        if (isset($this->info[$symbol]) === false) {
+            $this->info[$symbol] = [];
+            $this->info[$symbol]['futures'] = [];
+        }
+        $this->info[$symbol]['futures']['firstUpdate'] = $json['lastUpdateId'];
+        return $this->depthData($symbol, $json, 'futures');
+    }
+
+    /**
+     * futuresRecentTrades - Get recent trades for a specific currency
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Recent-Trades-List
+     *
+     * $trades = $api->futuresRecentTrades("ETHBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) the symbol to query, e.g. ETHUSDT
+     * @param int    $limit  (optional) limit the amount of trades, default 500, max 1000
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresRecentTrades(string $symbol, int $limit = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        return $this->httpRequest("v1/trades", "GET", $parameters);
+    }
+
+    /**
+     * futuresHistoricalTrades - Get historical trades for a specific currency
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Old-Trades-Lookup
+     *
+     * $trades = $api->futuresHistoricalTrades("ETHBTC");
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol  (mandatory) the symbol to query, e.g. ETHUSDT
+     * @param int    $limit   (optional)  limit the amount of trades, default 100, max 500
+     * @param int    $tradeId (optional)  return the orders from this orderId onwards, negative to get recent ones
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresHistoricalTrades(string $symbol, int $limit = null, int $tradeId = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($tradeId) {
+            $parameters['fromId'] = $tradeId;
+        }
+        return $this->httpRequest("v1/historicalTrades", "GET", $parameters, true);
+    }
+
+    /**
+     * futuresAggTrades get Market History / Aggregate Trades
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Compressed-Aggregate-Trades-List
+     *
+     * $trades = $api->futuresAggTrades("BNBBTC");
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol (mandatory) the symbol to get the trade information for, e.g. ETHUSDT
+     * @param int    $fromId (optional) ID to get aggregate trades from INCLUSIVE
+     * @param int    $startTime (optional) timestamp in ms to get aggregate trades from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get aggregate trades until INCLUSIVE
+     * @param int    $limit (optional) the amount of trades, default 500, max 1000
+     *
+     * @return array with error message or array of market history
+     * @throws \Exception
+     */
+    public function futuresAggTrades(string $symbol, int $fromId = null, int $startTime = null, int $endTime = null, int $limit = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($fromId) {
+            $parameters['fromId'] = $fromId;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        return $this->tradesData($this->httpRequest("v1/aggTrades", "GET", $parameters));
+    }
+
+    /**
+     * futuresCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) the symbol to query, e.g. ETHUSDT
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'klines');
+    }
+
+    /**
+     * futuresContinuousCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Continuous-Contract-Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresContinuousCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     * @param string $contractType (optional) string to request - PERPETUAL, CURRENT_QUARTER, NEXT_QUARTER (default PERPETUAL)
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresContinuousCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'continuousKlines', $contractType);
+    }
+
+    /**
+     * futuresIndexPriceCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Index-Price-Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresIndexPriceCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresIndexPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'indexPriceKlines');
+    }
+
+    /**
+     * futuresMarkPriceCandlesticks get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price-Kline-Candlestick-Data
+     *
+     * $candles = $api->futuresMarkPriceCandlesticks("BNBBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresMarkPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'markPriceKlines');
+    }
+
+    /**
+     * futuresPremiumIndexKlines get the candles for the given intervals
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Premium-Index-Kline-Data
+     *
+     * $candles = $api->futuresPremiumIndexKlines("ETHBTC", "5m");
+     *
+     * @property int $weight 5
+     * for limit < 100 - weight 1
+     * for limit < 500 - weight 2
+     * for limit <= 1000 - weight 5
+     * for limit > 1000 - weight 10
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $interval (optional) string to request - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M (default 5m)
+     * @param int    $limit (optional) int limit the amount of candles (default 500, max 1000)
+     * @param int    $startTime (optional) string request candle information starting from here
+     * @param int    $endTime (optional) string request candle information ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPremiumIndexKlines(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines');
+    }
+
+    /**
+     * futuresCandlesticksHelper
+     * helper for routing the futuresCandlesticks, futuresContinuousCandlesticks, futuresIndexPriceCandlesticks, futuresMarkPriceCandlesticks and futuresPremiumIndexKlines
+     */
+    private function futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, $klineType, $contractType = null)
+    {
+        if (!isset($this->charts['futures'])) {
+            $this->charts['futures'] = [];
+        }
+        if (!isset($this->charts['futures'][$symbol])) {
+            $this->charts['futures'][$symbol] = [];
+        }
+        if (!isset($this->charts['futures'][$symbol][$type])) {
+            $this->charts['futures'][$symbol][$type] = [];
+        }
+        if (!isset($this->charts['futures'][$symbol][$type][$interval])) {
+            $this->charts['futures'][$symbol][$type][$interval] = [];
+        }
+        $params = [
+            'interval' => $interval,
+            'fapi' => true,
+        ];
+        if ($klineType === 'continuousKlines' || $klineType === 'indexPriceKlines') {
+            $params['pair'] = $symbol;
+        } else {
+            $params['symbol'] = $symbol;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($contractType) {
+            $params['contractType'] = $contractType;
+        }
+
+        $response = $this->httpRequest("v1/{$klineType}", 'GET', $params);
+
+        if (is_array($response) === false) {
+            return [];
+        }
+        if (count($response) === 0) {
+            echo "warning: fapi/v1/{$klineType} returned empty array, usually a blip in the connection or server" . PHP_EOL;
+            return [];
+        }
+
+        $candlesticks = $this->chartData($symbol, $interval, $response, 'futures', $klineType);
+        $this->charts['futures'][$symbol][$klineType][$interval] = $candlesticks;
+        return $candlesticks;
+    }
+
+    /**
+     * futuresMarkPrice get the mark price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Mark-Price
+     *
+     * $markPrice = $api->futuresMarkPrice();
+     * $markPrice = $api->futuresMarkPrice("ETHBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresMarkPrice(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/premiumIndex", "GET", $parameters);
+    }
+
+    /**
+     * futuresFundingRateHistory get the funding rate history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-History
+     *
+     * $fundingRate = $api->futuresFundingRateHistory();
+     * $fundingRate = $api->futuresFundingRateHistory("ETHBTC");
+     *
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
+     * @param int    $limit  (optional) int limit the amount of funding rate history (default 100, max 1000)
+     * @param int    $startTime (optional) string request funding rate history starting from here
+     * @param int    $endTime (optional) string request funding rate history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFundingRateHistory(string $symbol = null, int $limit = null, $startTime = null, $endTime = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        return $this->httpRequest("v1/fundingRate", "GET", $parameters);
+    }
+
+    /**
+     * futuresFundingInfo get the funding rate history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Get-Funding-Rate-Info
+     *
+     * $fundingInfo = $api->futuresFundingInfo();
+     *
+     * @property int $weight 1
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFundingInfo()
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        return $this->httpRequest("v1/fundingInfo", "GET", $parameters);
+    }
+
+    /**
+     * futuresPrevDay get 24 hour price change statistics for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/24hr-Ticker-Price-Change-Statistics
+     *
+     * $ticker = $api->futuresPrevDay();
+     * $ticker = $api->futuresPrevDay("ETHBTC");
+     *
+     * @property int $weight 1
+     * if the symbol parameter is omitted weight is 40
+     *
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPrevDay(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/ticker/24hr", "GET", $parameters);
+    }
+
+    /**
+     * futuresPrice get the latest price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker
+     *
+     * $price = $api->futuresPrice('ETHUSDT');
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPrice(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        return $ticker['price'];
+    }
+
+    /**
+     * futuresPrices get the latest price for all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker
+     *
+     * $price = $api->futuresPrices();
+     *
+     * @property int $weight 2
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPrices()
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        return $this->priceData($this->httpRequest("v1/ticker/price", "GET", $parameters));
+    }
+
+    /**
+     * futuresPriceV2 get the latest price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker-v2
+     *
+     * $price = $api->futuresPriceV2('ETHBTC');
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPriceV2(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        return $ticker['price'];
+    }
+
+    /**
+     * futuresPricesV2 get the latest price for all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Price-Ticker-v2
+     *
+     * $price = $api->futuresPricesV2();
+     *
+     * @property int $weight 2
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPricesV2()
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        return $this->priceData($this->httpRequest("v2/ticker/price", "GET", $parameters));
+    }
+
+    /**
+     * futuresSymbolOrderBookTicker get the best price/qty on the order book for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Symbol-Order-Book-Ticker
+     *
+     * $ticker = $api->futuresSymbolOrderBookTicker();
+     * $ticker = $api->futuresSymbolOrderBookTicker("ETHBTC");
+     *
+     * @property int $weight 2
+     * 5 when the symbol parameter is omitted
+     *
+     * @param string $symbol (optional) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSymbolOrderBookTicker(string $symbol = null): array
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/ticker/bookTicker", "GET", $parameters);
+    }
+
+    /**
+     * futuresDeliveryPrice get the latest delivery price for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Delivery-Price
+     *
+     * $price = $api->futuresDeliveryPrice("ETHBTC");
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresDeliveryPrice(string $symbol): array
+    {
+        $parameters = [
+            'pair' => $symbol,
+            'fapiData' => true,
+        ];
+
+        return $this->httpRequest("delivery-price", "GET", $parameters);
+    }
+
+    /**
+     * futuresOpenInterest get the open interest for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Open-Interest
+     *
+     * $openInterest = $api->futuresOpenInterest("ETHBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOpenInterest(string $symbol): array
+    {
+        $parameters = [
+            'symbol'=> $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest("v1/openInterest", 'GET', $parameters);
+    }
+
+    /**
+     * symbolPeriodLimitStartEndRequest
+     * helper for routing GET methods that require symbol, period, limit, startTime and endTime
+     */
+    private function symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'period' => $period,
+        ];
+        $parameters[$base] = true;
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        return $this->httpRequest($url, 'GET', $parameters);
+    }
+
+    /**
+     * futuresOpenInterestHistory get the open interest history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Open-Interest-Statistics
+     *
+     * $openInterest = $api->futuresOpenInterestHistory("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 100, max 1000)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', 'fapiData');
+    }
+
+    /**
+     * futuresTopLongShortPositionRatio get the proportion of net long and net short positions to total open positions of the top 20% users with the highest margin balance
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Top-Trader-Long-Short-Ratio
+     *
+     * $ratio = $api->futuresTopLongShortPositionRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', 'fapiData');
+    }
+
+    /**
+     * futuresTopLongShortAccountRatio get the proportion of net long and net short accounts to total accounts of the top 20% users with the highest margin balance
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Top-Long-Short-Account-Ratio
+     *
+     * $ratio = $api->futuresTopLongShortAccountRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', 'fapiData');
+    }
+
+    /**
+     * futuresGlobalLongShortAccountRatio get the Long/Short Ratio for symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Long-Short-Ratio
+     *
+     * $ratio = $api->futuresGlobalLongShortAccountRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', 'fapiData');
+    }
+
+    /**
+     * futuresTakerLongShortRatio get the taker Long/Short Ratio for symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Taker-BuySell-Volume
+     *
+     * $ratio = $api->futuresTakerLongShortRatio("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    {
+        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', 'fapiData');
+    }
+
+    /**
+     * futuresBasis get future basis for symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Basis
+     *
+     * $basis = $api->futuresBasis("ETHBTC", 5m);
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $period (optional) string of period to query - 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d (default 5m)
+     * @param int    $limit (optional) int limit the amount of open interest history (default 30, max 500)
+     * @param int    $startTime (optional) string request open interest history starting from here
+     * @param int    $endTime (optional) string request open interest history ending here
+     * @param string $contractType (optional) string of period to query - PERPETUAL, CURRENT_QUARTER, NEXT_QUARTER (default PERPETUAL)
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresBasis(string $symbol, string $period = '5m', int $limit = 30, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    {
+        $parameters = [
+            'pair' => $symbol,
+            'period' => $period,
+            'contractType' => $contractType,
+            'fapiData' => true,
+        ];
+        if ($limit) {
+            $parameters['limit'] = $limit;
+        }
+        if ($startTime) {
+            $parameters['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $parameters['endTime'] = $endTime;
+        }
+        return $this->httpRequest("basis", 'GET', $parameters);
+    }
+
+    /**
+     * futuresIndexInfo get composite index symbol information
+     * only for composite index symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Composite-Index-Symbol-Information
+     *
+     * $indexInfo = $api->futuresIndexInfo("DEFIUSDT");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. DEFIUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresIndexInfo(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
+    }
+
+    /**
+     * asset assetIndex get the asset index for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Multi-Assets-Mode-Asset-Index
+     *
+     * $assetIndex = $api->futuresAssetIndex();
+     * $assetIndex = $api->futuresAssetIndex("USDCUSD");
+     *
+     * @property int $weight 1
+     * with symbol parameter omitted weight is 10
+     *
+     * @param string $symbol (optional) market symbol to get the response for, e.g. USDCUSD
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresAssetIndex(string $symbol = null)
+    {
+        $parameters = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $parameters['symbol'] = $symbol;
+        }
+        return $this->httpRequest("v1/assetIndex", 'GET', $parameters);
+    }
+
+    /**
+     * futuresConstituents get the index price constituents
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Index-Constituents
+     *
+     * $constituents = $api->futuresConstituents("BTCUSDT");
+     *
+     * @property int $weight 2
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresConstituents(string $symbol)
+    {
+        $parameters = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
+    }
+
+    /**
+     * createFuturesOrderRequest
+     * helper for creating the request for futures order
+     * @return array containing the request
+     * @throws \Exception
+     */
+    protected function createFuturesOrderRequest(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = []) {
+        $opt = [
+            'symbol' => $symbol,
+            'side' => $side,
+            'type' => $type,
+        ];
+
+        // someone has preformated there 8 decimal point double already
+        // dont do anything, leave them do whatever they want
+        if ($price && gettype($price) !== 'string') {
+            // for every other type, lets format it appropriately
+            $price = number_format($price, 8, '.', '');
+        }
+
+        if ($quantity) {
+            if (is_numeric($quantity) === false) {
+                // WPCS: XSS OK.
+                echo "warning: quantity expected numeric got " . gettype($quantity) . PHP_EOL;
+            }
+            if (isset($flags['closePosition']) && $flags['closePosition'] === true) {
+                // WPCS: XSS OK.
+                echo "warning: closePosition is set to true, quantity will be ignored" . PHP_EOL;
+            } else {
+                $opt['quantity'] = $quantity;
+            }
+        }
+
+        if ($price && is_string($price) === false) {
+            // WPCS: XSS OK.
+            echo "warning: price expected string got " . gettype($price) . PHP_EOL;
+        }
+
+        if ($type === "LIMIT" || $type === "STOP_LOSS_LIMIT" || $type === "TAKE_PROFIT_LIMIT") {
+            $opt["price"] = $price;
+            if (!isset($flags['timeInForce'])) {
+                $opt['timeInForce'] = 'GTC';
+            }
+        }
+
+        if (isset($flags['positionSide'])) {
+            $opt['positionSide'] = $flags['positionSide'];
+        }
+
+        if (isset($flags['timeInForce'])) {
+            $opt['timeInForce'] = $flags['timeInForce'];
+        }
+
+        if (isset($flags['reduceOnly'])) {
+            $reduceOnly = $flags['reduceOnly'];
+            if ($reduceOnly === true) {
+                $opt['reduceOnly'] = 'true';
+            } else {
+                $opt['reduceOnly'] = 'false';
+            }
+        }
+
+        if (isset($flags['newClientOrderId'])) {
+            $opt['newClientOrderId'] = $flags['newClientOrderId'];
+        } else {
+            $opt['newClientOrderId'] = $this->generateFuturesClientOrderId();
+        }
+
+        if (isset($flags['stopPrice'])) {
+            $opt['stopPrice'] = $flags['stopPrice'];
+        }
+
+        if (isset($flags['closePosition'])) {
+            $closePosition = $flags['closePosition'];
+            if ($closePosition === true) {
+                $opt['closePosition'] = 'true';
+            } else {
+                $opt['closePosition'] = 'false';
+            }
+        }
+
+        if (isset($flags['activationPrice'])) {
+            $opt['activationPrice'] = $flags['activationPrice'];
+        }
+
+        if (isset($flags['callbackRate'])) {
+            $opt['callbackRate'] = $flags['callbackRate'];
+        }
+
+        if (isset($flags['workingType'])) {
+            $opt['workingType'] = $flags['workingType'];
+        }
+
+        if (isset($flags['priceProtect'])) {
+            $priceProtect = $flags['priceProtect'];
+            if ($priceProtect === true) {
+                $opt['priceProtect'] = 'TRUE';
+            } else {
+                $opt['priceProtect'] = 'FALSE';
+            }
+        }
+
+        if (isset($flags['newOrderRespType'])) {
+            $opt['newOrderRespType'] = $flags['newOrderRespType'];
+        }
+
+        if (isset($flags['priceMatch'])) {
+            $opt['priceMatch'] = $flags['priceMatch'];
+        }
+
+        if (isset($flags['selfTradePreventionMode'])) {
+            $opt['selfTradePreventionMode'] = $flags['selfTradePreventionMode'];
+        }
+
+        if (isset($flags['goodTillDate'])) {
+            $opt['goodTillDate'] = $flags['goodTillDate'];
+        }
+
+        if (isset($flags['recvWindow'])) {
+            $opt['recvWindow'] = $flags['recvWindow'];
+        }
+
+        return $opt;
+    }
+
+    /**
+     * futuresOrder formats the orders before sending them to the curl wrapper function
+     * You can call this function directly or use the helper functions
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api
+     *
+     * @see futuresBuy()
+     * @see sell()
+     * @see marketBuy()
+     * @see marketSell()
+     *
+     * @param string $side (mandatory) typically "BUY" or "SELL"
+     * @param string $symbol (mandatory) market symbol
+     * @param string $quantity (optional) of the order (Cannot be sent with closePosition=true (Close-All))
+     * @param string $price (optional) price per unit
+     * @param string $type (mandatory) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc.
+     * @param array $flags (optional) additional transaction options
+     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $flags['timeInForce']
+     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $flags['newClientOrderId'] new client order id
+     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param int    $flags['recvWindow']
+     * @param $test bool whether to test or not, test only validates the query
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [], $test = false)
+    {
+        $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $flags);
+        $opt['fapi'] = true;
+        $qstring = ($test === false) ? 'v1/order' : 'v1/order/test';
+        return $this->httpRequest($qstring, 'POST', $opt, true);
+    }
+
+    /**
+     * futuresBuy attempts to create a buy order
+     * each market supports a number of order types, such as
+     * -LIMIT
+     * -MARKET
+     * -STOP_LOSS
+     * -STOP_LOSS_LIMIT
+     * -TAKE_PROFIT
+     * -TAKE_PROFIT_LIMIT
+     * -LIMIT_MAKER
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api
+     *
+     * You should check the @see exchangeInfo for each currency to determine
+     * what types of orders can be placed against specific pairs
+     *
+     * $quantity = 1;
+     * $price = 0.0005;
+     * $order = $api->futuresBuy("BNBBTC", $quantity, $price);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $quantity (optional) the quantity required
+     * @param string $price (optional) price per unit
+     * @param string $type (mandatory) type of order
+     * @param array $flags (optional) addtional options for order type
+     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $flags['timeInForce']
+     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $flags['newClientOrderId'] new client order id
+     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param int    $flags['recvWindow']
+     * @return array with error message or the order details
+     */
+    public function futuresBuy(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    {
+        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags);
+    }
+
+    /**
+     * futuresBuyTest attempts to create a TEST futures buy order
+     *
+     * @see futuresBuy()
+     *
+     * params and return value are the same as @see futuresBuy()
+     */
+    public function futuresBuyTest(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    {
+        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags, true);
+    }
+
+    /**
+     * futuresSell creates a futures sell order
+     * each market supports a number of order types, such as
+     * -LIMIT
+     * -MARKET
+     * -STOP_LOSS
+     * -STOP_LOSS_LIMIT
+     * -TAKE_PROFIT
+     * -TAKE_PROFIT_LIMIT
+     * -LIMIT_MAKER
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api
+     *
+     * You should check the @see exchangeInfo for each currency to determine
+     * what types of orders can be placed against specific pairs
+     *
+     * $quantity = 1;
+     * $price = 0.0005;
+     * $order = $api->futuresSell("BNBBTC", $quantity, $price);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $quantity (optional) the quantity required
+     * @param string $price (optional) price per unit
+     * @param string $type (mandatory) type of order
+     * @param array $flags (optional) addtional options for order type
+     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $flags['timeInForce']
+     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $flags['newClientOrderId'] new client order id
+     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param int    $flags['recvWindow']
+     * @return array with error message or the order details
+     */
+    public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    {
+        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags);
+    }
+
+    /**
+     * futuresSellTest attempts to create a TEST futures sell order
+     *
+     * @see futuresSell()
+     *
+     * params and return value are the same as @see futuresSell()
+     */
+    public function futuresSellTest(string $symbol, $quantity = null, $price = null, $type = null, array $flags = [])
+    {
+        if ($type === null) {
+            $type = 'LIMIT';
+        }
+        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags, true);
+    }
+
+    /**
+     * createBatchOrdersRequest
+     * helper for creating the request for multiple futures orders
+     * @param array $orders (mandatory) array of orders to be placed
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
+     *
+     * @return array containing the request
+     * @throws \Exception
+     */
+    protected function createBatchOrdersRequest(array $orders)
+    {
+        $formatedOrders = [];
+        for ($index = 0; $index < count($orders); $index++) {
+            $order = $orders[$index];
+            if (!isset($order['quantity'])) {
+                $order['quantity'] = null;
+            }
+            if (!isset($order['price'])) {
+                $order['price'] = null;
+            }
+            if (!isset($order['flags'])) {
+                $order['flags'] = [];
+            }
+            $formatedOrder = $this->createFuturesOrderRequest(
+                $order['side'],
+                $order['symbol'],
+                $order['quantity'],
+                $order['price'],
+                $order['type'],
+                $order['flags']
+            );
+            if (isset($formatedOrder['recvWindow'])) {
+                // remove recvWindow from the order
+                unset($formatedOrder['recvWindow']);
+            }
+            if (isset($order['orderId'])) {
+                $formatedOrder['orderId'] = $order['orderId'];
+            }
+            if (isset($order['origClientOrderId'])) {
+                $formatedOrder['origClientOrderId'] = $order['origClientOrderId'];
+            }
+            $formatedOrders[$index] = $formatedOrder;
+        }
+        return $formatedOrders;
+    }
+
+    /**
+     * futuresBatchOrders creates multiple orders in a single request
+     * max 5 orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Place-Multiple-Orders
+     *
+     * @param array $orders (mandatory) array of orders to be placed
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the $flags['recvWindow']
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response or error message
+     * @throws \Exception
+     */
+    public function futuresBatchOrders(array $orders, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        $formatedOrders = $this->createBatchOrdersRequest($orders);
+        if (count($formatedOrders) > 5) {
+            throw new \Exception('futuresBatchOrders: max 5 orders allowed');
+        }
+        if (count($formatedOrders) < 1) {
+            throw new \Exception('futuresBatchOrders: at least 1 order required');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        // current endpoint accepts orders list as a json string in the query string
+        $encodedOrders = json_encode($formatedOrders);
+        $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
+        return $this->httpRequest($url, 'POST', $params, true);
+    }
+
+    /**
+     * futuresEditOrder edits the limit order
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Order
+     *
+     * @param string $symbol (mandatory) market symbol
+     * @param string $side (mandatory) "BUY" or "SELL"
+     * @param string $orderId (optional) order id to be modified (mandatory if $flags['origClientOrderId'] is not set)
+     * @param string $quantity (optional) of the order (Cannot be sent for orders with closePosition=true (Close-All))
+     * @param string $price (mandatory) price per unit
+     * @param array $flags (optional) additional options
+     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param int    $flags['recvWindow']
+     * - @param string $flags['origClientOrderId'] client order id to be modified (mandatory if $orderId is not set)
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresEditOrder(string $symbol, string $side, string $quantity, string $price, $orderId = null, array $flags = [])
+    {
+        $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $flags);
+        $origClientOrderId = null;
+        if (isset($flags['origClientOrderId'])) {
+            $origClientOrderId = $flags['origClientOrderId'];
+            $opt['origClientOrderId'] = $origClientOrderId;
+        }
+        if (!$origClientOrderId && !$orderId) {
+            throw new \Exception('futuresEditOrder: either orderId or origClientOrderId must be set');
+        }
+        if ($orderId) {
+            $opt['orderId'] = $orderId;
+        }
+        unset($opt['type']);
+        $opt['fapi'] = true;
+        return $this->httpRequest("v1/order", 'PUT', $opt, true);
+    }
+
+    /**
+     * futuresEditOrders edits the multiple limit orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Multiple-Orders
+     *
+     * @param array $orders (mandatory) array of orders to be modified
+     * objects in the array should contain literally the same keys as the @see futuresEditOrder but without the $flags['recvWindow']
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response or error message
+     * @throws \Exception
+     */
+    public function futuresEditOrders(array $orders, $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        $formatedOrders = $this->createBatchOrdersRequest($orders);
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        // current endpoint accepts orders list as a json string in the query string
+        $encodedOrders = json_encode($formatedOrders);
+        $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
+        return $this->httpRequest($url, 'PUT', $params, true);
+    }
+
+    /**
+     * futuresOrderAmendment get order modification history
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Get-Order-Modify-History
+     *
+     * $amendment = $api->futuresOrderAmendment("ETHUSDT");
+     *
+     * @param string $symbol (mandatory) market symbol to get the response for, e.g. ETHUSDT
+     * @param string $orderId (optional) order id to get the response for
+     * @param string $origClientOrderId (optional) original client order id to get the response for
+     * @param int    $startTime (optional) timestamp in ms to get modification history from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get modification history until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of open interest history (default 50, max 100)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresOrderAmendment(string $symbol, $orderId = null, $origClientOrderId = null, $startTime = null, $endTime = null, $limit = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        }
+        if ($origClientOrderId) {
+            $params['origClientOrderId'] = $origClientOrderId;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/orderAmendment", 'GET', $params, true);
+    }
+
+    /**
+     * futuresCancel cancels a futures order
+     *
+     * $orderid = "123456789";
+     * $order = $api->futuresCancel("BNBBTC", $orderid);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $orderid (optional) the orderid to cancel (mandatory if $flags['origClientOrderId'] is not set)
+     * @param array  $flags (optional) additional options
+     * - @param string $flags['origClientOrderId'] original client order id to cancel
+     * - @param int    $flags['recvWindow'] the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresCancel(string $symbol, $orderid, $flags = [])
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderid) {
+            $params['orderId'] = $orderid;
+        } else if (!isset($flags['origClientOrderId'])) {
+            throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
+        }
+        return $this->httpRequest("v1/order", 'DELETE', array_merge($params, $flags), true);
+    }
+
+    /**
+     * futuresCancelBatchOrders canceles multiple futures orders
+     *
+     * $orderIds = ["123456789", "987654321"];
+     * $order = $api->futuresCancelBatchOrders("BNBBTC", $orderIds);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param array  $orderIdList (optional) list of ids to cancel (mandatory if origClientOrderIdList is not set)
+     * @param array  $origClientOrderIdList (optional) list of client order ids to cancel (mandatory if orderIdList is not set)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresCancelBatchOrders(string $symbol, $orderIdList = null, $origClientOrderIdList = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderIdList) {
+            $idsString = json_encode($orderIdList);
+            // remove quotes and spaces
+            $params['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
+        } else if ($origClientOrderIdList) {
+            // remove spaces
+            $params['origClientOrderIdList'] = str_replace(' ', '', json_encode($origClientOrderIdList));
+        } else {
+            throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/batchOrders", 'DELETE', $params, true);
+    }
+
+    /**
+     * futuresCancelOpenOrders cancels all open futures orders for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-All-Open-Orders
+     *
+     * $orders = $api->futuresCancelOpenOrders("BNBBTC");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresCancelOpenOrders(string $symbol, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/allOpenOrders", 'DELETE', $params, true);
+    }
+
+    /**
+     * futuresCountdownCancelAllOrders cancels all open futures orders for a symbol at the end of the specified countdown
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Auto-Cancel-All-Open-Orders
+     *
+     * $orders = $api->futuresCountdownCancelAllOrders("BNBBTC", 10);
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $countdownTime (mandatory) countdown in milliseconds (0 to stop the timer)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresCountdownCancelAllOrders(string $symbol, int $countdownTime, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'countdownTime' => $countdownTime,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/countdownCancelAll", 'POST', $params, true);
+    }
+
+    /**
+     * futuresOrderStatus gets the details of a futures order
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Query-Order
+     *
+     * $order = $api->futuresOrderStatus("BNBBTC", "123456789");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
+     * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresOrderStatus(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        } else if ($origClientOrderId) {
+            $params['origClientOrderId'] = $origClientOrderId;
+        } else {
+            throw new \Exception('futuresOrderStatus: either orderId or origClientOrderId must be set');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/order", 'GET', $params, true);
+    }
+
+    /**
+     * futuresAllOrders gets all orders for a symbol
+     * query time period must be less then 7 days (default as the recent 7 days)
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/All-Orders
+     *
+     * $orders = $api->futuresAllOrders("BNBBTC");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get orders from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
+     * @param string $orderId (optional) order id to get the response from (if is set it will get orders >= that orderId)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     */
+    public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/allOrders", 'GET', $params, true);
+    }
+
+    /**
+     * futuresOpenOrders gets all open orders for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Current-All-Open-Orders
+     *
+     * $orders = $api->futuresOpenOrders();
+     * $orders = $api->futuresOpenOrders("BNBBTC");
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresOpenOrders($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/openOrders", 'GET', $params, true);
+    }
+
+    /**
+     * futuresOpenOrder gets an open futures order
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Query-Current-Open-Order
+     *
+     * $order = $api->futuresOpenOrder("BNBBTC", "123456789");
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
+     * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
+     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the order details
+     * @throws \Exception
+     */
+    public function futuresOpenOrder(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        } else if ($origClientOrderId) {
+            $params['origClientOrderId'] = $origClientOrderId;
+        } else {
+            throw new \Exception('futuresOpenOrder: either orderId or origClientOrderId must be set');
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/openOrder", 'GET', $params, true);
+    }
+    /**
+     * futuresForceOrders gets all futures force orders
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Users-Force-Orders
+     *
+     * $orders = $api->futuresForceOrders("BNBBTC");
+     *
+     * @property int $weight 50
+     * 20 if symbol is not passed
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get orders from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
+     * @param string $autoCloseType (optional) "LIQUIDATION" for liquidation orders, "ADL" for ADL orders
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
+     */
+    public function futuresForceOrders($symbol = null, $startTime = null, $endTime = null, $limit = null, $autoCloseType = null, $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($autoCloseType) {
+            $params['autoCloseType'] = $autoCloseType;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/forceOrders", 'GET', $params, true);
+    }
+
+    /**
+     * futuresMyTrades gets all futures trades for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Account-Trade-List
+     *
+     * $trades = $api->futuresMyTrades("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get trades from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get trades until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of trades (default 500, max 1000)
+     * @param string $orderId (optional) order id to get the trades for
+     * @param string $fromId (optional) trade id to get the trades from (if is set it will get trades >= that Id)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the trades details
+     * @throws \Exception
+     */
+    public function futuresMyTrades(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        }
+        if ($fromId) {
+            $params['fromId'] = $fromId;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/userTrades", 'GET', $params, true);
+    }
+
+    /**
+     * futuresHistory
+     * another name for futuresMyTrades (for naming compatibility with spot)
+     * @deprecated
+     */
+    public function futuresHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    {
+        return $this->futuresMyTrades($symbol, $startTime, $endTime, $limit, $orderId, $fromId, $recvWindow);
+    }
+
+    /**
+     * futuresSetMarginMode sets the margin mode for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Margin-Type
+     *
+     * $api->futuresSetMarginMode("BNBBTC", "ISOLATED");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $marginType (mandatory) margin type, "CROSSED" or "ISOLATED"
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetMarginMode(string $symbol, string $marginType, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'marginType' => $marginType,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/marginType", 'POST', $params, true);
+    }
+
+    /**
+     * futuresPositionMode gets the position mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Current-Position-Mode
+     *
+     * $response = $api->futuresPositionMode();
+     *
+     * @property int $weight 30
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresPositionMode(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/positionSide/dual", 'GET', $params, true);
+    }
+
+    /**
+     * futuresSetPositionMode sets the position mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Position-Mode
+     *
+     * $api->futuresSetPositionMode(true);
+     *
+     * @property int $weight 1
+     *
+     * @param bool $dualSidePosition (mandatory) true for Hedge Mode, false for One-way Mode
+     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetPositionMode(bool $dualSidePosition, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'dualSidePosition' => $dualSidePosition ? 'true' : 'false',
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/positionSide/dual", 'POST', $params, true);
+    }
+
+    /**
+     * futuresSetLeverage sets the leverage for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Initial-Leverage
+     *
+     * $leverage = $api->futuresSetLeverage(10, "BTCUSDT");
+     *
+     * @property int $weight 1
+     *
+     *
+     * @param int    $leverage (mandatory) leverage to be set (min 1, max 125)
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetLeverage(int $leverage, string $symbol, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'leverage' => $leverage,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/leverage", 'POST', $params, true);
+    }
+
+    /**
+     * futuresMultiAssetsMarginMode gets the multi-assets margin mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Current-Multi-Assets-Mode
+     *
+     * $response = $api->futuresMultiAssetsMarginMode();
+     *
+     * @property int $weight 30
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresMultiAssetsMarginMode(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/multiAssetsMargin", 'GET', $params, true);
+    }
+
+    /**
+     * futuresSetMultiAssetsMarginMode sets the multi-assets margin mode for ALL symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Change-Multi-Assets-Mode
+     *
+     * $response = $api->futuresSetMultiAssetsMarginMode(true);
+     *
+     * @property int $weight 1
+     *
+     * @param bool $multiAssetsMarginMode (mandatory) true for multi-assets mode, false for single-asset mode
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresSetMultiAssetsMarginMode(bool $multiAssetsMarginMode, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'multiAssetsMarginMode' => $multiAssetsMarginMode ? 'true' : 'false',
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/multiAssetsMarginMode", 'POST', $params, true);
+    }
+
+    /**
+     * modifyMarginHelper helper for adding or removing margin
+     *
+     * @see futuresAddMargin() and futuresReduceMargin()
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    protected function modifyMarginHelper(string $symbol, string $amount, $addOrReduce, $positionSide = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+            'amount' => $amount,
+            'type' => $addOrReduce,
+        ];
+        if ($positionSide) {
+            $params['positionSide'] = $positionSide;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/positionMargin", 'POST', $params, true);
+    }
+
+    /**
+     * futuresAddMargin adds margin to a position
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Isolated-Position-Margin
+     *
+     * $response = $api->futuresAddMargin("BNBBTC", 10);
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $amount (mandatory) amount to be added
+     * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresAddMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    {
+        return $this->modifyMarginHelper($symbol, $amount, 1, $positionSide, $recvWindow);
+    }
+
+    /**
+     * futuresReduceMargin removes margin from a position
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Isolated-Position-Margin
+     *
+     * $response = $api->futuresReduceMargin("BNBBTC", 10);
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param string $amount (mandatory) amount to be removed
+     * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresReduceMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    {
+        return $this->modifyMarginHelper($symbol, $amount, 2, $positionSide, $recvWindow);
+    }
+
+    /**
+     * futuresPositions gets the position information for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V2
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V3
+     *
+     * $position = $api->futuresPositions("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
+     *
+     * @return array with error message or the position details
+     * @throws \Exception
+     */
+    public function futuresPositions($symbol = null, $recvWindow = null, $api_version = 'v3')
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        if ($api_version !== 'v2' && $api_version !== 'v3') {
+            throw new \Exception('futuresPositions: api_version must be either v2 or v3');
+        }
+        return $this->httpRequest($api_version . "/positionRisk", 'GET', $params, true);
+    }
+
+    /** futuresPositionsV2
+     * @see futuresPositions
+     */
+    public function futuresPositionsV2($symbol = null, int $recvWindow = null)
+    {
+        return $this->futuresPositions($symbol, $recvWindow, 'v2');
+    }
+
+    /**
+     * futuresPositionsV3
+     * @see futuresPositions
+     */
+    public function futuresPositionsV3($symbol = null, int $recvWindow = null)
+    {
+        return $this->futuresPositions($symbol, $recvWindow, 'v3');
+    }
+
+    /**
+     * futuresPosition gets the position information for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-Information-V2
+     *
+     * $position = $api->futuresPosition("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
+     *
+     * @return array with error message or the position details
+     * @throws \Exception
+     */
+    public function futuresPosition(string $symbol, $recvWindow = null, string $api_version = 'v3')
+    {
+        return $this->futuresPositions($symbol, $recvWindow, $api_version);
+    }
+
+    /**
+     * futuresPositionV2
+     * @see futuresPosition
+     */
+    public function futuresPositionV2(string $symbol, int $recvWindow = null)
+    {
+        return $this->futuresPositionsV2($symbol, $recvWindow, 'v2');
+    }
+
+    /**
+     * futuresPositionV3
+     * @see futuresPosition
+     */
+    public function futuresPositionV3(string $symbol, int $recvWindow = null)
+    {
+        return $this->futuresPositionsV3($symbol, $recvWindow, 'v3');
+    }
+
+    /**
+     * futuresAdlQuantile gets the ADL quantile estimation for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Position-ADL-Quantile-Estimation
+     *
+     * $response = $api->futuresAdlQuantile("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the ADL quantile details
+     * @throws \Exception
+     */
+    public function futuresAdlQuantile($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/adlQuantile", 'GET', $params, true);
+    }
+
+    /**
+     * futuresPositionMarginChangeHistory gets the position margin change history for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Get-Position-Margin-Change-History
+     *
+     * $history = $api->futuresPositionMarginChangeHistory("BNBBTC");
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $startTime (optional) timestamp in ms to get history from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get history until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of history (default 500)
+     * @param string $addOrReduce (optional) "ADD" or "REDUCE" to filter the history
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     */
+    public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($addOrReduce) {
+            if (is_numeric($addOrReduce)) {
+                $params['addOrReduce'] = $addOrReduce;
+            } else if (is_string($addOrReduce)) {
+                $addOrReduce = strtoupper($addOrReduce);
+                if ($addOrReduce === 'ADD' || $addOrReduce === '1') {
+                    $params['addOrReduce'] = 1;
+                } else if ($addOrReduce === 'REDUCE' || $addOrReduce === '2') {
+                    $params['addOrReduce'] = 2;
+                } else {
+                    throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
+                }
+            } else {
+                throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
+            }
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/positionMargin/history", 'GET', $params, true);
+    }
+
+    /**
+     * futuresBalances gets the balance information futures account
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Futures-Account-Balance-V2
+     *
+     * $balances = $api->futuresBalances();
+     *
+     * @property int $weight 5
+     *
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
+     *
+     * @return array with error message or the balance details
+     * @throws \Exception
+     */
+    public function futuresBalances($recvWindow = null, string $api_version = 'v3')
+    {
+        if ($api_version !== 'v2' && $api_version !== 'v3') {
+            throw new \Exception('futuresBalances: api_version must be either v2 or v3');
+        }
+        return $this->balances('futures', $recvWindow, 'v3');
+    }
+
+    /**
+     * futuresBalancesV2
+     * see futuresBalances
+     */
+    public function futuresBalancesV2(int $recvWindow = null)
+    {
+        return $this->futuresBalances($recvWindow, 'v2');
+    }
+
+    /**
+     * futuresBalancesV3
+     * see futuresBalances
+     */
+    public function futuresBalancesV3(int $recvWindow = null)
+    {
+        return $this->futuresBalances($recvWindow, 'v3');
+    }
+
+    /**
+     * futuresAccount get all information about the api account
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V2
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V3
+     *
+     * $account = $api->futuresAccount();
+     *
+     * @property int $weight 5
+     *
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
+     *
+     * @return array with error message or array of all the account information
+     * @throws \Exception
+     */
+    public function futuresAccount($recvWindow = null, string $api_version = 'v3')
+    {
+        if ($api_version !== 'v2' && $api_version !== 'v3') {
+            throw new \Exception('futuresAccount: api_version must be either v2 or v3');
+        }
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($api_version . "/account", "GET", $params, true);
+    }
+
+    /**
+     * futuresAccountV2
+     * see futuresAccount
+     */
+    public function futuresAccountV2(int $recvWindow = null)
+    {
+        return $this->futuresAccount($recvWindow, 'v2');
+    }
+
+    /**
+     * futuresAccountV3
+     * see futuresAccount
+     */
+    public function futuresAccountV3(int $recvWindow = null)
+    {
+        return $this->futuresAccount($recvWindow, 'v3');
+    }
+
+    /**
+     * futuresTradeFee gets the trade fee information for a symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/User-Commission-Rate
+     *
+     * $tradeFee = $api->futuresTradeFee("BNBBTC");
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the trade fee details
+     * @throws \Exception
+     */
+    public function futuresTradeFee(string $symbol, int $recvWindow = null)
+    {
+        $params = [
+            'symbol' => $symbol,
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/commissionRate", 'GET', $params, true);
+    }
+
+    /**
+     * futuresAccountConfig gets the account configuration information
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Config
+     *
+     * $accountConfig = $api->futuresAccountConfig();
+     *
+     * @property int $weight 5
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the account configuration details
+     * @throws \Exception
+     */
+    public function futuresAccountConfig(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/accountConfig", 'GET', $params, true);
+    }
+
+    /**
+     * futuresMarginModes gets the margin mode for all symbols or specific symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Symbol-Config
+     *
+     * $marginMode = $api->futuresMarginModes();
+     * $marginModes = $api->futuresMarginModes("BNBBTC");
+     *
+     * @property int $weight 5
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the margin mode details
+     * @throws \Exception
+     */
+    public function futuresMarginModes($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/symbolConfig", 'GET', $params, true);
+    }
+
+    /**
+     * futuresOrderRateLimit gets the user rate limit
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Query-Rate-Limit
+     *
+     * $rateLimit = $api->futuresOrderRateLimit();
+     *
+     * @property int $weight 1
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function futuresOrderRateLimit(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/rateLimit/order", 'GET', $params, true);
+    }
+
+    /**
+     * futuresLeverages gets the leverage information for a symbol or all symbols
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Notional-and-Leverage-Brackets
+     *
+     * $leverage = $api->futuresLeverages("BNBBTC");
+     * $leverages = $api->futuresLeverages();
+     *
+     * @property int $weight 1
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the leverage details
+     * @throws \Exception
+     */
+    public function futuresLeverages($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/leverageBracket", 'GET', $params, true);
+    }
+
+    /**
+     * futuresLedger fetch the history of changes, actions done by the user or operations that altered the balance of the user
+     * possible values for incomeType:
+     * - TRANSFER
+     * - TRANSFER
+     * - WELCOME_BONUS
+     * - REALIZED_PNL
+     * - FUNDING_FEE
+     * - COMMISSION
+     * - INSURANCE_CLEAR
+     * - REFERRAL_KICKBACK
+     * - COMMISSION_REBATE
+     * - API_REBATE
+     * - CONTEST_REWARD
+     * - CROSS_COLLATERAL_TRANSFER
+     * - OPTIONS_PREMIUM_FEE
+     * - OPTIONS_SETTLE_PROFIT
+     * - INTERNAL_TRANSFER
+     * - AUTO_EXCHANGE
+     * - DELIVERED_SETTELMENT
+     * - COIN_SWAP_DEPOSIT
+     * - COIN_SWAP_WITHDRAW
+     * - POSITION_LIMIT_INCREASE_FEE
+     * - STRATEGY_UMFUTURES_TRANSFER
+     * - FEE_RETURN
+     * - BFUSD_REWARD
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Income-History
+     *
+     * $income = $api->futuresLedger("BNBBTC");
+     * $income = $api->futuresLedger("BNBBTC", "FUNDING_FEE");
+     *
+     * @property int $weight 30
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param string $incomeType (optional) income type to filter the response
+     * @param int    $startTime (optional) timestamp in ms to get income from INCLUSIVE
+     * @param int    $endTime (optional) timestamp in ms to get income until INCLUSIVE
+     * @param int    $limit (optional) limit the amount of income (default 100, max 1000)
+     * @param int    $page (optional) number of page to get
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the income details
+     * @throws \Exception
+     */
+    public function futuresLedger($symbol = null, $incomeType = null, $startTime = null, $endTime = null, $limit = null, $page = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($incomeType) {
+            $params['incomeType'] = $incomeType;
+        }
+        if ($startTime) {
+            $params['startTime'] = $startTime;
+        }
+        if ($endTime) {
+            $params['endTime'] = $endTime;
+        }
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+        if ($page) {
+            $params['page'] = $page;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/income", 'GET', $params, true);
+    }
+
+    /**
+     * futuresTradingStatus get the futures trading quantitative rules indicators
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Futures-Trading-Quantitative-Rules-Indicators
+     *
+     * $tradingStatus = $api->futuresTradingStatus();
+     *
+     * @property int $weight 10
+     * weigth is 1 if symbol is provided
+     *
+     * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the trading status details
+     * @throws \Exception
+     */
+    public function futuresTradingStatus($symbol = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($symbol) {
+            $params['symbol'] = $symbol;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/apiTradingStatus", 'GET', $params, true);
+    }
+
+    /**
+     * futuresDownloadId
+     * helper for other metods for getting download id
+     */
+    protected function futuresDownloadId($startTime, $endTime, $recvWindow = null, string $url = '')
+    {
+        $params = [
+            'fapi' => true,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($url, 'GET', $params, true);
+    }
+
+    /**
+     * futuresDownloadLinkByDownloadId
+     * helper for other metods for getting download link by download id
+     */
+    protected function futuresDownloadLinkByDownloadId(string $downloadId, $recvWindow = null, string $url = '')
+    {
+        $params = [
+            'fapi' => true,
+            'downloadId' => $downloadId,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($url, 'GET', $params, true);
+    }
+
+    /**
+     * futuresDownloadIdForTransactions gets the download id for transactions
+     * request limitation is 5 times per month, shared by front end download page and rest api
+     * the time between startTime and endTime can not be longer than 1 year
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Transaction-History
+     *
+     * $downloadId = $api->futuresDownloadIdForTransactions(1744105700000, 1744105722122);
+     *
+     * @property int $weight 1000
+     *
+     * @param int $startTime (optional) timestamp in ms to get transactions from INCLUSIVE
+     * @param int $endTime (optional) timestamp in ms to get transactions until INCLUSIVE
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the response
+     * @throws \Exception
+     */
+    public function futuresDownloadIdForTransactions(int $startTime, int $endTime, int $recvWindow = null)
+    {
+        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/income/asyn");
+    }
+
+    /**
+     * futuresDownloadTransactionsByDownloadId get futures transaction history download link by Id
+     * download link expiration: 24h
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Futures-Transaction-History-Download-Link-by-Id
+     *
+     * $downloadLink = $api->futuresDownloadTransactionsByDownloadId("downloadId");
+     *
+     * @property int $weight 10
+     *
+     * @param string $downloadId (mandatory) download id
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the download link
+     * @throws \Exception
+     */
+    public function futuresDownloadTransactionsByDownloadId(string $downloadId, int $recvWindow = null)
+    {
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/income/asyn/id");
+    }
+
+    /**
+     * futuresDownloadIdForOrders gets the download id for orders
+     * request limitation is 10 times per month, shared by front end download page and rest api
+     * the time between startTime and endTime can not be longer than 1 year
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Order-History
+     *
+     * $downloadId = $api->futuresDownloadIdForOrders(1744105700000, 1744105722122);
+     *
+     * @property int $weight 1000
+     *
+     * @param int $startTime (optional) timestamp in ms to get orders from INCLUSIVE
+     * @param int $endTime (optional) timestamp in ms to get orders until INCLUSIVE
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the response
+     * @throws \Exception
+     */
+    public function futuresDownloadIdForOrders(int $startTime, int $endTime, int $recvWindow = null)
+    {
+        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/order/asyn");
+    }
+
+    /**
+     * futuresDownloadOrdersByDownloadId get futures orders history download link by Id
+     * download link expiration: 24h
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Futures-Order-History-Download-Link-by-Id
+     *
+     * $downloadLink = $api->futuresDownloadOrdersByDownloadId("downloadId");
+     *
+     * @property int $weight 10
+     *
+     * @param string $downloadId (mandatory) download id
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the download link
+     * @throws \Exception
+     */
+    public function futuresDownloadOrdersByDownloadId(string $downloadId, int $recvWindow = null)
+    {
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/order/asyn/id");
+    }
+
+    /**
+     * futuresDownloadIdForTrades gets the download id for trades
+     * request limitation is 5 times per month, shared by front end download page and rest api
+     * the time between startTime and endTime can not be longer than 1 year
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Download-Id-For-Futures-Trade-History
+     *
+     * $downloadId = $api->futuresDownloadIdForTrades(1744105700000, 1744105722122);
+     *
+     * @property int $weight 1000
+     *
+     * @param int $startTime (optional) timestamp in ms to get trades from INCLUSIVE
+     * @param int $endTime (optional) timestamp in ms to get trades until INCLUSIVE
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the response
+     * @throws \Exception
+     */
+    public function futuresDownloadIdForTrades(int $startTime, int $endTime, int $recvWindow = null)
+    {
+        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/trade/asyn");
+    }
+
+    /**
+     * futuresDownloadTradesByDownloadId get futures trades history download link by Id
+     * download link expiration: 24h
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Futures-Trade-Download-Link-by-Id
+     *
+     * $downloadLink = $api->futuresDownloadTradesByDownloadId("downloadId");
+     *
+     * @property int $weight 10
+     *
+     * @param string $downloadId (mandatory) download id
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array with error message or the download link
+     * @throws \Exception
+     */
+    public function futuresDownloadTradesByDownloadId(string $downloadId, int $recvWindow = null)
+    {
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/trade/asyn/id");
+    }
+
+    /**
+     * futuresFeeBurn change user's BNB Fee Discount (Fee Discount On or Fee Discount Off ) on EVERY symbol
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Toggle-BNB-Burn-On-Futures-Trade
+     *
+     * $response = $api->futuresFeeBurn(true);
+     *
+     * @property int $weight 1
+     *
+     * @param bool $flag (mandatory) true for BNB Fee Discount On, false for BNB Fee Discount Off
+     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFeeBurn(bool $flag, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'feeBurn' => $flag ? 'true' : 'false',
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/feeBurn", 'POST', $params, true);
+    }
+
+    /**
+     * futuresFeeBurnStatus gets the BNB Fee Discount status
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-BNB-Burn-Status
+     *
+     * $response = $api->futuresFeeBurnStatus();
+     *
+     * @property int $weight 30
+     *
+     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function futuresFeeBurnStatus(int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/feeBurn", 'GET', $params, true);
+    }
+
+    /**
+     * convertExchangeInfo get all convertible token pairs and the tokens’ respective upper/lower limits
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert
+     *
+     * $converInfo = $api->convertExchangeInfo();
+     * $converInfo = $api->convertExchangeInfo("ETH", "DOGE");
+     *
+     * @property int $weight 20
+     *
+     * @param string $fromAsset (optional) the asset to convert from
+     * @param string $toAsset (optional) the asset to convert to
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertExchangeInfo($fromAsset = null, $toAsset = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($fromAsset) {
+            $params['fromAsset'] = $fromAsset;
+        }
+        if ($toAsset) {
+            $params['toAsset'] = $toAsset;
+        }
+        return $this->httpRequest("v1/convert/exchangeInfo", 'GET', $params);
+    }
+
+    /**
+     * convertSend send a convert request
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert/Send-quote-request
+     *
+     * $convertRequest = $api->convertSend("ETH", "DOGE", 0.1);
+     *
+     * @property int $weight 50
+     *
+     * @param string $fromAsset (mandatory) the asset to convert from
+     * @param string $toAsset (mandatory) the asset to convert to
+     * @param string $fromAmount (optional) mandatory if $toAmount is not set
+     * @param string $toAmount (optional) mandatory if $fromAmount is not set
+     * @param string $validTime (optional) deafault "10s"
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertSend(string $fromAsset, string $toAsset, $fromAmount = null, $toAmount = null, $validTime = null, int $recvWindow = null)
+    {
+        $params = [
+            'fapi' => true,
+            'fromAsset' => $fromAsset,
+            'toAsset' => $toAsset,
+        ];
+        if ($fromAmount) {
+            $params['fromAmount'] = $fromAmount;
+        } else if ($toAmount) {
+            $params['toAmount'] = $toAmount;
+        } else {
+            throw new \Exception('convertSendRequest: fromAmount or toAmount must be set');
+        }
+        if ($validTime) {
+            $params['validTime'] = $validTime;
+        }
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest("v1/convert/getQuote", 'POST', $params, true);
+    }
+
+    /**
+     * convertAccept accept the offered quote by quote ID
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert/Accept-Quote
+     *
+     * $convertAccept = $api->convertAccept("quoteId");
+     *
+     * @property int $weight 200
+     *
+     * @param string $quoteId (mandatory) the quote ID to accept
+     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) additional parameters
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertAccept(string $quoteId, int $recvWindow = null, array $params = [])
+    {
+        $request = [
+            'quoteId' => $quoteId,
+        ];
+        return $this->fapiRequest("v1/cconvert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
+    }
+
+    /**
+     * fapiRequest helper for creating a fapi httpRequest
+     */
+    protected function fapiRequest(string $url, string $method, array $params = [], $signed = false, int $recvWindow = null)
+    {
+        $params['fapi'] = true;
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
+        return $this->httpRequest($url, $method, $params, $signed);
+    }
+
+    /**
+     * convertStatus get the status of a convert request by orderId or quoteId
+     *
+     * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/convert/Order-Status
+     *
+     * $status = $api->convertStatus("orderId");
+     *
+     * @property int $weight 50
+     *
+     * @param string $orderId (optional) the order ID to get the status of (mandatory if $quoteId is not set)
+     * @param string $quoteId (optional) the quote ID to get the status of (mandatory if $orderId is not set)
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function convertStatus($orderId = null, $quoteId = null)
+    {
+        $params = [
+            'fapi' => true,
+        ];
+        if ($orderId) {
+            $params['orderId'] = $orderId;
+        } else if ($quoteId) {
+            $params['quoteId'] = $quoteId;
+        } else {
+            throw new \Exception('convertStatus: orderId or quoteId must be set');
+        }
+        return $this->httpRequest("v1/convert/orderStatus", 'GET', $params, true);
     }
 }
