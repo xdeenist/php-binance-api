@@ -3943,7 +3943,7 @@ class API
      * symbolPeriodLimitStartEndRequest
      * helper for routing GET methods that require symbol, period, limit, startTime and endTime
      */
-    private function symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
+    private function symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
     {
         $parameters = [
             'symbol' => $symbol,
