@@ -4717,8 +4717,8 @@ class API
             // remove quotes and spaces
             $params['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
         } else if ($origClientOrderIdList) {
-            // remove spaces
-            $params['origClientOrderIdList'] = str_replace(' ', '', json_encode($origClientOrderIdList));
+            // remove spaces between the ids
+            $params['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
         } else {
             throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
         }
