@@ -1091,7 +1091,7 @@ class API
      *
      * @property int $weight 1
      *
-     * @param string $type (optional) type of transfer, e.g. MAIN_MARGIN (@see transfer())
+     * @param string $type (mandatory) type of transfer, e.g. MAIN_MARGIN (@see transfer())
      * @param string $startTime (optional) start time in milliseconds
      * @param string $endTime (optional) end time in milliseconds
      * @param int    $limit (optional) the number of records to return (default 10, max 100)
@@ -3112,7 +3112,7 @@ class API
         if ($startTime > 0)
             $params['startTime'] = $startTime;
         if ($endTime > 0)
-            $params['endTime'] = $startTime;
+            $params['endTime'] = $endTime;
         if ($nbrDays != 5)
             $params['limit'] = $nbrDays;
 
