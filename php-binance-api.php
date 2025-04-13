@@ -4477,7 +4477,7 @@ class API
      * @return array containing the request
      * @throws \Exception
      */
-    protected function createBatchOrdersRequest(array $orders)
+    protected function createBatchOrdersRequest(array $orders, bool $edit = false)
     {
         $formatedOrders = [];
         for ($index = 0; $index < count($orders); $index++) {
@@ -4491,6 +4491,9 @@ class API
             if (!isset($order['flags'])) {
                 $order['flags'] = [];
             }
+            if (!isset($order['type'])) {
+                $order['type'] = 'LIMIT';
+            }
             $formatedOrder = $this->createFuturesOrderRequest(
                 $order['side'],
                 $order['symbol'],
@@ -4503,11 +4506,15 @@ class API
                 // remove recvWindow from the order
                 unset($formatedOrder['recvWindow']);
             }
-            if (isset($order['orderId'])) {
-                $formatedOrder['orderId'] = $order['orderId'];
-            }
-            if (isset($order['origClientOrderId'])) {
-                $formatedOrder['origClientOrderId'] = $order['origClientOrderId'];
+            if ($edit) {
+                if (isset($order['orderId'])) {
+                    $formatedOrder['orderId'] = $order['orderId'];
+                }
+                if (isset($order['origClientOrderId'])) {
+                    $formatedOrder['origClientOrderId'] = $order['origClientOrderId'];
+                }
+                unset($formatedOrder['type']);
+                unset($formatedOrder['newClientOrderId']);
             }
             $formatedOrders[$index] = $formatedOrder;
         }
@@ -4580,6 +4587,7 @@ class API
             $opt['orderId'] = $orderId;
         }
         unset($opt['type']);
+        unset($opt['newClientOrderId']);
         $opt['fapi'] = true;
         return $this->httpRequest("v1/order", 'PUT', $opt, true);
     }
@@ -4601,14 +4609,13 @@ class API
         $params = [
             'fapi' => true,
         ];
-        $formatedOrders = $this->createBatchOrdersRequest($orders);
+        $formatedOrders = $this->createBatchOrdersRequest($orders, true);
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
         // current endpoint accepts orders list as a json string in the query string
-        $encodedOrders = json_encode($formatedOrders);
-        $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
-        return $this->httpRequest($url, 'PUT', $params, true);
+        $params['batchOrders'] = json_encode($formatedOrders);
+        return $this->httpRequest("v1/batchOrders", 'PUT', $params, true);
     }
 
     /**
