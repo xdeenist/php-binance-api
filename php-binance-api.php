@@ -3588,12 +3588,12 @@ class API
     }
 
     /**
-     * futuresPremiumIndexKlines get the candles for the given intervals
+     * futuresPremiumIndexCandlesticks get the candles for the given intervals
      * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Premium-Index-Kline-Data
      *
-     * $candles = $api->futuresPremiumIndexKlines("ETHBTC", "5m");
+     * $candles = $api->futuresPremiumIndexCandlesticks("ETHBTC", "5m");
      *
      * @property int $weight 5
      * for limit < 100 - weight 1
@@ -3610,7 +3610,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPremiumIndexKlines(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresPremiumIndexCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
         return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines');
     }
