@@ -6030,8 +6030,6 @@ class API
             'fromAsset' => $fromAsset,
             'toAsset' => $toAsset,
         ];
-        print_r(PHP_EOL);
-        print_r('convertSend' . PHP_EOL);
         if ($fromAmount) {
             $params['fromAmount'] = $fromAmount;
         } else if ($toAmount) {
