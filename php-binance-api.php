@@ -1158,7 +1158,10 @@ class API
     public function price(string $symbol)
     {
         $ticker = $this->httpRequest("v3/ticker/price", "GET", ["symbol" => $symbol]);
-
+        if (!isset($ticker['price'])) {
+            echo "Error: unable to fetch price for $symbol" . PHP_EOL;
+            return null;
+        }
         return $ticker['price'];
     }
 
@@ -1283,6 +1286,14 @@ class API
             "symbol" => $symbol,
             "limit" => $limit,
         ]);
+        if (is_array($json) === false) {
+            echo "Error: unable to fetch depth" . PHP_EOL;
+            $json = [];
+        }
+        if (empty($json)) {
+            echo "Error: depth were empty" . PHP_EOL;
+            return $json;
+        }
         if (isset($this->info[$symbol]) === false) {
             $this->info[$symbol] = [];
         }
@@ -3380,10 +3391,11 @@ class API
         $json = $this->httpRequest("v1/depth", "GET", $params);
         if (is_array($json) === false) {
             echo "Error: unable to fetch futures depth" . PHP_EOL;
+            $json = [];
         }
         if (empty($json)) {
             echo "Error: futures depth were empty" . PHP_EOL;
-            return [];
+            return $json;
         }
         if (isset($this->info[$symbol]) === false) {
             $this->info[$symbol] = [];
