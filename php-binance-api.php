@@ -692,9 +692,6 @@ class API
     {
         if (!$this->exchangeInfo) {
             $arr = array();
-            $arr['symbols'] = array();
-            $parameters = [];
-
             if ($symbols) {
                 if (gettype($symbols) == "string") {
                     $parameters["symbol"] = $symbols;
@@ -706,7 +703,11 @@ class API
             } else {
                 $arr = $this->httpRequest("v3/exchangeInfo");
             }
-
+            if ((is_array($arr) === false) || empty($arr)) {
+                echo "Error: unable to fetch spot exchange info" . PHP_EOL;
+                $arr = array();
+                $arr['symbols'] = array();
+            }
             $this->exchangeInfo = $arr;
             $this->exchangeInfo['symbols'] = null;
 
@@ -921,13 +922,16 @@ class API
         $return = $this->httpRequest("v1/capital/deposit/address", "GET", $params, true);
 
         // Adding for backwards compatibility with wapi
-        $return['asset'] = $return['coin'];
-        $return['addressTag'] = $return['tag'];
-
-        if (!empty($return['address'])) {
-            $return['success'] = 1;
+        if (is_array($return) && !empty($return)) {
+            $return['asset'] = $return['coin'];
+            $return['addressTag'] = $return['tag'];
+            if (!empty($return['address'])) {
+                $return['success'] = 1;
+            } else {
+                $return['success'] = 0;
+            }
         } else {
-            $return['success'] = 0;
+            echo "Error: no deposit address found" . PHP_EOL;
         }
 
         return $return;
@@ -955,8 +959,12 @@ class API
         $return = $this->httpRequest("v1/capital/deposit/hisrec", "GET", $params, true);
 
         // Adding for backwards compatibility with wapi
-        foreach ($return as $key=>$item) {
-            $return[$key]['asset'] = $item['coin'];
+        if (is_array($return) && !empty($return)) {
+            foreach ($return as $key=>$item) {
+                $return[$key]['asset'] = $item['coin'];
+            }
+        } else {
+            echo "Error: no deposit history found" . PHP_EOL;
         }
 
         return $return;
