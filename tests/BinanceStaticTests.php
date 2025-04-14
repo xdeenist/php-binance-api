@@ -1918,4 +1918,776 @@ class BinanceStaticTests extends TestCase
         $endpoint = "https://fapi.binance.com/fapi/v1/openOrder?" . $query;
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
     }
+
+    public function testFuturesForceOrders()
+    {
+        try  {
+            $this->binance->futuresForceOrders($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->autoCloseType, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+
+        $endpoint = "https://fapi.binance.com/fapi/v1/forceOrders?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->autoCloseType, $params['autoCloseType']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesMyTrades()
+    {
+        try  {
+            $this->binance->futuresMyTrades($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->fromId, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/userTrades?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals($this->fromId, $params['fromId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesHistory()
+    {
+        try  {
+            $this->binance->futuresHistory($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->fromId, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/userTrades?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals($this->fromId, $params['fromId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesSetMarginMode()
+    {
+        try  {
+            $this->binance->futuresSetMarginMode($this->symbol, $this->marginType, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/marginType", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->marginType, $params['marginType']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPositionMode()
+    {
+        try  {
+            $this->binance->futuresPositionMode($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/positionSide/dual?" . $query;
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesSetPositionMode()
+    {
+        try  {
+            $this->binance->futuresSetPositionMode($this->dualSidePosition, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/positionSide/dual", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->dualSidePosition, $params['dualSidePosition']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesSetLeverage()
+    {
+        try  {
+            $this->binance->futuresSetLeverage($this->leverage, $this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/leverage", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->leverage, $params['leverage']);
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesMultiAssetsMarginMode()
+    {
+        try  {
+            $this->binance->futuresMultiAssetsMarginMode($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $query = http_build_query([
+            'recvWindow' => $this->recvWindow,
+        ]);
+        $endpoint = "https://fapi.binance.com/fapi/v1/multiAssetsMargin?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesSetMultiAssetsMarginMode()
+    {
+        try  {
+            $this->binance->futuresSetMultiAssetsMarginMode($this->multiAssetsMarginMode, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/multiAssetsMarginMode", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->multiAssetsMarginMode, $params['multiAssetsMarginMode']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesAddMargin()
+    {
+        try  {
+            $this->binance->futuresAddMargin($this->symbol, $this->amount, $this->positionSide, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/positionMargin";
+        $this->assertEquals($endpoint, self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->amount, $params['amount']);
+        $this->assertEquals($this->positionSide, $params['positionSide']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+        $this->assertEquals(1, $params['type']);
+    }
+
+    public function testFuturesReduceMargin()
+    {
+        try  {
+            $this->binance->futuresReduceMargin($this->symbol, $this->amount, $this->positionSide, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/positionMargin";
+        $this->assertEquals($endpoint, self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->amount, $params['amount']);
+        $this->assertEquals($this->positionSide, $params['positionSide']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+        $this->assertEquals(2, $params['type']);
+    }
+
+    public function testFuturesPositions()
+    {
+        try  {
+            $this->binance->futuresPositions($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v3/positionRisk?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPositionsV2()
+    {
+        try  {
+            $this->binance->futuresPositionsV2($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v2/positionRisk?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPositionsV3()
+    {
+        try  {
+            $this->binance->futuresPositionsV3($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v3/positionRisk?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPosition()
+    {
+        try  {
+            $this->binance->futuresPosition($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v3/positionRisk?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPositionV2()
+    {
+        try  {
+            $this->binance->futuresPositionV2($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v2/positionRisk?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPositionV3()
+    {
+        try  {
+            $this->binance->futuresPositionV3($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v3/positionRisk?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesAdlQuantile()
+    {
+        try  {
+            $this->binance->futuresAdlQuantile($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/adlQuantile?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesPositionMarginChangeHistory()
+    {
+        try  {
+            $this->binance->futuresPositionMarginChangeHistory($this->symbol, $this->startTime, $this->endTime, $this->limit, 'ADD', $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/positionMargin/history?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals(1, $params['addOrReduce']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesAccount()
+    {
+        try  {
+            $this->binance->futuresAccount($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v3/account?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesAccountV2()
+    {
+        try  {
+            $this->binance->futuresAccountV2($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v2/account?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesAccountV3()
+    {
+        try  {
+            $this->binance->futuresAccountV3($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v3/account?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesTradeFee()
+    {
+        try  {
+            $this->binance->futuresTradeFee($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/commissionRate?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesAccountConfig()
+    {
+        try  {
+            $this->binance->futuresAccountConfig($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/accountConfig?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesMarginModes()
+    {
+        try  {
+            $this->binance->futuresMarginModes($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/symbolConfig?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesOrderRateLimit()
+    {
+        try  {
+            $this->binance->futuresOrderRateLimit($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/rateLimit/order?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesLeverages()
+    {
+        try  {
+            $this->binance->futuresLeverages($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/leverageBracket?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesLedger()
+    {
+        try  {
+            $this->binance->futuresLedger($this->symbol, $this->incomeType, $this->startTime, $this->endTime, $this->limit, $this->page, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/income?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->incomeType, $params['incomeType']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->page, $params['page']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesTradingStatus()
+    {
+        try  {
+            $this->binance->futuresTradingStatus($this->symbol, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/apiTradingStatus?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesDownloadIdForTransactions()
+    {
+        try  {
+            $this->binance->futuresDownloadIdForTransactions($this->startTime, $this->endTime, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/income/asyn?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesDownloadTransactionsByDownloadId()
+    {
+        try  {
+            $this->binance->futuresDownloadTransactionsByDownloadId($this->downloadId, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/income/asyn/id?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->downloadId, $params['downloadId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesDownloadIdForOrders()
+    {
+        try  {
+            $this->binance->futuresDownloadIdForOrders($this->startTime, $this->endTime, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/order/asyn?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesDownloadOrdersByDownloadId()
+    {
+        try  {
+            $this->binance->futuresDownloadOrdersByDownloadId($this->downloadId, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/order/asyn/id?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->downloadId, $params['downloadId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesDownloadIdForTrades()
+    {
+        try  {
+            $this->binance->futuresDownloadIdForTrades($this->startTime, $this->endTime, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/trade/asyn?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesDownloadTradesByDownloadId()
+    {
+        try  {
+            $this->binance->futuresDownloadTradesByDownloadId($this->downloadId, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/trade/asyn/id?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->downloadId, $params['downloadId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesFeeBurn()
+    {
+        try  {
+            $this->binance->futuresFeeBurn(true, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/feeBurn", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals('true', $params['feeBurn']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testFuturesFeeBurnStatus()
+    {
+        try  {
+            $this->binance->futuresFeeBurnStatus($this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/feeBurn?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testConvertExchangeInfo()
+    {
+        try  {
+            $this->binance->convertExchangeInfo($this->fromAsset, $this->toAsset);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/convert/exchangeInfo?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->fromAsset, $params['fromAsset']);
+        $this->assertEquals($this->toAsset, $params['toAsset']);
+    }
+
+    public function testConvertSend()
+    {
+        try  {
+            $this->binance->convertSend($this->fromAsset, $this->toAsset, $this->fromAmount, null, $this->validTime, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+            print_r ($e);
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/convert/getQuote", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->fromAsset, $params['fromAsset']);
+        $this->assertEquals($this->toAsset, $params['toAsset']);
+        $this->assertEquals($this->fromAmount, $params['fromAmount']);
+        $this->assertEquals($this->validTime, $params['validTime']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
+    public function testConvertAccept()
+    {
+        try  {
+            $this->binance->convertAccept($this->quoteId, $this->recvWindow);
+
+        } catch (\Throwable $e) {
+
+        }
+        $this->assertEquals("https://fapi.binance.com/fapi/v1/convert/acceptQuote", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals($this->quoteId, $params['quoteId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+        $this->assertEquals($this->params, $params['params']);
+    }
+
+    public function testConvertStatusByOrderId()
+    {
+        try  {
+            $this->binance->convertStatus($this->orderId, null);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/convert/orderStatus?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->orderId, $params['orderId']);
+    }
+
+    public function testConvertStatusByQuoteId()
+    {
+        try  {
+            $this->binance->convertStatus(null, $this->quoteId);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://fapi.binance.com/fapi/v1/convert/orderStatus?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->quoteId, $params['quoteId']);
+    }
 }
