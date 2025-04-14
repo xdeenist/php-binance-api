@@ -274,16 +274,19 @@ class BinanceStaticTests extends TestCase
     public function testSpotMarketQuoteSell()
     {
         try  {
-            $this->binance->marketQuoteSell($this->symbol, 1);
+            $this->binance->marketQuoteSell($this->symbol, '1');
 
         } catch (\Throwable $e) {
 
         }
+        // warns here cuz method needs information fetched by exchangeInfo
         $this->assertEquals("https://api.binance.com/api/v3/order", self::$capturedUrl);
 
         parse_str(self::$capturedBody, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals('SELL', $params['side']);
+        $this->assertEquals('MARKET', $params['type']);
         $this->assertEquals(1, $params['quoteOrderQty']);
         $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX));
     }
@@ -313,12 +316,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
+        // warns here cuz method needs information fetched by exchangeInfo
         $this->assertEquals("https://api.binance.com/api/v3/order", self::$capturedUrl);
 
         parse_str(self::$capturedBody, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
         $this->assertEquals(1, $params['quantity']);
+        $this->assertEquals('SELL', $params['side']);
+        $this->assertEquals('MARKET', $params['type']);
         $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX));
     }
 
@@ -507,9 +513,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query ='symbols=["' . implode('","', $this->symbols) . '"]';
-        $endpoint = "https://api.binance.com/api/v3/exchangeInfo?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://api.binance.com/api/v3/exchangeInfo?";
+        $this->assertTrue(str_starts_with (self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+        $this->assertTrue(!empty($params['symbols']));
+        $symbols = $params['symbols'];
+        $this->assertTrue(str_contains($symbols, $this->symbols[0]));
+        $this->assertTrue(str_contains($symbols, $this->symbols[1]));
     }
 
     public function testAssetDetail()
@@ -623,7 +635,6 @@ class BinanceStaticTests extends TestCase
 
         $this->assertEquals($this->asset, $params['coin']);
         $this->assertEquals($this->network, $params['network']);
-
     }
 
     public function testDepositHistory()
@@ -641,7 +652,6 @@ class BinanceStaticTests extends TestCase
         parse_str($queryString, $params);
 
         $this->assertEquals($this->asset, $params['coin']);
-
     }
 
     public function testWithdrawHistory()
@@ -745,7 +755,6 @@ class BinanceStaticTests extends TestCase
         parse_str($queryString, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
-
     }
 
     public function testSpotBookPrices()
@@ -861,7 +870,6 @@ class BinanceStaticTests extends TestCase
 
         $this->assertEquals($this->symbol, $params['symbol']);
         $this->assertEquals($this->limit, $params['limit']);
-
     }
 
     public function testSpotBalances()
@@ -1046,7 +1054,7 @@ class BinanceStaticTests extends TestCase
     public function testOcoOrder()
     {
         try  {
-            $this->binance->ocoOrder($this->side, $this->symbol, $this->quantity, $this->price, $this->stopprice, $this->stoplimitprice, $this->stoplimittimeinforce);
+            $this->binance->ocoOrder($this->side, $this->symbol, $this->quantity, $this->price, $this->stopprice, $this->stoplimitprice);
 
         } catch (\Throwable $e) {
 
@@ -1062,7 +1070,6 @@ class BinanceStaticTests extends TestCase
         $this->assertEquals($this->stopprice, $params['stopPrice']);
         $this->assertEquals($this->stoplimitprice, $params['stopLimitPrice']);
         $this->assertEquals('GTC', $params['stopLimitTimeInForce']);
-        $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX_ORDER_PREFIX));
     }
 
     public function testSpotAvgPrice()
@@ -1080,7 +1087,6 @@ class BinanceStaticTests extends TestCase
         parse_str($queryString, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
-
     }
 
     public function testBswapQuote()
@@ -1141,7 +1147,6 @@ class BinanceStaticTests extends TestCase
 
         $this->assertEquals($this->symbol, $params['symbol']);
         $this->assertEquals($this->limit, $params['limit']);
-
     }
 
     public function testFuturesRecentTrades()
@@ -1313,7 +1318,6 @@ class BinanceStaticTests extends TestCase
         $this->assertEquals($this->limit, $params['limit']);
         $this->assertEquals($this->startTime, $params['startTime']);
         $this->assertEquals($this->endTime, $params['endTime']);
-
     }
 
     public function testFuturesMarkPrice()
@@ -1428,7 +1432,6 @@ class BinanceStaticTests extends TestCase
         parse_str($queryString, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
-
     }
 
     public function testFuturesSymbolOrderBookTicker()
@@ -1837,8 +1840,8 @@ class BinanceStaticTests extends TestCase
         $this->assertEquals($this->side, $params['side']);
         $this->assertEquals($this->quantity, $params['quantity']);
         $this->assertEquals($this->price, $params['price']);
-        $this->assertEquals($this->paramsId, $params['paramsId']);
-        $this->assertEquals("GTC", $params['timeInForce']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals('GTC', $params['timeInForce']);
     }
 
     public function testFuturesEditOrders()
@@ -1855,7 +1858,7 @@ class BinanceStaticTests extends TestCase
             $this->binance->futuresEditOrders([ $order ], $this->recvWindow);
 
         } catch (\Throwable $e) {
-            print_r($e);
+
         }
         $endpoint = "https://fapi.binance.com/fapi/v1/batchOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
@@ -1923,7 +1926,7 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://fapi.binance.com/fapi/v1/batchOrders?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/batchOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
@@ -1942,7 +1945,7 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://fapi.binance.com/fapi/v1/batchOrders?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/batchOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
@@ -2205,12 +2208,11 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://fapi.binance.com/fapi/v1/positionSide/dual?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/positionSide/dual?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
         parse_str($queryString, $params);
-
         $this->assertEquals($this->recvWindow, $params['recvWindow']);
     }
 
@@ -2822,7 +2824,7 @@ class BinanceStaticTests extends TestCase
             $this->binance->convertSend($this->fromAsset, $this->toAsset, $this->fromAmount, null, $this->validTime, $this->recvWindow);
 
         } catch (\Throwable $e) {
-            print_r ($e);
+
         }
         $this->assertEquals("https://fapi.binance.com/fapi/v1/convert/getQuote", self::$capturedUrl);
 
@@ -2849,7 +2851,6 @@ class BinanceStaticTests extends TestCase
 
         $this->assertEquals($this->quoteId, $params['quoteId']);
         $this->assertEquals($this->recvWindow, $params['recvWindow']);
-        $this->assertEquals($this->params, $params['params']);
     }
 
     public function testConvertStatusByOrderId()
