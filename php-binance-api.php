@@ -3627,11 +3627,11 @@ class API
         if (!isset($this->charts['futures'][$symbol])) {
             $this->charts['futures'][$symbol] = [];
         }
-        if (!isset($this->charts['futures'][$symbol][$type])) {
-            $this->charts['futures'][$symbol][$type] = [];
+        if (!isset($this->charts['futures'][$symbol][$contractType])) {
+            $this->charts['futures'][$symbol][$contractType] = [];
         }
-        if (!isset($this->charts['futures'][$symbol][$type][$interval])) {
-            $this->charts['futures'][$symbol][$type][$interval] = [];
+        if (!isset($this->charts['futures'][$symbol][$contractType][$interval])) {
+            $this->charts['futures'][$symbol][$contractType][$interval] = [];
         }
         $params = [
             'interval' => $interval,
@@ -3800,6 +3800,9 @@ class API
             'fapi' => true,
         ];
         $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        if (!isset($ticker['price'])) {
+            throw new \Exception("No price found for symbol $symbol");
+        }
         return $ticker['price'];
     }
 
@@ -3844,6 +3847,9 @@ class API
             'fapi' => true,
         ];
         $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        if (!isset($ticker['price'])) {
+            throw new \Exception("No price found for symbol $symbol");
+        }
         return $ticker['price'];
     }
 
@@ -6024,6 +6030,8 @@ class API
             'fromAsset' => $fromAsset,
             'toAsset' => $toAsset,
         ];
+        print_r(PHP_EOL);
+        print_r('convertSend' . PHP_EOL);
         if ($fromAmount) {
             $params['fromAmount'] = $fromAmount;
         } else if ($toAmount) {
