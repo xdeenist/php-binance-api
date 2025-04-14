@@ -347,12 +347,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'orderId' => $this->orderid,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/order?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/order?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderid, $params['orderId']);
+
     }
 
     public function testSpotOrderStatus()
@@ -363,12 +366,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'orderId' => $this->orderid,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/order?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/order?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderid, $params['orderId']);
+
     }
 
     public function testSpotOpenOrders()
@@ -379,11 +385,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/openOrders?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/openOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testSpotCancelOpenOrders()
@@ -394,11 +403,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/openOrders?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/openOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testSpotOrders()
@@ -409,13 +421,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'orderId' => $this->fromOrderId,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/allOrders?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/allOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->fromOrderId, $params['orderId']);
+
     }
 
     public function testSpotHistory()
@@ -426,15 +441,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'fromId' => $this->fromTradeId,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/myTrades?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/myTrades?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->fromTradeId, $params['fromId']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testSpotMyTrades()
@@ -445,15 +463,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'fromId' => $this->fromTradeId,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/myTrades?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/myTrades?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->fromTradeId, $params['fromId']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testUseServerTime()
@@ -499,11 +520,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'asset' => $this->asset,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/asset/assetDetail?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/asset/assetDetail?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->asset, $params['asset']);
+
     }
 
     public function testSpotDustLog()
@@ -514,12 +538,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/asset/dribblet?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/asset/dribblet?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testSpotTradeFee()
@@ -530,11 +557,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/asset/tradeFee?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/asset/tradeFee?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testSpotCommissionFee()
@@ -545,11 +575,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/asset/tradeFee?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/asset/tradeFee?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testWithdraw()
@@ -582,12 +615,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'coin' => $this->asset,
-            'network' => $this->network,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/capital/deposit/address?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/capital/deposit/address?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->asset, $params['coin']);
+        $this->assertEquals($this->network, $params['network']);
+
     }
 
     public function testDepositHistory()
@@ -598,11 +634,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'coin' => $this->asset,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/capital/deposit/hisrec?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/capital/deposit/hisrec?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->asset, $params['coin']);
+
     }
 
     public function testWithdrawHistory()
@@ -613,11 +652,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'coin' => $this->asset,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/capital/withdraw/history?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/capital/withdraw/history?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->asset, $params['coin']);
+
     }
 
     public function testWithdrawFee()
@@ -660,18 +702,21 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'type' => $this->type,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'size' => $this->limit,
-            'current' => $this->current,
-            'fromSymbol' => $this->fromSymbol,
-            'toSymbol' => $this->toSymbol,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://api.binance.com/api/v1/asset/transfer?" . $query;
+        $endpoint = "https://api.binance.com/api/v1/asset/transfer?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->type, $params['type']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['size']);
+        $this->assertEquals($this->current, $params['current']);
+        $this->assertEquals($this->fromSymbol, $params['fromSymbol']);
+        $this->assertEquals($this->toSymbol, $params['toSymbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testSpotPrices()
@@ -693,11 +738,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/ticker/price?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://api.binance.com/api/v3/ticker/price?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testSpotBookPrices()
@@ -730,11 +778,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/api/v1/ticker/24hr?" . $query;
+        $endpoint = "https://api.binance.com/api/v1/ticker/24hr?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testSotAggTrades()
@@ -745,11 +796,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/api/v1/aggTrades?" . $query;
+        $endpoint = "https://api.binance.com/api/v1/aggTrades?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testSpotHistoricalTrades()
@@ -760,12 +814,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/trades?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/trades?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+
     }
 
     public function testSpotHistoricalTradesWithTradeId()
@@ -776,13 +833,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'fromId' => $this->tradeId,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/historicalTrades?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/historicalTrades?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->tradeId, $params['fromId']);
+
     }
 
     public function testSpotDepth()
@@ -793,12 +853,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-        ]);
-        $endpoint = "https://api.binance.com/api/v1/depth?" . $query;
+        $endpoint = "https://api.binance.com/api/v1/depth?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+
     }
 
     public function testSpotBalances()
@@ -823,11 +886,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v2/balance?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v2/balance?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesBalancesV3()
@@ -838,11 +904,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v3/balance?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v3/balance?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testCoins()
@@ -864,15 +933,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'interval' => $this->interval,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://api.binance.com/api/v1/klines?" . $query;
+        $endpoint = "https://api.binance.com/api/v1/klines?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->interval, $params['interval']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testSpotAccountSnapshot()
@@ -883,14 +955,17 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'type' => 'SPOT',
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'limit' => $this->nbrDays,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/accountSnapshot?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/accountSnapshot?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals('SPOT', $params['type']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->nbrDays, $params['limit']);
+
     }
 
     public function testMarginAccountSnapshot()
@@ -901,14 +976,17 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'type' => 'MARGIN',
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'limit' => $this->nbrDays,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/accountSnapshot?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/accountSnapshot?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals('MARGIN', $params['type']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->nbrDays, $params['limit']);
+
     }
 
     public function testFuturesAccountSnapshot()
@@ -919,14 +997,17 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'type' => 'FUTURES',
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'limit' => $this->nbrDays,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/accountSnapshot?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/accountSnapshot?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals('FUTURES', $params['type']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->nbrDays, $params['limit']);
+
     }
 
     public function testAccountStatus()
@@ -992,11 +1073,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://api.binance.com/api/v3/avgPrice?" . $query;
+        $endpoint = "https://api.binance.com/api/v3/avgPrice?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testBswapQuote()
@@ -1007,13 +1091,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'quoteAsset' => $this->quoteAsset,
-            'baseAsset' => $this->baseAsset,
-            'quoteQty' => $this->quoteQty,
-        ]);
-        $endpoint = "https://api.binance.com/sapi/v1/bswap/quote?" . $query;
+        $endpoint = "https://api.binance.com/sapi/v1/bswap/quote?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->quoteAsset, $params['quoteAsset']);
+        $this->assertEquals($this->baseAsset, $params['baseAsset']);
+        $this->assertEquals($this->quoteQty, $params['quoteQty']);
+
     }
 
     public function testFuturesTime()
@@ -1046,12 +1133,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/depth?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/depth?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+
     }
 
     public function testFuturesRecentTrades()
@@ -1062,12 +1152,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/trades?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/trades?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+
     }
 
     public function testFuturesHistoricalTrades()
@@ -1078,13 +1171,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'fromId' => $this->tradeId,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/historicalTrades?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/historicalTrades?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->tradeId, $params['fromId']);
+
     }
 
     public function testFuturesAggTrades()
@@ -1095,15 +1191,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'fromId' => $this->fromId,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'limit' => $this->limit,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/aggTrades?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/aggTrades?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->fromId, $params['fromId']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+
     }
 
     public function testFuturesCandlesticks()
@@ -1114,15 +1213,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'interval' => $this->interval,
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/klines?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/klines?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->interval, $params['interval']);
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesContinuousCandlesticks()
@@ -1133,16 +1235,19 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'interval' => $this->interval,
-            'pair' => $this->symbol,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'contractType' => $this->contractType,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/continuousKlines?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/continuousKlines?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->interval, $params['interval']);
+        $this->assertEquals($this->symbol, $params['pair']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->contractType, $params['contractType']);
+
     }
 
     public function testFuturesIndexPriceCandlesticks()
@@ -1153,15 +1258,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'interval' => $this->interval,
-            'pair' => $this->symbol,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/indexPriceKlines?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/indexPriceKlines?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->interval, $params['interval']);
+        $this->assertEquals($this->symbol, $params['pair']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesMarkPriceCandlesticks()
@@ -1172,15 +1280,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'interval' => $this->interval,
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/markPriceKlines?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/markPriceKlines?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->interval, $params['interval']);
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesPremiumIndexCandlesticks()
@@ -1191,15 +1302,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'interval' => $this->interval,
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/premiumIndexKlines?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/premiumIndexKlines?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->interval, $params['interval']);
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesMarkPrice()
@@ -1210,11 +1324,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/premiumIndex?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/premiumIndex?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesFundingRateHistory()
@@ -1225,14 +1342,17 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/fundingRate?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/fundingRate?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesFundingInfo()
@@ -1254,11 +1374,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/ticker/24hr?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/ticker/24hr?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesPrice()
@@ -1269,11 +1392,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/ticker/price?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/ticker/price?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesPrices()
@@ -1295,11 +1421,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v2/ticker/price?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v2/ticker/price?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesSymbolOrderBookTicker()
@@ -1310,11 +1439,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/ticker/bookTicker?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/ticker/bookTicker?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesDeliveryPrice()
@@ -1325,11 +1457,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'pair' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/delivery-price?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/futures/data/delivery-price?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['pair']);
+
     }
 
     public function testFuturesOpenInterest()
@@ -1340,11 +1475,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/openInterest?" . $query;
-        $this->assertEquals(self::$capturedUrl, $endpoint);
+        $endpoint = "https://fapi.binance.com/fapi/v1/openInterest?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesOpenInterestHistory()
@@ -1355,15 +1493,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'period' => $this->period,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/openInterestHist?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/futures/data/openInterestHist?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->period, $params['period']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesTopLongShortPositionRatio()
@@ -1374,15 +1515,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'period' => $this->period,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/topLongShortPositionRatio?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/futures/data/topLongShortPositionRatio?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->period, $params['period']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesTopLongShortAccountRatio()
@@ -1393,15 +1537,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'period' => $this->period,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/topLongShortAccountRatio?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/futures/data/topLongShortAccountRatio?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->period, $params['period']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesGlobalLongShortAccountRatio()
@@ -1412,15 +1559,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'period' => $this->period,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/globalLongShortAccountRatio?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/futures/data/globalLongShortAccountRatio?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->period, $params['period']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesTakerLongShortRatio()
@@ -1431,15 +1581,18 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'period' => $this->period,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/takerlongshortRatio?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/futures/data/takerlongshortRatio?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->period, $params['period']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesBasis()
@@ -1450,16 +1603,19 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'pair' => $this->symbol,
-            'period' => $this->period,
-            'contractType' => $this->contractType,
-            'limit' => $this->limit,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-        ]);
-        $endpoint = "https://fapi.binance.com/futures/data/basis?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/futures/data/basis?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['pair']);
+        $this->assertEquals($this->period, $params['period']);
+        $this->assertEquals($this->contractType, $params['contractType']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+
     }
 
     public function testFuturesIndexInfo()
@@ -1470,11 +1626,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/indexInfo?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/fapi/v1/indexInfo?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesAssetIndex()
@@ -1485,11 +1644,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/assetIndex?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/fapi/v1/assetIndex?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesConstituents()
@@ -1500,11 +1662,14 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/indexInfo?" . $query;
-        $this->assertEquals($endpoint, self::$capturedUrl);
+        $endpoint = "https://fapi.binance.com/fapi/v1/indexInfo?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
     }
 
     public function testFuturesOrder()
@@ -1715,17 +1880,20 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'orderId' => $this->orderId,
-            'origClientOrderId' => $this->origClientOrderId,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'limit' => $this->limit,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/orderAmendment?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/orderAmendment?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals($this->origClientOrderId, $params['origClientOrderId']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesCancel()
@@ -1736,12 +1904,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'orderId' => $this->orderid,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/order?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/order?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderid, $params['orderId']);
+
     }
 
     public function testFuturesCancelBatchOrdersByOrderIds()
@@ -1790,12 +1961,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/allOpenOrders?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/allOpenOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesCountdownCancelAllOrders()
@@ -1823,13 +1997,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'orderId' => $this->orderId,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/order?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/order?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesOrderStatusByClientOrderId()
@@ -1840,13 +2017,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'origClientOrderId' => $this->origClientOrderId,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/order?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/order?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->origClientOrderId, $params['origClientOrderId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesAllOrders()
@@ -1857,16 +2037,19 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'startTime' => $this->startTime,
-            'endTime' => $this->endTime,
-            'limit' => $this->limit,
-            'orderId' => $this->orderId,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/allOrders?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/allOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesOpenOrders()
@@ -1877,12 +2060,15 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/openOrders?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/openOrders?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesOpenOrderByOrderId()
@@ -1893,13 +2079,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'orderId' => $this->orderId,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/openOrder?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/openOrder?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesOpenOrderByClientOrderId()
@@ -1910,13 +2099,16 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'symbol' => $this->symbol,
-            'origClientOrderId' => $this->origClientOrderId,
-            'recvWindow' => $this->recvWindow,
-        ]);
-        $endpoint = "https://fapi.binance.com/fapi/v1/openOrder?" . $query;
+        $endpoint = "https://fapi.binance.com/fapi/v1/openOrder?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->origClientOrderId, $params['origClientOrderId']);
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesForceOrders()
@@ -2063,9 +2255,6 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $query = http_build_query([
-            'recvWindow' => $this->recvWindow,
-        ]);
         $endpoint = "https://fapi.binance.com/fapi/v1/multiAssetsMargin?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
@@ -2073,6 +2262,12 @@ class BinanceStaticTests extends TestCase
         parse_str($queryString, $params);
 
         $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+
     }
 
     public function testFuturesSetMultiAssetsMarginMode()
