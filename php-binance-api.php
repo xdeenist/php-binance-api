@@ -6061,7 +6061,7 @@ class API
         $request = [
             'quoteId' => $quoteId,
         ];
-        return $this->fapiRequest("v1/cconvert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
+        return $this->fapiRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
     }
 
     /**
