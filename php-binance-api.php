@@ -3249,6 +3249,14 @@ class API
     public function avgPrice(string $symbol)
     {
         $ticker = $this->httpRequest("v3/avgPrice", "GET", ["symbol" => $symbol]);
+        if (is_array($ticker) === false) {
+            echo "Error: unable to fetch avg price" . PHP_EOL;
+            $ticker = [];
+        }
+        if (empty($ticker)) {
+            echo "Error: avg price was empty" . PHP_EOL;
+            return null;
+        }
         return $ticker['price'];
     }
 
@@ -3320,11 +3328,12 @@ class API
     public function futuresExchangeInfo()
     {
         if (!$this->futuresExchangeInfo) {
-            $arr = array();
-            $arr['symbols'] = array();
-
             $arr = $this->httpRequest("v1/exchangeInfo", "GET", [ 'fapi' => true ]);
-
+            if ((is_array($arr) === false) || empty($arr)) {
+                echo "Error: unable to fetch futures exchange info" . PHP_EOL;
+                $arr = array();
+                $arr['symbols'] = array();
+            }
             $this->futuresExchangeInfo = $arr;
             $this->futuresExchangeInfo['symbols'] = null;
 
@@ -3369,6 +3378,13 @@ class API
             $params['limit'] = $limit;
         }
         $json = $this->httpRequest("v1/depth", "GET", $params);
+        if (is_array($json) === false) {
+            echo "Error: unable to fetch futures depth" . PHP_EOL;
+        }
+        if (empty($json)) {
+            echo "Error: futures depth were empty" . PHP_EOL;
+            return [];
+        }
         if (isset($this->info[$symbol]) === false) {
             $this->info[$symbol] = [];
             $this->info[$symbol]['futures'] = [];
@@ -3801,7 +3817,8 @@ class API
         ];
         $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
         if (!isset($ticker['price'])) {
-            throw new \Exception("No price found for symbol $symbol");
+            echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
+            return null;
         }
         return $ticker['price'];
     }
@@ -3848,7 +3865,8 @@ class API
         ];
         $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
         if (!isset($ticker['price'])) {
-            throw new \Exception("No price found for symbol $symbol");
+            echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
+            return null;
         }
         return $ticker['price'];
     }
