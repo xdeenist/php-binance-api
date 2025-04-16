@@ -1665,7 +1665,7 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://fapi.binance.com/fapi/v1/indexInfo?";
+        $endpoint = "https://fapi.binance.com/fapi/v1/constituents?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
