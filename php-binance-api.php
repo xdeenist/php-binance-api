@@ -4221,7 +4221,7 @@ class API
             'symbol' => $symbol,
             'fapi' => true,
         ];
-        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
+        return $this->httpRequest("v1/constituents", 'GET', $parameters);
     }
 
     /**
