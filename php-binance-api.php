@@ -1077,6 +1077,7 @@ class API
             'type' => $type,
             'asset' => $asset,
             'amount' => $amount,
+            'sapi' => true,
         ];
         // todo: check this method with real account
         if ($fromSymbol) {
@@ -1115,6 +1116,7 @@ class API
     {
         $params = [
             'type' => $type,
+            'sapi' => true,
         ];
         // todo: check this method with real account
         if ($startTime) {
