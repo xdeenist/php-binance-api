@@ -692,9 +692,6 @@ class API
     {
         if (!$this->exchangeInfo) {
             $arr = array();
-            $arr['symbols'] = array();
-            $parameters = [];
-
             if ($symbols) {
                 if (gettype($symbols) == "string") {
                     $parameters["symbol"] = $symbols;
@@ -706,7 +703,11 @@ class API
             } else {
                 $arr = $this->httpRequest("v3/exchangeInfo");
             }
-
+            if ((is_array($arr) === false) || empty($arr)) {
+                echo "Error: unable to fetch spot exchange info" . PHP_EOL;
+                $arr = array();
+                $arr['symbols'] = array();
+            }
             $this->exchangeInfo = $arr;
             $this->exchangeInfo['symbols'] = null;
 
@@ -921,13 +922,16 @@ class API
         $return = $this->httpRequest("v1/capital/deposit/address", "GET", $params, true);
 
         // Adding for backwards compatibility with wapi
-        $return['asset'] = $return['coin'];
-        $return['addressTag'] = $return['tag'];
-
-        if (!empty($return['address'])) {
-            $return['success'] = 1;
+        if (is_array($return) && !empty($return)) {
+            $return['asset'] = $return['coin'];
+            $return['addressTag'] = $return['tag'];
+            if (!empty($return['address'])) {
+                $return['success'] = 1;
+            } else {
+                $return['success'] = 0;
+            }
         } else {
-            $return['success'] = 0;
+            echo "Error: no deposit address found" . PHP_EOL;
         }
 
         return $return;
@@ -955,8 +959,12 @@ class API
         $return = $this->httpRequest("v1/capital/deposit/hisrec", "GET", $params, true);
 
         // Adding for backwards compatibility with wapi
-        foreach ($return as $key=>$item) {
-            $return[$key]['asset'] = $item['coin'];
+        if (is_array($return) && !empty($return)) {
+            foreach ($return as $key=>$item) {
+                $return[$key]['asset'] = $item['coin'];
+            }
+        } else {
+            echo "Error: no deposit history found" . PHP_EOL;
         }
 
         return $return;
@@ -1091,7 +1099,7 @@ class API
      *
      * @property int $weight 1
      *
-     * @param string $type (optional) type of transfer, e.g. MAIN_MARGIN (@see transfer())
+     * @param string $type (mandatory) type of transfer, e.g. MAIN_MARGIN (@see transfer())
      * @param string $startTime (optional) start time in milliseconds
      * @param string $endTime (optional) end time in milliseconds
      * @param int    $limit (optional) the number of records to return (default 10, max 100)
@@ -1158,7 +1166,10 @@ class API
     public function price(string $symbol)
     {
         $ticker = $this->httpRequest("v3/ticker/price", "GET", ["symbol" => $symbol]);
-
+        if (!isset($ticker['price'])) {
+            echo "Error: unable to fetch price for $symbol" . PHP_EOL;
+            return null;
+        }
         return $ticker['price'];
     }
 
@@ -1283,6 +1294,14 @@ class API
             "symbol" => $symbol,
             "limit" => $limit,
         ]);
+        if (is_array($json) === false) {
+            echo "Error: unable to fetch depth" . PHP_EOL;
+            $json = [];
+        }
+        if (empty($json)) {
+            echo "Error: depth were empty" . PHP_EOL;
+            return $json;
+        }
         if (isset($this->info[$symbol]) === false) {
             $this->info[$symbol] = [];
         }
@@ -3112,7 +3131,7 @@ class API
         if ($startTime > 0)
             $params['startTime'] = $startTime;
         if ($endTime > 0)
-            $params['endTime'] = $startTime;
+            $params['endTime'] = $endTime;
         if ($nbrDays != 5)
             $params['limit'] = $nbrDays;
 
@@ -3249,6 +3268,14 @@ class API
     public function avgPrice(string $symbol)
     {
         $ticker = $this->httpRequest("v3/avgPrice", "GET", ["symbol" => $symbol]);
+        if (is_array($ticker) === false) {
+            echo "Error: unable to fetch avg price" . PHP_EOL;
+            $ticker = [];
+        }
+        if (empty($ticker)) {
+            echo "Error: avg price was empty" . PHP_EOL;
+            return null;
+        }
         return $ticker['price'];
     }
 
@@ -3320,11 +3347,12 @@ class API
     public function futuresExchangeInfo()
     {
         if (!$this->futuresExchangeInfo) {
-            $arr = array();
-            $arr['symbols'] = array();
-
             $arr = $this->httpRequest("v1/exchangeInfo", "GET", [ 'fapi' => true ]);
-
+            if ((is_array($arr) === false) || empty($arr)) {
+                echo "Error: unable to fetch futures exchange info" . PHP_EOL;
+                $arr = array();
+                $arr['symbols'] = array();
+            }
             $this->futuresExchangeInfo = $arr;
             $this->futuresExchangeInfo['symbols'] = null;
 
@@ -3369,6 +3397,14 @@ class API
             $params['limit'] = $limit;
         }
         $json = $this->httpRequest("v1/depth", "GET", $params);
+        if (is_array($json) === false) {
+            echo "Error: unable to fetch futures depth" . PHP_EOL;
+            $json = [];
+        }
+        if (empty($json)) {
+            echo "Error: futures depth were empty" . PHP_EOL;
+            return $json;
+        }
         if (isset($this->info[$symbol]) === false) {
             $this->info[$symbol] = [];
             $this->info[$symbol]['futures'] = [];
@@ -3588,12 +3624,12 @@ class API
     }
 
     /**
-     * futuresPremiumIndexKlines get the candles for the given intervals
+     * futuresPremiumIndexCandlesticks get the candles for the given intervals
      * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
      *
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Premium-Index-Kline-Data
      *
-     * $candles = $api->futuresPremiumIndexKlines("ETHBTC", "5m");
+     * $candles = $api->futuresPremiumIndexCandlesticks("ETHBTC", "5m");
      *
      * @property int $weight 5
      * for limit < 100 - weight 1
@@ -3610,7 +3646,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPremiumIndexKlines(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresPremiumIndexCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
     {
         return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines');
     }
@@ -3627,11 +3663,11 @@ class API
         if (!isset($this->charts['futures'][$symbol])) {
             $this->charts['futures'][$symbol] = [];
         }
-        if (!isset($this->charts['futures'][$symbol][$type])) {
-            $this->charts['futures'][$symbol][$type] = [];
+        if (!isset($this->charts['futures'][$symbol][$contractType])) {
+            $this->charts['futures'][$symbol][$contractType] = [];
         }
-        if (!isset($this->charts['futures'][$symbol][$type][$interval])) {
-            $this->charts['futures'][$symbol][$type][$interval] = [];
+        if (!isset($this->charts['futures'][$symbol][$contractType][$interval])) {
+            $this->charts['futures'][$symbol][$contractType][$interval] = [];
         }
         $params = [
             'interval' => $interval,
@@ -3800,6 +3836,10 @@ class API
             'fapi' => true,
         ];
         $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        if (!isset($ticker['price'])) {
+            echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
+            return null;
+        }
         return $ticker['price'];
     }
 
@@ -3844,6 +3884,10 @@ class API
             'fapi' => true,
         ];
         $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        if (!isset($ticker['price'])) {
+            echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
+            return null;
+        }
         return $ticker['price'];
     }
 
@@ -3943,7 +3987,7 @@ class API
      * symbolPeriodLimitStartEndRequest
      * helper for routing GET methods that require symbol, period, limit, startTime and endTime
      */
-    private function symbolPeriodLimitStartEndContractTypeRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
+    private function symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
     {
         $parameters = [
             'symbol' => $symbol,
@@ -4477,7 +4521,7 @@ class API
      * @return array containing the request
      * @throws \Exception
      */
-    protected function createBatchOrdersRequest(array $orders)
+    protected function createBatchOrdersRequest(array $orders, bool $edit = false)
     {
         $formatedOrders = [];
         for ($index = 0; $index < count($orders); $index++) {
@@ -4491,6 +4535,9 @@ class API
             if (!isset($order['flags'])) {
                 $order['flags'] = [];
             }
+            if (!isset($order['type'])) {
+                $order['type'] = 'LIMIT';
+            }
             $formatedOrder = $this->createFuturesOrderRequest(
                 $order['side'],
                 $order['symbol'],
@@ -4503,11 +4550,15 @@ class API
                 // remove recvWindow from the order
                 unset($formatedOrder['recvWindow']);
             }
-            if (isset($order['orderId'])) {
-                $formatedOrder['orderId'] = $order['orderId'];
-            }
-            if (isset($order['origClientOrderId'])) {
-                $formatedOrder['origClientOrderId'] = $order['origClientOrderId'];
+            if ($edit) {
+                if (isset($order['orderId'])) {
+                    $formatedOrder['orderId'] = $order['orderId'];
+                }
+                if (isset($order['origClientOrderId'])) {
+                    $formatedOrder['origClientOrderId'] = $order['origClientOrderId'];
+                }
+                unset($formatedOrder['type']);
+                unset($formatedOrder['newClientOrderId']);
             }
             $formatedOrders[$index] = $formatedOrder;
         }
@@ -4580,6 +4631,7 @@ class API
             $opt['orderId'] = $orderId;
         }
         unset($opt['type']);
+        unset($opt['newClientOrderId']);
         $opt['fapi'] = true;
         return $this->httpRequest("v1/order", 'PUT', $opt, true);
     }
@@ -4601,14 +4653,13 @@ class API
         $params = [
             'fapi' => true,
         ];
-        $formatedOrders = $this->createBatchOrdersRequest($orders);
+        $formatedOrders = $this->createBatchOrdersRequest($orders, true);
         if ($recvWindow) {
             $params['recvWindow'] = $recvWindow;
         }
         // current endpoint accepts orders list as a json string in the query string
-        $encodedOrders = json_encode($formatedOrders);
-        $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
-        return $this->httpRequest($url, 'PUT', $params, true);
+        $params['batchOrders'] = json_encode($formatedOrders);
+        return $this->httpRequest("v1/batchOrders", 'PUT', $params, true);
     }
 
     /**
@@ -4710,8 +4761,8 @@ class API
             // remove quotes and spaces
             $params['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
         } else if ($origClientOrderIdList) {
-            // remove spaces
-            $params['origClientOrderIdList'] = str_replace(' ', '', json_encode($origClientOrderIdList));
+            // remove spaces between the ids
+            $params['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
         } else {
             throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
         }
@@ -6054,7 +6105,7 @@ class API
         $request = [
             'quoteId' => $quoteId,
         ];
-        return $this->fapiRequest("v1/cconvert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
+        return $this->fapiRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
     }
 
     /**
