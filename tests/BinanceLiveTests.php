@@ -696,4 +696,222 @@ class BinanceLiveTests extends TestCase
         $this->assertArrayHasKey($this->symbol, $res);
         $this->assertIsNumeric($res[$this->symbol]);
     }
+
+    public function testSymbolOrderBookTickerFutures()
+    {
+        $res = $this->futuresBinance->futuresSymbolOrderBookTicker($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('bidPrice', $res);
+        $this->assertIsNumeric($res['bidPrice']);
+        $this->assertArrayHasKey('bidQty', $res);
+        $this->assertIsNumeric($res['bidQty']);
+        $this->assertArrayHasKey('askPrice', $res);
+        $this->assertIsNumeric($res['askPrice']);
+        $this->assertArrayHasKey('askQty', $res);
+        $this->assertIsNumeric($res['askQty']);
+        $this->assertArrayHasKey('time', $res);
+        $this->assertIsInt($res['time']);
+    }
+
+    public function testDeliveryPriceFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresDeliveryPrice($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertIsArray($res[0]);
+        $this->assertArrayHasKey('deliveryTime', $res[0]);
+        $this->assertIsInt($res[0]['deliveryTime']);
+        $this->assertArrayHasKey('deliveryPrice', $res[0]);
+        $this->assertIsNumeric($res[0]['deliveryPrice']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testOpenInterestFutures()
+    {
+        $res = $this->futuresBinance->futuresOpenInterest($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('openInterest', $res);
+        $this->assertIsNumeric($res['openInterest']);
+        $this->assertArrayHasKey('time', $res);
+        $this->assertIsInt($res['time']);
+    }
+
+    public function testOpenInterestHistoryFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresOpenInterestHistory($this->symbol, $this->period, $this->limit);
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('symbol', $entry);
+        $this->assertEquals($this->symbol, $entry['symbol']);
+        $this->assertArrayHasKey('sumOpenInterest', $entry);
+        $this->assertIsNumeric($entry['sumOpenInterest']);
+        $this->assertArrayHasKey('sumOpenInterestValue', $entry);
+        $this->assertIsNumeric($entry['sumOpenInterestValue']);
+        $this->assertArrayHasKey('timestamp', $entry);
+        $this->assertIsInt($entry['timestamp']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testTopLongShortPositionRatioFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresTopLongShortPositionRatio($this->symbol, $this->period, $this->limit);
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('symbol', $entry);
+        $this->assertEquals($this->symbol, $entry['symbol']);
+        $this->assertArrayHasKey('longAccount', $entry);
+        $this->assertIsNumeric($entry['longAccount']);
+        $this->assertArrayHasKey('longShortRatio', $entry);
+        $this->assertIsNumeric($entry['longShortRatio']);
+        $this->assertArrayHasKey('shortAccount', $entry);
+        $this->assertIsNumeric($entry['shortAccount']);
+        $this->assertArrayHasKey('timestamp', $entry);
+        $this->assertIsInt($entry['timestamp']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testTopLongShortAccountRatioFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresTopLongShortAccountRatio($this->symbol, $this->period, $this->limit);
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('symbol', $entry);
+        $this->assertEquals($this->symbol, $entry['symbol']);
+        $this->assertArrayHasKey('longAccount', $entry);
+        $this->assertIsNumeric($entry['longAccount']);
+        $this->assertArrayHasKey('longShortRatio', $entry);
+        $this->assertIsNumeric($entry['longShortRatio']);
+        $this->assertArrayHasKey('shortAccount', $entry);
+        $this->assertIsNumeric($entry['shortAccount']);
+        $this->assertArrayHasKey('timestamp', $entry);
+        $this->assertIsInt($entry['timestamp']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testGlobalLongShortAccountRatioFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresGlobalLongShortAccountRatio($this->symbol, $this->period, $this->limit);
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('symbol', $entry);
+        $this->assertEquals($this->symbol, $entry['symbol']);
+        $this->assertArrayHasKey('longAccount', $entry);
+        $this->assertIsNumeric($entry['longAccount']);
+        $this->assertArrayHasKey('longShortRatio', $entry);
+        $this->assertIsNumeric($entry['longShortRatio']);
+        $this->assertArrayHasKey('shortAccount', $entry);
+        $this->assertIsNumeric($entry['shortAccount']);
+        $this->assertArrayHasKey('timestamp', $entry);
+        $this->assertIsInt($entry['timestamp']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testTakerLongShortRatioFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresTakerLongShortRatio($this->symbol, $this->period, $this->limit);
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('buySellRatio', $entry);
+        $this->assertIsNumeric($entry['buySellRatio']);
+        $this->assertArrayHasKey('sellVol', $entry);
+        $this->assertIsNumeric($entry['sellVol']);
+        $this->assertArrayHasKey('buyVol', $entry);
+        $this->assertIsNumeric($entry['buyVol']);
+        $this->assertArrayHasKey('timestamp', $entry);
+        $this->assertIsInt($entry['timestamp']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testBasisFutures()
+    {
+        $this->futuresBinance->useTestnet = false; // set to false for fapiData request
+        $res = $this->futuresBinance->futuresBasis($this->symbol, $this->period, $this->limit, null, null, $this->contractType);
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('indexPrice', $entry);
+        $this->assertIsNumeric($entry['indexPrice']);
+        $this->assertArrayHasKey('contractType', $entry);
+        $this->assertEquals($this->contractType, $entry['contractType']);
+        $this->assertArrayHasKey('basisRate', $entry);
+        $this->assertIsNumeric($entry['basisRate']);
+        $this->assertArrayHasKey('futuresPrice', $entry);
+        $this->assertIsNumeric($entry['futuresPrice']);
+        $this->assertArrayHasKey('annualizedBasisRate', $entry);
+        $this->assertIsNumeric($entry['annualizedBasisRate']);
+        $this->assertArrayHasKey('basis', $entry);
+        $this->assertIsNumeric($entry['basis']);
+        $this->assertArrayHasKey('pair', $entry);
+        $this->assertEquals($this->symbol, $entry['pair']);
+        $this->assertArrayHasKey('timestamp', $entry);
+        $this->assertIsInt($entry['timestamp']);
+        $this->futuresBinance->useTestnet = true; // reset to true for other tests
+    }
+
+    public function testIndexInfoFutures()
+    {
+        $compositeIndex = 'DEFIUSDT';
+        $res = $this->futuresBinance->futuresIndexInfo($compositeIndex);
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('symbol', $res);
+        $this->assertEquals($compositeIndex, $res['symbol']);
+        $this->assertArrayHasKey('time', $res);
+        $this->assertIsInt($res['time']);
+        $this->assertArrayHasKey('component', $res);
+        $this->assertArrayHasKey('baseAssetList', $res);
+        $this->assertIsArray($res['baseAssetList']);
+    }
+
+    public function testAssetIndexFutures()
+    {
+        $res = $this->futuresBinance->futuresAssetIndex();
+        $this->assertIsArray($res);
+        $entry = $res[0];
+        $this->assertIsArray($entry);
+        $this->assertArrayHasKey('symbol', $entry);
+        $this->assertIsString($entry['symbol']);
+        $this->assertArrayHasKey('time', $entry);
+        $this->assertIsInt($entry['time']);
+        $this->assertArrayHasKey('index', $entry);
+        $this->assertIsNumeric($entry['index']);
+        $this->assertArrayHasKey('bidBuffer', $entry);
+        $this->assertIsNumeric($entry['bidBuffer']);
+        $this->assertArrayHasKey('askBuffer', $entry);
+        $this->assertIsNumeric($entry['askBuffer']);
+        $this->assertArrayHasKey('bidRate', $entry);
+        $this->assertIsNumeric($entry['bidRate']);
+        $this->assertArrayHasKey('askRate', $entry);
+        $this->assertIsNumeric($entry['askRate']);
+        $this->assertArrayHasKey('autoExchangeBidBuffer', $entry);
+        $this->assertIsNumeric($entry['autoExchangeBidBuffer']);
+        $this->assertArrayHasKey('autoExchangeAskBuffer', $entry);
+        $this->assertIsNumeric($entry['autoExchangeAskBuffer']);
+        $this->assertArrayHasKey('autoExchangeBidRate', $entry);
+        $this->assertIsNumeric($entry['autoExchangeBidRate']);
+        $this->assertArrayHasKey('autoExchangeAskRate', $entry);
+        $this->assertIsNumeric($entry['autoExchangeAskRate']);
+    }
+
+    public function testConstituentsFutures()
+    {
+        $res = $this->futuresBinance->futuresConstituents($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('time', $res);
+        $this->assertIsInt($res['time']);
+        $this->assertArrayHasKey('constituents', $res);
+        $this->assertIsArray($res['constituents']);
+    }
 }
