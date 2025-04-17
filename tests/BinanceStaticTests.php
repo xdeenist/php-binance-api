@@ -692,7 +692,7 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $this->assertEquals("https://api.binance.com/api/v1/asset/transfer", self::$capturedUrl);
+        $this->assertEquals("https://api.binance.com/sapi/v1/asset/transfer", self::$capturedUrl);
 
         parse_str(self::$capturedBody, $params);
 
@@ -712,7 +712,7 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://api.binance.com/api/v1/asset/transfer?";
+        $endpoint = "https://api.binance.com/sapi/v1/asset/transfer?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
@@ -1665,7 +1665,7 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://fapi.binance.com/fapi/v1/indexInfo?";
+        $endpoint = "https://fapi.binance.com/fapi/v1/constituents?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
