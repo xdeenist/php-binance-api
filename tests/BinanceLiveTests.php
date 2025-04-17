@@ -1014,4 +1014,343 @@ class BinanceLiveTests extends TestCase
         $res = $this->futuresBinance->futuresPositionV3($this->symbol);
         $this->assertIsArray($res);
     }
+
+    public function testAdlQuantileFutures()
+    {
+        $res = $this->futuresBinance->futuresAdlQuantile($this->symbol, $this->recvWindow);
+        $this->assertIsArray($res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('adlQuantile', $res);
+        $this->assertIsArray($res['adlQuantile']);
+    }
+
+    public function testPositionMarginChangeHistoryFutures()
+    {
+        $res = $this->futuresBinance->futuresPositionMarginChangeHistory($this->symbol);
+        $this->assertIsArray($res);
+    }
+
+    public function testBalancesFutures()
+    {
+        $res = $this->futuresBinance->futuresBalances();
+        $this->assertIsArray($res);
+        $firstKey = array_key_first($res);
+        $this->assertIsString($firstKey);
+        $firstValue = $res[$firstKey];
+        $this->assertIsArray($firstValue);
+        $this->assertArrayHasKey('available', $firstValue);
+        $this->assertIsNumeric($firstValue['available']);
+        $this->assertArrayHasKey('onOrder', $firstValue);
+        $this->assertIsNumeric($firstValue['onOrder']);
+        $this->assertArrayHasKey('total', $firstValue);
+        $this->assertIsNumeric($firstValue['total']);
+        $this->assertArrayHasKey('info', $firstValue);
+        $info = $firstValue['info'];
+        $this->assertIsArray($info);
+        $this->assertArrayHasKey('accountAlias', $info);
+        $this->assertIsString($info['accountAlias']);
+        $this->assertArrayHasKey('asset', $info);
+        $this->assertIsString($info['asset']);
+        $this->assertArrayHasKey('balance', $info);
+        $this->assertIsNumeric($info['balance']);
+        $this->assertArrayHasKey('crossWalletBalance', $info);
+        $this->assertIsNumeric($info['crossWalletBalance']);
+        $this->assertArrayHasKey('crossUnPnl', $info);
+        $this->assertIsNumeric($info['crossUnPnl']);
+        $this->assertArrayHasKey('availableBalance', $info);
+        $this->assertIsNumeric($info['availableBalance']);
+        $this->assertArrayHasKey('maxWithdrawAmount', $info);
+        $this->assertIsNumeric($info['maxWithdrawAmount']);
+        $this->assertArrayHasKey('marginAvailable', $info);
+        $this->assertIsBool($info['marginAvailable']);
+        $this->assertArrayHasKey('updateTime', $info);
+        $this->assertIsInt($info['updateTime']);
+    }
+
+    public function testBalancesV2Futures()
+    {
+        $res = $this->futuresBinance->futuresBalancesV2();
+        $this->assertIsArray($res);
+        $firstKey = array_key_first($res);
+        $this->assertIsString($firstKey);
+        $firstValue = $res[$firstKey];
+        $this->assertIsArray($firstValue);
+        $this->assertArrayHasKey('available', $firstValue);
+        $this->assertIsNumeric($firstValue['available']);
+        $this->assertArrayHasKey('onOrder', $firstValue);
+        $this->assertIsNumeric($firstValue['onOrder']);
+        $this->assertArrayHasKey('total', $firstValue);
+        $this->assertIsNumeric($firstValue['total']);
+        $this->assertArrayHasKey('info', $firstValue);
+        $info = $firstValue['info'];
+        $this->assertIsArray($info);
+        $this->assertArrayHasKey('accountAlias', $info);
+        $this->assertIsString($info['accountAlias']);
+        $this->assertArrayHasKey('asset', $info);
+        $this->assertIsString($info['asset']);
+        $this->assertArrayHasKey('balance', $info);
+        $this->assertIsNumeric($info['balance']);
+        $this->assertArrayHasKey('crossWalletBalance', $info);
+        $this->assertIsNumeric($info['crossWalletBalance']);
+        $this->assertArrayHasKey('crossUnPnl', $info);
+        $this->assertIsNumeric($info['crossUnPnl']);
+        $this->assertArrayHasKey('availableBalance', $info);
+        $this->assertIsNumeric($info['availableBalance']);
+        $this->assertArrayHasKey('maxWithdrawAmount', $info);
+        $this->assertIsNumeric($info['maxWithdrawAmount']);
+        $this->assertArrayHasKey('marginAvailable', $info);
+        $this->assertIsBool($info['marginAvailable']);
+        $this->assertArrayHasKey('updateTime', $info);
+        $this->assertIsInt($info['updateTime']);
+    }
+
+    public function testBalancesV3Futures()
+    {
+        $res = $this->futuresBinance->futuresBalancesV3();
+        $this->assertIsArray($res);
+        $firstKey = array_key_first($res);
+        $this->assertIsString($firstKey);
+        $firstValue = $res[$firstKey];
+        $this->assertIsArray($firstValue);
+        $this->assertArrayHasKey('available', $firstValue);
+        $this->assertIsNumeric($firstValue['available']);
+        $this->assertArrayHasKey('onOrder', $firstValue);
+        $this->assertIsNumeric($firstValue['onOrder']);
+        $this->assertArrayHasKey('total', $firstValue);
+        $this->assertIsNumeric($firstValue['total']);
+        $this->assertArrayHasKey('info', $firstValue);
+        $info = $firstValue['info'];
+        $this->assertIsArray($info);
+        $this->assertArrayHasKey('accountAlias', $info);
+        $this->assertIsString($info['accountAlias']);
+        $this->assertArrayHasKey('asset', $info);
+        $this->assertIsString($info['asset']);
+        $this->assertArrayHasKey('balance', $info);
+        $this->assertIsNumeric($info['balance']);
+        $this->assertArrayHasKey('crossWalletBalance', $info);
+        $this->assertIsNumeric($info['crossWalletBalance']);
+        $this->assertArrayHasKey('crossUnPnl', $info);
+        $this->assertIsNumeric($info['crossUnPnl']);
+        $this->assertArrayHasKey('availableBalance', $info);
+        $this->assertIsNumeric($info['availableBalance']);
+        $this->assertArrayHasKey('maxWithdrawAmount', $info);
+        $this->assertIsNumeric($info['maxWithdrawAmount']);
+        $this->assertArrayHasKey('marginAvailable', $info);
+        $this->assertIsBool($info['marginAvailable']);
+        $this->assertArrayHasKey('updateTime', $info);
+        $this->assertIsInt($info['updateTime']);
+    }
+
+    public function testAccountFutures()
+    {
+        $res = $this->futuresBinance->futuresAccount();
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('totalInitialMargin', $res);
+        $this->assertIsNumeric($res['totalInitialMargin']);
+        $this->assertArrayHasKey('totalMaintMargin', $res);
+        $this->assertIsNumeric($res['totalMaintMargin']);
+        $this->assertArrayHasKey('totalWalletBalance', $res);
+        $this->assertIsNumeric($res['totalWalletBalance']);
+        $this->assertArrayHasKey('totalUnrealizedProfit', $res);
+        $this->assertIsNumeric($res['totalUnrealizedProfit']);
+        $this->assertArrayHasKey('totalMarginBalance', $res);
+        $this->assertIsNumeric($res['totalMarginBalance']);
+        $this->assertArrayHasKey('totalPositionInitialMargin', $res);
+        $this->assertIsNumeric($res['totalPositionInitialMargin']);
+        $this->assertArrayHasKey('totalOpenOrderInitialMargin', $res);
+        $this->assertIsNumeric($res['totalOpenOrderInitialMargin']);
+        $this->assertArrayHasKey('totalCrossWalletBalance', $res);
+        $this->assertIsNumeric($res['totalCrossWalletBalance']);
+        $this->assertArrayHasKey('totalCrossUnPnl', $res);
+        $this->assertIsNumeric($res['totalCrossUnPnl']);
+        $this->assertArrayHasKey('availableBalance', $res);
+        $this->assertIsNumeric($res['availableBalance']);
+        $this->assertArrayHasKey('maxWithdrawAmount', $res);
+        $this->assertIsNumeric($res['maxWithdrawAmount']);
+        $this->assertArrayHasKey('assets', $res);
+        $this->assertIsArray($res['assets']);
+        $this->assertArrayHasKey('positions', $res);
+        $this->assertIsArray($res['positions']);
+    }
+
+    public function testAccountV2Futures()
+    {
+        $res = $this->futuresBinance->futuresAccountV2($this->recvWindow);
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('totalInitialMargin', $res);
+        $this->assertIsNumeric($res['totalInitialMargin']);
+        $this->assertArrayHasKey('totalMaintMargin', $res);
+        $this->assertIsNumeric($res['totalMaintMargin']);
+        $this->assertArrayHasKey('totalWalletBalance', $res);
+        $this->assertIsNumeric($res['totalWalletBalance']);
+        $this->assertArrayHasKey('totalUnrealizedProfit', $res);
+        $this->assertIsNumeric($res['totalUnrealizedProfit']);
+        $this->assertArrayHasKey('totalMarginBalance', $res);
+        $this->assertIsNumeric($res['totalMarginBalance']);
+        $this->assertArrayHasKey('totalPositionInitialMargin', $res);
+        $this->assertIsNumeric($res['totalPositionInitialMargin']);
+        $this->assertArrayHasKey('totalOpenOrderInitialMargin', $res);
+        $this->assertIsNumeric($res['totalOpenOrderInitialMargin']);
+        $this->assertArrayHasKey('totalCrossWalletBalance', $res);
+        $this->assertIsNumeric($res['totalCrossWalletBalance']);
+        $this->assertArrayHasKey('totalCrossUnPnl', $res);
+        $this->assertIsNumeric($res['totalCrossUnPnl']);
+        $this->assertArrayHasKey('availableBalance', $res);
+        $this->assertIsNumeric($res['availableBalance']);
+        $this->assertArrayHasKey('maxWithdrawAmount', $res);
+        $this->assertIsNumeric($res['maxWithdrawAmount']);
+        $this->assertArrayHasKey('assets', $res);
+        $this->assertIsArray($res['assets']);
+        $this->assertArrayHasKey('positions', $res);
+        $this->assertIsArray($res['positions']);
+    }
+
+    public function testAccountV3Futures()
+    {
+        $res = $this->futuresBinance->futuresAccountV3($this->recvWindow);
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('totalInitialMargin', $res);
+        $this->assertIsNumeric($res['totalInitialMargin']);
+        $this->assertArrayHasKey('totalMaintMargin', $res);
+        $this->assertIsNumeric($res['totalMaintMargin']);
+        $this->assertArrayHasKey('totalWalletBalance', $res);
+        $this->assertIsNumeric($res['totalWalletBalance']);
+        $this->assertArrayHasKey('totalUnrealizedProfit', $res);
+        $this->assertIsNumeric($res['totalUnrealizedProfit']);
+        $this->assertArrayHasKey('totalMarginBalance', $res);
+        $this->assertIsNumeric($res['totalMarginBalance']);
+        $this->assertArrayHasKey('totalPositionInitialMargin', $res);
+        $this->assertIsNumeric($res['totalPositionInitialMargin']);
+        $this->assertArrayHasKey('totalOpenOrderInitialMargin', $res);
+        $this->assertIsNumeric($res['totalOpenOrderInitialMargin']);
+        $this->assertArrayHasKey('totalCrossWalletBalance', $res);
+        $this->assertIsNumeric($res['totalCrossWalletBalance']);
+        $this->assertArrayHasKey('totalCrossUnPnl', $res);
+        $this->assertIsNumeric($res['totalCrossUnPnl']);
+        $this->assertArrayHasKey('availableBalance', $res);
+        $this->assertIsNumeric($res['availableBalance']);
+        $this->assertArrayHasKey('maxWithdrawAmount', $res);
+        $this->assertIsNumeric($res['maxWithdrawAmount']);
+        $this->assertArrayHasKey('assets', $res);
+        $this->assertIsArray($res['assets']);
+        $this->assertArrayHasKey('positions', $res);
+        $this->assertIsArray($res['positions']);
+    }
+
+    public function testTradeFeeFutures()
+    {
+        $res = $this->futuresBinance->futuresTradeFee($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('symbol', $res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('makerCommissionRate', $res);
+        $this->assertIsNumeric($res['makerCommissionRate']);
+        $this->assertArrayHasKey('takerCommissionRate', $res);
+        $this->assertIsNumeric($res['takerCommissionRate']);
+    }
+
+    public function testAccountConfigFutures()
+    {
+        $res = $this->futuresBinance->futuresAccountConfig();
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('feeTier', $res);
+        $this->assertIsInt($res['feeTier']);
+        $this->assertArrayHasKey('canTrade', $res);
+        $this->assertIsBool($res['canTrade']);
+        $this->assertArrayHasKey('canDeposit', $res);
+        $this->assertIsBool($res['canDeposit']);
+        $this->assertArrayHasKey('canWithdraw', $res);
+        $this->assertIsBool($res['canWithdraw']);
+        $this->assertArrayHasKey('dualSidePosition', $res);
+        $this->assertIsBool($res['dualSidePosition']);
+        $this->assertArrayHasKey('updateTime', $res);
+        $this->assertIsInt($res['updateTime']);
+        $this->assertArrayHasKey('multiAssetsMargin', $res);
+        $this->assertIsBool($res['multiAssetsMargin']);
+        $this->assertArrayHasKey('tradeGroupId', $res);
+    }
+
+    public function testMarginModesFutures()
+    {
+        $res = $this->futuresBinance->futuresMarginModes($this->symbol);
+        $this->assertIsArray($res);
+        $firstEntry = $res[0];
+        $this->assertIsArray($firstEntry);
+        $this->assertArrayHasKey('symbol', $firstEntry);
+        $this->assertEquals($this->symbol, $firstEntry['symbol']);
+        $this->assertArrayHasKey('marginType', $firstEntry);
+        $this->assertIsString($firstEntry['marginType']);
+        $this->assertArrayHasKey('isAutoAddMargin', $firstEntry);
+        $this->assertIsBool($firstEntry['isAutoAddMargin']);
+        $this->assertArrayHasKey('leverage', $firstEntry);
+        $this->assertIsNumeric($firstEntry['leverage']);
+        $this->assertArrayHasKey('maxNotionalValue', $firstEntry);
+        $this->assertIsNumeric($firstEntry['maxNotionalValue']);
+    }
+
+    public function testOrderRateLimitFutures()
+    {
+        $res = $this->futuresBinance->futuresOrderRateLimit();
+        $this->assertIsArray($res);
+        $firstEntry = $res[0];
+        $this->assertIsArray($firstEntry);
+        $this->assertArrayHasKey('rateLimitType', $firstEntry);
+        $this->assertEquals('ORDERS', $firstEntry['rateLimitType']);
+        $this->assertArrayHasKey('interval', $firstEntry);
+        $this->assertIsString($firstEntry['interval']);
+        $this->assertArrayHasKey('intervalNum', $firstEntry);
+        $this->assertIsNumeric($firstEntry['intervalNum']);
+        $this->assertArrayHasKey('limit', $firstEntry);
+        $this->assertIsInt($firstEntry['limit']);
+    }
+
+    public function testLeveragesFutures()
+    {
+        $res = $this->futuresBinance->futuresLeverages($this->symbol);
+        $this->assertIsArray($res);
+        $firstEntry = $res[0];
+        $this->assertIsArray($firstEntry);
+        $this->assertArrayHasKey('symbol', $firstEntry);
+        $this->assertEquals($this->symbol, $firstEntry['symbol']);
+        $this->assertArrayHasKey('brackets', $firstEntry);
+        $this->assertIsArray($firstEntry['brackets']);
+        $firstBracket = $firstEntry['brackets'][0];
+        $this->assertIsArray($firstBracket);
+        $this->assertArrayHasKey('bracket', $firstBracket);
+        $this->assertIsInt($firstBracket['bracket']);
+        $this->assertArrayHasKey('initialLeverage', $firstBracket);
+        $this->assertIsNumeric($firstBracket['initialLeverage']);
+        $this->assertArrayHasKey('notionalCap', $firstBracket);
+        $this->assertIsNumeric($firstBracket['notionalCap']);
+        $this->assertArrayHasKey('notionalFloor', $firstBracket);
+        $this->assertIsNumeric($firstBracket['notionalFloor']);
+        $this->assertArrayHasKey('maintMarginRatio', $firstBracket);
+        $this->assertIsNumeric($firstBracket['maintMarginRatio']);
+        $this->assertArrayHasKey('cum', $firstBracket);
+        $this->assertIsNumeric($firstBracket['cum']);
+    }
+
+    public function testLedgerFutures()
+    {
+        $res = $this->futuresBinance->futuresLedger();
+        $this->assertIsArray($res);
+    }
+
+    public function testTradingStatusFutures()
+    {
+        $res = $this->futuresBinance->futuresTradingStatus();
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('indicators', $res);
+        $this->assertIsArray($res['indicators']);
+        $this->assertArrayHasKey('updateTime', $res);
+        $this->assertIsInt($res['updateTime']);
+    }
+
+    public function testFeeBurnStatusFutures()
+    {
+        $res = $this->futuresBinance->futuresFeeBurnStatus();
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('feeBurn', $res);
+        $this->assertIsBool($res['feeBurn']);
+    }
 }
