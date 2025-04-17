@@ -728,16 +728,16 @@ class BinanceLiveTests extends TestCase
     //     $this->futuresBinance->useTestnet = true; // reset to true for other tests
     // }
 
-    public function testOpenInterestFutures()
-    {
-        $res = $this->futuresBinance->futuresOpenInterest($this->symbol);
-        $this->assertIsArray($res);
-        $this->assertEquals($this->symbol, $res['symbol']);
-        $this->assertArrayHasKey('openInterest', $res);
-        $this->assertIsNumeric($res['openInterest']);
-        $this->assertArrayHasKey('time', $res);
-        $this->assertIsInt($res['time']);
-    }
+    // public function testOpenInterestFutures()
+    // {
+    //     $res = $this->futuresBinance->futuresOpenInterest($this->symbol); // for now the exchange returns null
+    //     $this->assertIsArray($res);
+    //     $this->assertEquals($this->symbol, $res['symbol']);
+    //     $this->assertArrayHasKey('openInterest', $res);
+    //     $this->assertIsNumeric($res['openInterest']);
+    //     $this->assertArrayHasKey('time', $res);
+    //     $this->assertIsInt($res['time']);
+    // }
 
     // public function testOpenInterestHistoryFutures() // Could throw an error if useTestnet is set to false
     // {
