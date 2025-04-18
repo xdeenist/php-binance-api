@@ -503,13 +503,13 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function cancel(string $symbol, $orderid, $params = [])
+    public function cancel(string $symbol, string $orderid, $params = [])
     {
-        $params = [
+        $request = [
             "symbol" => $symbol,
             "orderId" => $orderid,
         ];
-        return $this->httpRequest("v3/order", "DELETE", array_merge($params, $params), true);
+        return $this->spotRequest("v3/order", "DELETE", array_merge($request, $params), true);
     }
 
     /**
@@ -523,12 +523,13 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function orderStatus(string $symbol, $orderid)
+    public function orderStatus(string $symbol, string $orderid, array $params = [])
     {
-        return $this->httpRequest("v3/order", "GET", [
+        $request = [
             "symbol" => $symbol,
             "orderId" => $orderid,
-        ], true);
+        ];
+        return $this->spotRequest("v3/order", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -541,15 +542,15 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function openOrders(string $symbol = null)
+    public function openOrders($symbol = null, array $params = [])
     {
-        $params = [];
+        $request = [];
         if (is_null($symbol) != true) {
-            $params = [
+            $request = [
                 "symbol" => $symbol,
             ];
         }
-        return $this->httpRequest("v3/openOrders", "GET", $params, true);
+        return $this->spotRequest("v3/openOrders", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -559,15 +560,15 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function cancelOpenOrders(string $symbol = null)
+    public function cancelOpenOrders($symbol = null, array $params = [])
     {
-        $params = [];
+        $request = [];
         if (is_null($symbol) != true) {
-            $params = [
+            $request = [
                 "symbol" => $symbol,
             ];
         }
-        return $this->httpRequest("v3/openOrders", "DELETE", $params, true);
+        return $this->spotRequest("v3/openOrders", "DELETE", array_merge($request, $params), true);
     }
 
     /**
@@ -584,12 +585,14 @@ class API
      */
     public function orders(string $symbol, int $limit = 500, int $fromOrderId = 0, array $params = [])
     {
-        $params["symbol"] = $symbol;
-        $params["limit"] = $limit;
+        $request = [
+            "symbol" => $symbol,
+            "limit" => $limit,
+        ];
         if ($fromOrderId) {
-            $params["orderId"] = $fromOrderId;
+            $request["orderId"] = $fromOrderId;
         }
-        return $this->httpRequest("v3/allOrders", "GET", $params, true);
+        return $this->spotRequest("v3/allOrders", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -609,23 +612,23 @@ class API
      * @return array with error message or array of orderDetails array
      * @throws \Exception
      */
-    public function history(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null)
+    public function history(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             "symbol" => $symbol,
             "limit" => $limit,
         ];
         if ($fromTradeId > 0) {
-            $parameters["fromId"] = $fromTradeId;
+            $request["fromId"] = $fromTradeId;
         }
         if (isset($startTime)) {
-            $parameters["startTime"] = $startTime;
+            $request["startTime"] = $startTime;
         }
         if (isset($endTime)) {
-            $parameters["endTime"] = $endTime;
+            $request["endTime"] = $endTime;
         }
 
-        return $this->httpRequest("v3/myTrades", "GET", $parameters, true);
+        return $this->spotRequest("v3/myTrades", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -636,9 +639,9 @@ class API
      * @return array with error message or array of orderDetails array
      * @throws \Exception
      */
-    public function myTrades(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null)
+    public function myTrades(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null, array $params = [])
     {
-        return $this->history($symbol, $limit, $fromTradeId, $startTime, $endTime);
+        return $this->history($symbol, $limit, $fromTradeId, $startTime, $endTime, $params);
     }
 
     /**
@@ -649,9 +652,9 @@ class API
      * @return null
      * @throws \Exception
      */
-    public function useServerTime()
+    public function useServerTime(array $params = [])
     {
-        $request = $this->httpRequest("v3/time");
+        $request = $this->spotRequest("v3/time", "GET", $params);
         if (isset($request['serverTime'])) {
             $this->info['timeOffset'] = $request['serverTime'] - (microtime(true) * 1000);
         }
@@ -665,9 +668,9 @@ class API
      * @return array with error message or array with server time key
      * @throws \Exception
      */
-    public function time()
+    public function time(array $params = [])
     {
-        return $this->httpRequest("v3/time");
+        return $this->spotRequest("v3/time", "GET", $params);
     }
 
     /**
@@ -688,20 +691,20 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function exchangeInfo($symbols = null)
+    public function exchangeInfo($symbols = null, array $params = [])
     {
         if (!$this->exchangeInfo) {
             $arr = array();
             if ($symbols) {
                 if (gettype($symbols) == "string") {
-                    $parameters["symbol"] = $symbols;
-                    $arr = $this->httpRequest("v3/exchangeInfo", "GET", $parameters);
+                    $request["symbol"] = $symbols;
+                    $arr = $this->spotRequest("v3/exchangeInfo", "GET", array_merge($request, $params));
                 }
                 if (gettype($symbols) == "array")  {
-                    $arr = $this->httpRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]');
+                    $arr = $this->spotRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]', "GET", $params);
                 }
             } else {
-                $arr = $this->httpRequest("v3/exchangeInfo");
+                $arr = $this->spotRequest("v3/exchangeInfo", "GET", $params);
             }
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch spot exchange info" . PHP_EOL;
@@ -730,12 +733,12 @@ class API
      *
      * @return array containing the response
      */
-    public function assetDetail($asset = '')
+    public function assetDetail($asset = '', array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if ($asset != '' && gettype($asset) == 'string')
-            $params['asset'] = $asset;
-        $arr = $this->httpRequest("v1/asset/assetDetail", 'GET', $params, true);
+            $request['asset'] = $asset;
+        $arr = $this->spotWalletRequest("v1/asset/assetDetail", 'GET', array_merge($request, $params), true);
         // if asset was set, no backward compatibility needed as this was implemented later
         if (isset($params['asset']))
             return $arr;
@@ -779,15 +782,15 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function dustLog($startTime = NULL, $endTime = NULL)
+    public function dustLog($startTime = NULL, $endTime = NULL, array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if (!empty($startTime) && !empty($endTime)) {
-            $params['startTime'] = $startTime;
-            $params['endTime'] = $endTime;
+            $request['startTime'] = $startTime;
+            $request['endTime'] = $endTime;
         }
 
-        return $this->httpRequest("v1/asset/dribblet", 'GET', $params, true);
+        return $this->spotWalletRequest("v1/asset/dribblet", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -802,12 +805,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function dustTransfer($assets)
+    public function dustTransfer($assets, array $params = [])
     {
-        $params["sapi"] = true;
-        $params["asset"] = $assets;
+        $request = [
+            'assets' => $assets,
+        ];
 
-        return $this->httpRequest("v1/asset/dust", 'POST', $params, true);
+        return $this->spotWalletRequest("v1/asset/dust", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -818,13 +822,12 @@ class API
      * @param string $symbol
      * @return mixed
      */
-    public function tradeFee(string $symbol)
+    public function tradeFee(string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             "symbol" => $symbol,
-            "sapi" => true,
         ];
-        return $this->httpRequest("v1/asset/tradeFee", 'GET', $params, true);
+        return $this->spotWalletRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -839,13 +842,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function commissionFee($symbol = '')
+    public function commissionFee($symbol = '', array $params = [])
     {
-        $params = array('sapi' => true);
+        $request = array();
         if ($symbol != '' && gettype($symbol) == 'string')
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
 
-        return $this->httpRequest("v1/asset/tradeFee", 'GET', $params, true);
+        return $this->spotWalletRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -870,7 +873,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function withdraw(string $asset, string $address, $amount, $addressTag = null, $addressName = "", bool $transactionFeeFlag = false, $network = null, $orderId = null)
+    public function withdraw(string $asset, string $address, $amount, $addressTag = null, $addressName = "", bool $transactionFeeFlag = false, $network = null, $orderId = null, array $params = [])
     {
         $request = [
             "coin" => $asset,
@@ -893,7 +896,7 @@ class API
         if (is_null($orderId) === false && empty($orderId) === false) {
             $request['withdrawOrderId'] = $orderId;
         }
-        return $this->httpRequest("v1/capital/withdraw/apply", "POST", $request, true);
+        return $this->spotWalletRequest("v1/capital/withdraw/apply", "POST", array_merge($request, $params), true);
     }
 
     /**
@@ -909,17 +912,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function depositAddress(string $asset, $network = null)
+    public function depositAddress(string $asset, $network = null, array $params = [])
     {
-        $params = [
-            "sapi" => true,
+        $request = [
             "coin" => $asset,
         ];
         if (is_null($network) === false && empty($network) === false) {
-            $params['network'] = $network;
+            $request['network'] = $network;
         }
 
-        $return = $this->httpRequest("v1/capital/deposit/address", "GET", $params, true);
+        $return = $this->spotWalletRequest("v1/capital/deposit/address", "GET", array_merge($request, $params), true);
 
         // Adding for backwards compatibility with wapi
         if (is_array($return) && !empty($return)) {
@@ -952,11 +954,11 @@ class API
      */
     public function depositHistory(string $asset = null, array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if (is_null($asset) === false) {
-            $params['coin'] = $asset;
+            $request['coin'] = $asset;
         }
-        $return = $this->httpRequest("v1/capital/deposit/hisrec", "GET", $params, true);
+        $return = $this->spotWalletRequest("v1/capital/deposit/hisrec", "GET", array_merge($request, $params), true);
 
         // Adding for backwards compatibility with wapi
         if (is_array($return) && !empty($return)) {
@@ -986,13 +988,13 @@ class API
      */
     public function withdrawHistory(string $asset = null, array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if (is_null($asset) === false) {
-            $params['coin'] = $asset;
+            $request['coin'] = $asset;
         }
         // Wrapping in array for backwards compatibility with wapi
         $return = array(
-            'withdrawList' => $this->httpRequest("v1/capital/withdraw/history", "GET", $params, true)
+            'withdrawList' => $this->spotWalletRequest("v1/capital/withdraw/history", "GET", array_merge($request, $params), true)
             );
 
         // Adding for backwards compatibility with wapi
@@ -1011,9 +1013,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function withdrawFee(string $asset)
+    public function withdrawFee(string $asset, array $params = [])
     {
-        $return = $this->assetDetail();
+        $return = $this->assetDetail('', $params);
 
         if (isset($return['success'], $return['assetDetail'], $return['assetDetail'][$asset]) && $return['success']) {
             return $return['assetDetail'][$asset];
@@ -1071,26 +1073,25 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, int $recvWindow = null)
+    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, int $recvWindow = null, array $params = [])
     {
-        $params = [
+        $request = [
             'type' => $type,
             'asset' => $asset,
             'amount' => $amount,
-            'sapi' => true,
         ];
         // todo: check this method with real account
         if ($fromSymbol) {
-            $params['fromSymbol'] = $fromSymbol;
+            $request['fromSymbol'] = $fromSymbol;
         }
         if ($toSymbol) {
-            $params['toSymbol'] = $toSymbol;
+            $request['toSymbol'] = $toSymbol;
         }
         if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
+            $request['recvWindow'] = $recvWindow;
         }
 
-        return $this->httpRequest("v1/asset/transfer", 'POST', $params, true);
+        return $this->spotWalletRequest("v1/asset/transfer", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -1112,36 +1113,35 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, $recvWindow = null)
+    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, $recvWindow = null, array $params = [])
     {
-        $params = [
+        $request = [
             'type' => $type,
-            'sapi' => true,
         ];
         // todo: check this method with real account
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['size'] = $limit;
+            $request['size'] = $limit;
         }
         if ($current) {
-            $params['current'] = $current;
+            $request['current'] = $current;
         }
         if ($fromSymbol) {
-            $params['fromSymbol'] = $fromSymbol;
+            $request['fromSymbol'] = $fromSymbol;
         }
         if ($toSymbol) {
-            $params['toSymbol'] = $toSymbol;
+            $request['toSymbol'] = $toSymbol;
         }
         if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
+            $request['recvWindow'] = $recvWindow;
         }
 
-        return $this->httpRequest("v1/asset/transfer", 'GET', $params, true);
+        return $this->spotWalletRequest("v1/asset/transfer", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -1152,9 +1152,9 @@ class API
      * @return array with error message or array of all the currencies prices
      * @throws \Exception
      */
-    public function prices()
+    public function prices(array $params = [])
     {
-        return $this->priceData($this->httpRequest("v3/ticker/price"));
+        return $this->priceData($this->spotRequest("v3/ticker/price", "GET", $params));
     }
 
     /**
@@ -1165,9 +1165,12 @@ class API
      * @return array with error message or array with symbol price
      * @throws \Exception
      */
-    public function price(string $symbol)
+    public function price(string $symbol, array $params = [])
     {
-        $ticker = $this->httpRequest("v3/ticker/price", "GET", ["symbol" => $symbol]);
+        $request = [
+            "symbol" => $symbol,
+        ];
+        $ticker = $this->spotRequest("v3/ticker/price", "GET", array_merge($request, $params));
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch price for $symbol" . PHP_EOL;
             return null;
@@ -1183,9 +1186,9 @@ class API
      * @return array with error message or array of all the book prices
      * @throws \Exception
      */
-    public function bookPrices()
+    public function bookPrices(array $params = [])
     {
-        return $this->bookPriceData($this->httpRequest("v3/ticker/bookTicker"));
+        return $this->bookPriceData($this->spotRequest("v3/ticker/bookTicker", "GET", $params));
     }
 
     /**
@@ -1196,9 +1199,9 @@ class API
      * @return array with error message or array of all the account information
      * @throws \Exception
      */
-    public function account()
+    public function account(array $params = [])
     {
-        return $this->httpRequest("v3/account", "GET", [], true);
+        return $this->spotRequest("v3/account", "GET", $params, true);
     }
 
     /**
@@ -1210,15 +1213,15 @@ class API
      * @return array with error message or array of prevDay change
      * @throws \Exception
      */
-    public function prevDay(string $symbol = null)
+    public function prevDay(string $symbol = null, array $params = [])
     {
-        $additionalData = [];
+        $request = [];
         if (is_null($symbol) === false) {
-            $additionalData = [
+            $request = [
                 'symbol' => $symbol,
             ];
         }
-        return $this->httpRequest("v1/ticker/24hr", "GET", $additionalData);
+        return $this->spotRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
     }
 
     /**
@@ -1230,11 +1233,12 @@ class API
      * @return array with error message or array of market history
      * @throws \Exception
      */
-    public function aggTrades(string $symbol)
+    public function aggTrades(string $symbol, array $params = [])
     {
-        return $this->tradesData($this->httpRequest("v1/aggTrades", "GET", [
+        $request = [
             "symbol" => $symbol,
-        ]));
+        ];
+        return $this->tradesData($this->spotRequest("v1/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
@@ -1253,23 +1257,23 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function historicalTrades(string $symbol, int $limit = 500, int $tradeId = -1)
+    public function historicalTrades(string $symbol, int $limit = 500, int $tradeId = -1, array $params = [])
     {
-        $parameters = [
+        $request = [
             "symbol" => $symbol,
             "limit" => $limit,
         ];
         if ($tradeId > 0) {
-            $parameters["fromId"] = $tradeId;
+            $request["fromId"] = $tradeId;
         } else {
             // if there is no tradeId given, we can use v3/trades, weight is 1 and not 5
-            return $this->httpRequest("v3/trades", "GET", $parameters);
+            return $this->spotRequest("v3/trades", "GET", array_merge($request, $params));
         }
 
         // The endpoint cannot handle extra parameters like 'timestamp' or 'signature',
         // but it needs the http header with the key so we need to construct it here
-        $query = http_build_query($parameters, '', '&');
-        return $this->httpRequest("v3/historicalTrades?$query");
+        $query = http_build_query(array_merge($request, $params), '', '&');
+        return $this->spotRequest("v3/historicalTrades?$query");
     }
 
     /**
@@ -1282,7 +1286,7 @@ class API
      * @return array with error message or array of market depth
      * @throws \Exception
      */
-    public function depth(string $symbol, int $limit = 100)
+    public function depth(string $symbol, int $limit = 100, array $params = [])
     {
         if (is_int($limit) === false) {
             $limit = 100;
@@ -1292,10 +1296,11 @@ class API
             // WPCS: XSS OK.
             echo "asset: expected bool false, " . gettype($symbol) . " given" . PHP_EOL;
         }
-        $json = $this->httpRequest("v1/depth", "GET", [
+        $request = [
             "symbol" => $symbol,
             "limit" => $limit,
-        ]);
+        ];
+        $json = $this->spotRequest("v1/depth", "GET", array_merge($request, $params), true);
         if (is_array($json) === false) {
             echo "Error: unable to fetch depth" . PHP_EOL;
             $json = [];
@@ -1323,16 +1328,16 @@ class API
      * @return array with error message or array of balances
      * @throws \Exception
      */
-    public function balances(string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2')
+    public function balances(string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2', array $params = [])
     {
         $is_spot = $market_type === 'spot';
-        $params = [];
+        $request = [];
         if ($is_spot) {
             $url = "v3/account";
         } else {
-            $params['fapi'] = true;
+            $request['fapi'] = true;
             if ($recvWindow) {
-                $params['recvWindow'] = $recvWindow;
+                $request['recvWindow'] = $recvWindow;
             }
             if ($api_version === 'v2') {
                 $url = "v2/balance";
@@ -1342,7 +1347,7 @@ class API
                 throw new \Exception("Invalid API version specified. Use 'v2' or 'v3'.");
             }
         }
-        $response = $this->httpRequest($url, "GET", $params, true);
+        $response = $this->httpRequest($url, "GET", array_merge($request, $params), true);
         if (is_array($response) === false) {
             echo "Error: unable to fetch your account details" . PHP_EOL;
         }
@@ -1360,9 +1365,9 @@ class API
      * @return array with error message or array containing coins
      * @throws \Exception
      */
-    public function coins()
+    public function coins(array $params = [])
     {
-        return $this->httpRequest("v1/capital/config/getall", 'GET', [ 'sapi' => true ], true);
+        return $this->spotWalletRequest("v1/capital/config/getall", 'GET', $params, true);
     }
 
     /**
@@ -1457,6 +1462,12 @@ class API
     protected function futuresRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['fapi'] = true;
+        return $this->httpRequest($url, $method, $params, $signed);
+    }
+
+    protected function fapiDataRequest($url, $method = "GET", $params = [], $signed = false)
+    {
+        $params['fapiData'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
@@ -1810,7 +1821,7 @@ class API
         }
 
         $qstring = ($test === false) ? "v3/order" : "v3/order/test";
-        return $this->httpRequest($qstring, "POST", $request, true);
+        return $this->spotRequest($qstring, "POST", array_merge($request, $params), true);
     }
 
     /**
@@ -1827,7 +1838,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function candlesticks(string $symbol, string $interval = "5m", int $limit = null, $startTime = null, $endTime = null)
+    public function candlesticks(string $symbol, string $interval = "5m", int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
         if (!isset($this->charts[$symbol])) {
             $this->charts[$symbol] = [];
@@ -1850,7 +1861,7 @@ class API
             $request["endTime"] = $endTime;
         }
 
-        $response = $this->httpRequest("v1/klines", "GET", $request);
+        $response = $this->spotRequest("v1/klines", "GET", array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
@@ -3101,24 +3112,24 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function systemStatus()
+    public function systemStatus(array $params = [])
     {
         $arr = array();
-        $api_status = $this->httpRequest("v3/ping", 'GET');
+        $api_status = $this->spotRequest("v3/ping", 'GET', $params);
         if ( empty($api_status) ) {
             $arr['api']['status']  = 'ping ok';
         } else {
             $arr['api']['status']  = $api_status;
         }
 
-        $fapi_status = $this->httpRequest("v1/ping", 'GET', [ 'fapi' => true ]);
+        $fapi_status = $this->futuresRequest("v1/ping", 'GET', $params);
         if ( empty($fapi_status) ) {
             $arr['fapi']['status'] = 'ping ok';
         } else {
             $arr['fapi']['status'] = $fapi_status;
         }
 
-        $arr['sapi'] = $this->httpRequest("v1/system/status", 'GET', [ 'sapi' => true ]);
+        $arr['sapi'] = $this->spotWalletRequest("v1/system/status", 'GET', $params);
         return $arr;
     }
 
@@ -3137,24 +3148,23 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function accountSnapshot($type, $nbrDays = 5, $startTime = 0, $endTime = 0)
+    public function accountSnapshot($type, $nbrDays = 5, $startTime = 0, $endTime = 0, array $params = [])
     {
         if ($nbrDays < 5 || $nbrDays > 30)
             $nbrDays = 5;
 
-        $params = [
-            'sapi' => true,
+        $request = [
             'type' => $type,
             ];
 
         if ($startTime > 0)
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         if ($endTime > 0)
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         if ($nbrDays != 5)
-            $params['limit'] = $nbrDays;
+            $request['limit'] = $nbrDays;
 
-        return $this->httpRequest("v1/accountSnapshot", 'GET', $params, true);
+        return $this->spotWalletRequest("v1/accountSnapshot", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -3167,10 +3177,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function accountStatus()
+    public function accountStatus(array $params = [])
     {
         $arr = array();
-        $arr['sapi'] = $this->httpRequest("v1/account/status", 'GET', [ 'sapi' => true ], true);
+        $arr['sapi'] = $this->spotWalletRequest("v1/account/status", 'GET', $params, true);
         return $arr;
     }
 
@@ -3184,9 +3194,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function apiRestrictions()
+    public function apiRestrictions(array $params = [])
     {
-        return $this->httpRequest("v1/account/apiRestrictions", 'GET', ['sapi' => true], true);
+        return $this->spotWalletRequest("v1/account/apiRestrictions", 'GET', $params, true);
     }
 
     /**
@@ -3199,10 +3209,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function apiTradingStatus()
+    public function apiTradingStatus(array $params = [])
     {
         $arr = array();
-        $arr['sapi'] = $this->httpRequest("v1/account/apiTradingStatus", 'GET', [ 'sapi' => true ], true);
+        $arr['sapi'] = $this->spotWalletRequest("v1/account/apiTradingStatus", 'GET', $params, true);
         return $arr;
     }
 
@@ -3269,7 +3279,7 @@ class API
                 $request[$flag] = $params[$flag];
         }
 
-        return $this->httpRequest("v3/order/oco", "POST", $request, true);
+        return $this->spotRequest("v3/order/oco", "POST", $request, true);
     }
 
     /**
@@ -3284,9 +3294,12 @@ class API
     * @return string with symbol price
     * @throws \Exception
     */
-    public function avgPrice(string $symbol)
+    public function avgPrice(string $symbol, array $params = [])
     {
-        $ticker = $this->httpRequest("v3/avgPrice", "GET", ["symbol" => $symbol]);
+        $request = [
+            'symbol' => $symbol,
+        ];
+        $ticker = $this->spotRequest("v3/avgPrice", "GET", array_merge($request, $params));
         if (is_array($ticker) === false) {
             echo "Error: unable to fetch avg price" . PHP_EOL;
             $ticker = [];
@@ -3319,15 +3332,14 @@ class API
     * @return array containing the response
     * @throws \Exception
     */
-    public function bswapQuote($baseAsset, $quoteAsset, $quoteQty) {
+    public function bswapQuote($baseAsset, $quoteAsset, $quoteQty, array $params = []) {
         $request = [
-            'sapi'       => true,
             'quoteAsset' => $quoteAsset,
             'baseAsset'  => $baseAsset,
             'quoteQty'   => $quoteQty,
         ];
 
-        return $this->httpRequest("v1/bswap/quote", 'GET', $request, true);
+        return $this->spotWalletRequest("v1/bswap/quote", 'GET', array_merge($request, $params), true);
     }
 
     /*********************************************
@@ -3348,7 +3360,7 @@ class API
      */
     public function futuresTime()
     {
-        return $this->httpRequest("v1/time", "GET", [ 'fapi' => true ]);
+        return $this->futuresRequest("v1/time", "GET");
     }
 
     /**
@@ -3366,7 +3378,7 @@ class API
     public function futuresExchangeInfo()
     {
         if (!$this->futuresExchangeInfo) {
-            $arr = $this->httpRequest("v1/exchangeInfo", "GET", [ 'fapi' => true ]);
+            $arr = $this->futuresRequest("v1/exchangeInfo", "GET");
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch futures exchange info" . PHP_EOL;
                 $arr = array();
@@ -4743,16 +4755,16 @@ class API
      */
     public function futuresCancel(string $symbol, $orderid, $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
             'fapi' => true,
         ];
         if ($orderid) {
-            $params['orderId'] = $orderid;
+            $request['orderId'] = $orderid;
         } else if (!isset($params['origClientOrderId'])) {
             throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
         }
-        return $this->httpRequest("v1/order", 'DELETE', array_merge($params, $params), true);
+        return $this->httpRequest("v1/order", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
