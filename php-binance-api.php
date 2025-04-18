@@ -1300,7 +1300,7 @@ class API
             "symbol" => $symbol,
             "limit" => $limit,
         ];
-        $json = $this->spotRequest("v1/depth", "GET", array_merge($request, $params), true);
+        $json = $this->spotRequest("v1/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch depth" . PHP_EOL;
             $json = [];
@@ -1799,6 +1799,8 @@ class API
 
         if ($type === "MARKET" && isset($params['isQuoteOrder']) && $params['isQuoteOrder']) {
             unset($request['quantity']);
+            unset($params['quantity']);
+            unset($params['isQuoteOrder']);
             $request['quoteOrderQty'] = $quantity;
         }
 
