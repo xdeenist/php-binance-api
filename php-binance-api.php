@@ -1068,7 +1068,8 @@ class API
      * @param string $amount (mandatory) the amount to transfer
      * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
      * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -1106,7 +1107,8 @@ class API
      * @param int    $current (optional) default 1
      * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
      * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -4468,7 +4470,7 @@ class API
      * createBatchOrdersRequest
      * helper for creating the request for multiple futures orders
      * @param array $orders (mandatory) array of orders to be placed
-     * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the $params[recvWindow]
      *
      * @return array containing the request
      * @throws \Exception
@@ -4525,7 +4527,8 @@ class API
      *
      * @param array $orders (mandatory) array of orders to be placed
      * objects in the array should contain literally the same keys as the @see futuresOrder but without the $params['recvWindow']
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response or error message
      * @throws \Exception
@@ -4590,7 +4593,8 @@ class API
      *
      * @param array $orders (mandatory) array of orders to be modified
      * objects in the array should contain literally the same keys as the @see futuresEditOrder but without the $params['recvWindow']
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response or error message
      * @throws \Exception
@@ -4618,7 +4622,8 @@ class API
      * @param int    $startTime (optional) timestamp in ms to get modification history from INCLUSIVE
      * @param int    $endTime (optional) timestamp in ms to get modification history until INCLUSIVE
      * @param int    $limit (optional) limit the amount of open interest history (default 50, max 100)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -4684,7 +4689,8 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param array  $orderIdList (optional) list of ids to cancel (mandatory if origClientOrderIdList is not set)
      * @param array  $origClientOrderIdList (optional) list of client order ids to cancel (mandatory if orderIdList is not set)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
@@ -4739,7 +4745,8 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param int    $countdownTime (mandatory) countdown in milliseconds (0 to stop the timer)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
@@ -4764,7 +4771,8 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
      * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the order details
      * @throws \Exception
@@ -4798,7 +4806,11 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
      * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
      * @param string $orderId (optional) order id to get the response from (if is set it will get orders >= that orderId)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
      */
     public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, array $params = [])
     {
@@ -4830,7 +4842,8 @@ class API
      * $orders = $api->futuresOpenOrders("BNBBTC");
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
@@ -4855,7 +4868,8 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
      * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the order details
      * @throws \Exception
@@ -4890,7 +4904,8 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
      * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
      * @param string $autoCloseType (optional) "LIQUIDATION" for liquidation orders, "ADL" for ADL orders
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
@@ -4932,7 +4947,8 @@ class API
      * @param int    $limit (optional) limit the amount of trades (default 500, max 1000)
      * @param string $orderId (optional) order id to get the trades for
      * @param string $fromId (optional) trade id to get the trades from (if is set it will get trades >= that Id)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the trades details
      * @throws \Exception
@@ -4982,7 +4998,8 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $marginType (mandatory) margin type, "CROSSED" or "ISOLATED"
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5006,7 +5023,8 @@ class API
      *
      * @property int $weight 30
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5026,7 +5044,8 @@ class API
      * @property int $weight 1
      *
      * @param bool $dualSidePosition (mandatory) true for Hedge Mode, false for One-way Mode
-     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5052,7 +5071,8 @@ class API
      *
      * @param int    $leverage (mandatory) leverage to be set (min 1, max 125)
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5061,7 +5081,6 @@ class API
     {
         $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'leverage' => $leverage,
         ];
 
@@ -5077,7 +5096,8 @@ class API
      *
      * @property int $weight 30
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5097,7 +5117,8 @@ class API
      * @property int $weight 1
      *
      * @param bool $multiAssetsMarginMode (mandatory) true for multi-assets mode, false for single-asset mode
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5145,7 +5166,8 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $amount (mandatory) amount to be added
      * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5167,7 +5189,8 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $amount (mandatory) amount to be removed
      * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5275,16 +5298,15 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the ADL quantile details
      * @throws \Exception
      */
     public function futuresAdlQuantile($symbol = null, array $params = [])
     {
-        $request = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
             $request['symbol'] = $symbol;
         }
@@ -5306,7 +5328,8 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get history until INCLUSIVE
      * @param int    $limit (optional) limit the amount of history (default 500)
      * @param string $addOrReduce (optional) "ADD" or "REDUCE" to filter the history
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      */
     public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, array $params = [])
     {
@@ -5438,7 +5461,8 @@ class API
      * @property int $weight 20
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the trade fee details
      * @throws \Exception
@@ -5461,7 +5485,8 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the account configuration details
      * @throws \Exception
@@ -5482,7 +5507,8 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the margin mode details
      * @throws \Exception
@@ -5506,7 +5532,8 @@ class API
      *
      * @property int $weight 1
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the rate limit details
      * @throws \Exception
@@ -5527,7 +5554,8 @@ class API
      * @property int $weight 1
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the leverage details
      * @throws \Exception
@@ -5582,7 +5610,8 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get income until INCLUSIVE
      * @param int    $limit (optional) limit the amount of income (default 100, max 1000)
      * @param int    $page (optional) number of page to get
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the income details
      * @throws \Exception
@@ -5623,7 +5652,8 @@ class API
      * weigth is 1 if symbol is provided
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the trading status details
      * @throws \Exception
@@ -5645,7 +5675,6 @@ class API
     protected function futuresDownloadId($startTime, $endTime, array $params = null, string $url = '')
     {
         $request = [
-            'fapi' => true,
             'startTime' => $startTime,
             'endTime' => $endTime,
         ];
@@ -5679,7 +5708,8 @@ class API
      *
      * @param int $startTime (optional) timestamp in ms to get transactions from INCLUSIVE
      * @param int $endTime (optional) timestamp in ms to get transactions until INCLUSIVE
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the response
      * @throws \Exception
@@ -5700,7 +5730,8 @@ class API
      * @property int $weight 10
      *
      * @param string $downloadId (mandatory) download id
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the download link
      * @throws \Exception
@@ -5723,7 +5754,8 @@ class API
      *
      * @param int $startTime (optional) timestamp in ms to get orders from INCLUSIVE
      * @param int $endTime (optional) timestamp in ms to get orders until INCLUSIVE
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the response
      * @throws \Exception
@@ -5744,7 +5776,8 @@ class API
      * @property int $weight 10
      *
      * @param string $downloadId (mandatory) download id
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the download link
      * @throws \Exception
@@ -5767,7 +5800,8 @@ class API
      *
      * @param int $startTime (optional) timestamp in ms to get trades from INCLUSIVE
      * @param int $endTime (optional) timestamp in ms to get trades until INCLUSIVE
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the response
      * @throws \Exception
@@ -5788,7 +5822,8 @@ class API
      * @property int $weight 10
      *
      * @param string $downloadId (mandatory) download id
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the download link
      * @throws \Exception
@@ -5808,7 +5843,8 @@ class API
      * @property int $weight 1
      *
      * @param bool $flag (mandatory) true for BNB Fee Discount On, false for BNB Fee Discount Off
-     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5831,7 +5867,8 @@ class API
      *
      * @property int $weight 30
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5883,7 +5920,8 @@ class API
      * @param string $fromAmount (optional) mandatory if $toAmount is not set
      * @param string $toAmount (optional) mandatory if $fromAmount is not set
      * @param string $validTime (optional) deafault "10s"
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5918,8 +5956,8 @@ class API
      * @property int $weight 200
      *
      * @param string $quoteId (mandatory) the quote ID to accept
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
-     * @param array  $params (optional) additional parameters
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
@@ -5949,9 +5987,7 @@ class API
      */
     public function convertStatus($orderId = null, $quoteId = null, array $params = [])
     {
-        $request = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($orderId) {
             $request['orderId'] = $orderId;
         } else if ($quoteId) {
