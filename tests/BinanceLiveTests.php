@@ -1017,7 +1017,7 @@ class BinanceLiveTests extends TestCase
 
     public function testAdlQuantileFutures()
     {
-        $res = $this->futuresBinance->futuresAdlQuantile($this->symbol, $this->recvWindow);
+        $res = $this->futuresBinance->futuresAdlQuantile($this->symbol);
         $this->assertIsArray($res);
         $this->assertEquals($this->symbol, $res['symbol']);
         $this->assertArrayHasKey('adlQuantile', $res);
@@ -1175,7 +1175,7 @@ class BinanceLiveTests extends TestCase
 
     public function testAccountV2Futures()
     {
-        $res = $this->futuresBinance->futuresAccountV2($this->recvWindow);
+        $res = $this->futuresBinance->futuresAccountV2();
         $this->assertIsArray($res);
         $this->assertArrayHasKey('totalInitialMargin', $res);
         $this->assertIsNumeric($res['totalInitialMargin']);
@@ -1207,7 +1207,7 @@ class BinanceLiveTests extends TestCase
 
     public function testAccountV3Futures()
     {
-        $res = $this->futuresBinance->futuresAccountV3($this->recvWindow);
+        $res = $this->futuresBinance->futuresAccountV3();
         $this->assertIsArray($res);
         $this->assertArrayHasKey('totalInitialMargin', $res);
         $this->assertIsNumeric($res['totalInitialMargin']);

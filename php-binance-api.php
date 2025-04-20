@@ -1073,7 +1073,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, int $recvWindow = null, array $params = [])
+    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, array $params = [])
     {
         $request = [
             'type' => $type,
@@ -1087,9 +1087,7 @@ class API
         if ($toSymbol) {
             $request['toSymbol'] = $toSymbol;
         }
-        if ($recvWindow) {
-            $request['recvWindow'] = $recvWindow;
-        }
+
 
         return $this->spotWalletRequest("v1/asset/transfer", 'POST', array_merge($request, $params), true);
     }
@@ -1113,7 +1111,7 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, $recvWindow = null, array $params = [])
+    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, array $params = [])
     {
         $request = [
             'type' => $type,
@@ -1137,9 +1135,7 @@ class API
         if ($toSymbol) {
             $request['toSymbol'] = $toSymbol;
         }
-        if ($recvWindow) {
-            $request['recvWindow'] = $recvWindow;
-        }
+
 
         return $this->spotWalletRequest("v1/asset/transfer", 'GET', array_merge($request, $params), true);
     }
@@ -1322,13 +1318,14 @@ class API
      * $balances = $api->balances();
      *
      * @param string $market_type (optional) market type - "spot" or "futures" (default is "spot")
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
+     * @param array  $params      (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
      * @param string $api_version (optional) not for spot - the api version to use (default is v2)
      *
      * @return array with error message or array of balances
      * @throws \Exception
      */
-    public function balances(string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2', array $params = [])
+    public function balances(string $market_type = 'spot', array $params = [], string $api_version = 'v2')
     {
         $is_spot = $market_type === 'spot';
         $request = [];
@@ -1336,9 +1333,6 @@ class API
             $url = "v3/account";
         } else {
             $request['fapi'] = true;
-            if ($recvWindow) {
-                $request['recvWindow'] = $recvWindow;
-            }
             if ($api_version === 'v2') {
                 $url = "v2/balance";
             } else if ($api_version === 'v3') {
@@ -1459,16 +1453,13 @@ class API
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    public function futuresRequest($url, $method = "GET", $params = [], $signed = false, $recvWindow = null)
+    public function futuresRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['fapi'] = true;
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    public function fapiDataRequest($url, $method = "GET", $params = [], $signed = false)
+    public function futuresDataRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['fapiData'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
@@ -3565,9 +3556,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'klines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'klines', null, $params);
     }
 
     /**
@@ -3594,9 +3585,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresContinuousCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    public function futuresContinuousCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, $contractType = 'PERPETUAL', array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'continuousKlines', $contractType);
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'continuousKlines', $contractType, $params);
     }
 
     /**
@@ -3622,9 +3613,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresIndexPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresIndexPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'indexPriceKlines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'indexPriceKlines', null, $params);
     }
 
     /**
@@ -3650,9 +3641,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresMarkPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresMarkPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'markPriceKlines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'markPriceKlines', null, $params);
     }
 
     /**
@@ -3678,16 +3669,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPremiumIndexCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresPremiumIndexCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines', null, $params);
     }
 
     /**
      * futuresCandlesticksHelper
      * helper for routing the futuresCandlesticks, futuresContinuousCandlesticks, futuresIndexPriceCandlesticks, futuresMarkPriceCandlesticks and futuresPremiumIndexKlines
      */
-    private function futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, $klineType, $contractType = null)
+    private function futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, $klineType, $contractType = null, $params = [])
     {
         if (!isset($this->charts['futures'])) {
             $this->charts['futures'] = [];
@@ -3701,29 +3692,28 @@ class API
         if (!isset($this->charts['futures'][$symbol][$contractType][$interval])) {
             $this->charts['futures'][$symbol][$contractType][$interval] = [];
         }
-        $params = [
+        $request = [
             'interval' => $interval,
-            'fapi' => true,
         ];
         if ($klineType === 'continuousKlines' || $klineType === 'indexPriceKlines') {
-            $params['pair'] = $symbol;
+            $request['pair'] = $symbol;
         } else {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($contractType) {
-            $params['contractType'] = $contractType;
+            $request['contractType'] = $contractType;
         }
 
-        $response = $this->httpRequest("v1/{$klineType}", 'GET', $params);
+        $response = $this->futuresRequest("v1/{$klineType}", 'GET', array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
@@ -3753,15 +3743,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresMarkPrice(string $symbol = null)
+    public function futuresMarkPrice(string $symbol = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/premiumIndex", "GET", $parameters);
+        return $this->futuresRequest("v1/premiumIndex", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3780,24 +3768,22 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFundingRateHistory(string $symbol = null, int $limit = null, $startTime = null, $endTime = null)
+    public function futuresFundingRateHistory(string $symbol = null, int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
-        return $this->httpRequest("v1/fundingRate", "GET", $parameters);
+        return $this->futuresRequest("v1/fundingRate", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3812,12 +3798,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFundingInfo()
+    public function futuresFundingInfo(array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
-        return $this->httpRequest("v1/fundingInfo", "GET", $parameters);
+        return $this->futuresRequest("v1/fundingInfo", "GET", $params);
     }
 
     /**
@@ -3836,15 +3819,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPrevDay(string $symbol = null)
+    public function futuresPrevDay(string $symbol = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/ticker/24hr", "GET", $parameters);
+        return $this->futuresRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3861,13 +3842,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPrice(string $symbol)
+    public function futuresPrice(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        $ticker = $this->futuresRequest("v1/ticker/price", "GET", array_merge($request, $params));
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
             return null;
@@ -3887,12 +3867,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPrices()
+    public function futuresPrices(array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
-        return $this->priceData($this->httpRequest("v1/ticker/price", "GET", $parameters));
+        return $this->priceData($this->futuresRequest("v1/ticker/price", "GET", $params));
     }
 
     /**
@@ -3909,13 +3886,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPriceV2(string $symbol)
+    public function futuresPriceV2(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        $ticker = $this->futuresRequest("v2/ticker/price", "GET", $request);
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
             return null;
@@ -3935,12 +3911,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPricesV2()
+    public function futuresPricesV2(array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
-        return $this->priceData($this->httpRequest("v2/ticker/price", "GET", $parameters));
+        return $this->priceData($this->futuresRequest("v2/ticker/price", "GET", $params));
     }
 
     /**
@@ -3959,15 +3932,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSymbolOrderBookTicker(string $symbol = null): array
+    public function futuresSymbolOrderBookTicker(string $symbol = null, array $params = []): array
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/ticker/bookTicker", "GET", $parameters);
+        return $this->futuresRequest("v1/ticker/bookTicker", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3982,14 +3953,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresDeliveryPrice(string $symbol): array
+    public function futuresDeliveryPrice(string $symbol, array $params = []): array
     {
-        $parameters = [
+        $request = [
             'pair' => $symbol,
-            'fapiData' => true,
         ];
 
-        return $this->httpRequest("delivery-price", "GET", $parameters);
+        return $this->futuresDataRequest("delivery-price", "GET", array_merge($request, $params));
     }
 
     /**
@@ -4006,36 +3976,34 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOpenInterest(string $symbol): array
+    public function futuresOpenInterest(string $symbol, array $params = []): array
     {
-        $parameters = [
+        $request = [
             'symbol'=> $symbol,
-            'fapi' => true,
         ];
-        return $this->httpRequest("v1/openInterest", 'GET', $parameters);
+        return $this->futuresRequest("v1/openInterest", 'GET', array_merge($request, $params));
     }
 
     /**
-     * symbolPeriodLimitStartEndRequest
+     * symbolPeriodLimitStartEndFuturesDataRequest
      * helper for routing GET methods that require symbol, period, limit, startTime and endTime
      */
-    private function symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
+    private function symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, $url, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
             'period' => $period,
         ];
-        $parameters[$base] = true;
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
-        return $this->httpRequest($url, 'GET', $parameters);
+        return $this->futuresDataRequest($url, 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4054,9 +4022,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', 'fapiData');
+        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', $params);
     }
 
     /**
@@ -4075,9 +4043,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', 'fapiData');
+        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', $params);
     }
 
     /**
@@ -4096,9 +4064,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', 'fapiData');
+        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', $params);
     }
 
     /**
@@ -4117,9 +4085,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', 'fapiData');
+        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', $params);
     }
 
     /**
@@ -4138,10 +4106,11 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', 'fapiData');
+        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', $params);
     }
+
 
     /**
      * futuresBasis get future basis for symbol
@@ -4160,24 +4129,23 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresBasis(string $symbol, string $period = '5m', int $limit = 30, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    public function futuresBasis(string $symbol, string $period = '5m', int $limit = 30, $startTime = null, $endTime = null, $contractType = 'PERPETUAL', array $params = [])
     {
-        $parameters = [
+        $request = [
             'pair' => $symbol,
             'period' => $period,
             'contractType' => $contractType,
-            'fapiData' => true,
         ];
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
-        return $this->httpRequest("basis", 'GET', $parameters);
+        return $this->futuresDataRequest("basis", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4195,13 +4163,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresIndexInfo(string $symbol)
+    public function futuresIndexInfo(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
+        return $this->futuresRequest("v1/indexInfo", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4220,15 +4187,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresAssetIndex(string $symbol = null)
+    public function futuresAssetIndex(string $symbol = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/assetIndex", 'GET', $parameters);
+        return $this->futuresRequest("v1/assetIndex", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4245,13 +4210,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresConstituents(string $symbol)
+    public function futuresConstituents(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        return $this->httpRequest("v1/constituents", 'GET', $parameters);
+        return $this->futuresRequest("v1/constituents", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4299,14 +4263,6 @@ class API
             }
         }
 
-        if (isset($params['positionSide'])) {
-            $request['positionSide'] = $params['positionSide'];
-        }
-
-        if (isset($params['timeInForce'])) {
-            $request['timeInForce'] = $params['timeInForce'];
-        }
-
         if (isset($params['reduceOnly'])) {
             $reduceOnly = $params['reduceOnly'];
             if ($reduceOnly === true) {
@@ -4314,16 +4270,11 @@ class API
             } else {
                 $request['reduceOnly'] = 'false';
             }
+            unset($params['reduceOnly']);
         }
 
-        if (isset($params['newClientOrderId'])) {
-            $request['newClientOrderId'] = $params['newClientOrderId'];
-        } else {
+        if (!isset($params['newClientOrderId'])) {
             $request['newClientOrderId'] = $this->generateFuturesClientOrderId();
-        }
-
-        if (isset($params['stopPrice'])) {
-            $request['stopPrice'] = $params['stopPrice'];
         }
 
         if (isset($params['closePosition'])) {
@@ -4333,18 +4284,7 @@ class API
             } else {
                 $request['closePosition'] = 'false';
             }
-        }
-
-        if (isset($params['activationPrice'])) {
-            $request['activationPrice'] = $params['activationPrice'];
-        }
-
-        if (isset($params['callbackRate'])) {
-            $request['callbackRate'] = $params['callbackRate'];
-        }
-
-        if (isset($params['workingType'])) {
-            $request['workingType'] = $params['workingType'];
+            unset($params['closePosition']);
         }
 
         if (isset($params['priceProtect'])) {
@@ -4354,29 +4294,10 @@ class API
             } else {
                 $request['priceProtect'] = 'FALSE';
             }
+            unset($params['priceProtect']);
         }
 
-        if (isset($params['newOrderRespType'])) {
-            $request['newOrderRespType'] = $params['newOrderRespType'];
-        }
-
-        if (isset($params['priceMatch'])) {
-            $request['priceMatch'] = $params['priceMatch'];
-        }
-
-        if (isset($params['selfTradePreventionMode'])) {
-            $request['selfTradePreventionMode'] = $params['selfTradePreventionMode'];
-        }
-
-        if (isset($params['goodTillDate'])) {
-            $request['goodTillDate'] = $params['goodTillDate'];
-        }
-
-        if (isset($params['recvWindow'])) {
-            $request['recvWindow'] = $params['recvWindow'];
-        }
-
-        return $request;
+        return array_merge($request, $params);
     }
 
     /**
@@ -4418,9 +4339,8 @@ class API
     public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $params = [], $test = false)
     {
         $request = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $params);
-        $request['fapi'] = true;
         $qstring = ($test === false) ? 'v1/order' : 'v1/order/test';
-        return $this->httpRequest($qstring, 'POST', $request, true);
+        return $this->futuresRequest($qstring, 'POST', $request, true);
     }
 
     /**
@@ -4564,8 +4484,8 @@ class API
             if (!isset($order['price'])) {
                 $order['price'] = null;
             }
-            if (!isset($order['flags'])) {
-                $order['flags'] = [];
+            if (!isset($order['params'])) {
+                $order['params'] = [];
             }
             if (!isset($order['type'])) {
                 $order['type'] = 'LIMIT';
@@ -4576,7 +4496,7 @@ class API
                 $order['quantity'],
                 $order['price'],
                 $order['type'],
-                $order['flags']
+                $order['params']
             );
             if (isset($formatedOrder['recvWindow'])) {
                 // remove recvWindow from the order
@@ -4610,11 +4530,8 @@ class API
      * @return array containing the response or error message
      * @throws \Exception
      */
-    public function futuresBatchOrders(array $orders, int $recvWindow = null)
+    public function futuresBatchOrders(array $orders, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
         $formatedOrders = $this->createBatchOrdersRequest($orders);
         if (count($formatedOrders) > 5) {
             throw new \Exception('futuresBatchOrders: max 5 orders allowed');
@@ -4622,13 +4539,12 @@ class API
         if (count($formatedOrders) < 1) {
             throw new \Exception('futuresBatchOrders: at least 1 order required');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
+        $request = [];
+
         // current endpoint accepts orders list as a json string in the query string
         $encodedOrders = json_encode($formatedOrders);
         $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
-        return $this->httpRequest($url, 'POST', $params, true);
+        return $this->futuresRequest($url, 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -4664,8 +4580,7 @@ class API
         }
         unset($request['type']);
         unset($request['newClientOrderId']);
-        $request['fapi'] = true;
-        return $this->httpRequest("v1/order", 'PUT', $request, true);
+        return $this->futuresRequest("v1/order", 'PUT', $request, true);
     }
 
     /**
@@ -4680,18 +4595,14 @@ class API
      * @return array containing the response or error message
      * @throws \Exception
      */
-    public function futuresEditOrders(array $orders, $recvWindow = null)
+    public function futuresEditOrders(array $orders, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
         $formatedOrders = $this->createBatchOrdersRequest($orders, true);
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
+        $request = [];
+
         // current endpoint accepts orders list as a json string in the query string
-        $params['batchOrders'] = json_encode($formatedOrders);
-        return $this->httpRequest("v1/batchOrders", 'PUT', $params, true);
+        $request['batchOrders'] = json_encode($formatedOrders);
+        return $this->futuresRequest("v1/batchOrders", 'PUT', array_merge($request, $params), true);
     }
 
     /**
@@ -4712,31 +4623,28 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrderAmendment(string $symbol, $orderId = null, $origClientOrderId = null, $startTime = null, $endTime = null, $limit = null, int $recvWindow = null)
+    public function futuresOrderAmendment(string $symbol, $orderId = null, $origClientOrderId = null, $startTime = null, $endTime = null, $limit = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
         if ($origClientOrderId) {
-            $params['origClientOrderId'] = $origClientOrderId;
+            $request['origClientOrderId'] = $origClientOrderId;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/orderAmendment", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/orderAmendment", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4758,14 +4666,13 @@ class API
     {
         $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderid) {
             $request['orderId'] = $orderid;
         } else if (!isset($params['origClientOrderId'])) {
             throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
         }
-        return $this->httpRequest("v1/order", 'DELETE', array_merge($request, $params), true);
+        return $this->futuresRequest("v1/order", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4782,26 +4689,23 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCancelBatchOrders(string $symbol, $orderIdList = null, $origClientOrderIdList = null, int $recvWindow = null)
+    public function futuresCancelBatchOrders(string $symbol, $orderIdList = null, $origClientOrderIdList = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderIdList) {
             $idsString = json_encode($orderIdList);
             // remove quotes and spaces
-            $params['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
+            $request['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
         } else if ($origClientOrderIdList) {
             // remove spaces between the ids
-            $params['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
+            $request['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
         } else {
             throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/batchOrders", 'DELETE', $params, true);
+
+        return $this->futuresRequest("v1/batchOrders", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4817,16 +4721,13 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCancelOpenOrders(string $symbol, int $recvWindow = null)
+    public function futuresCancelOpenOrders(string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/allOpenOrders", 'DELETE', $params, true);
+
+        return $this->futuresRequest("v1/allOpenOrders", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4843,17 +4744,14 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCountdownCancelAllOrders(string $symbol, int $countdownTime, int $recvWindow = null)
+    public function futuresCountdownCancelAllOrders(string $symbol, int $countdownTime, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'countdownTime' => $countdownTime,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/countdownCancelAll", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/countdownCancelAll", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -4871,23 +4769,20 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function futuresOrderStatus(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    public function futuresOrderStatus(string $symbol, $orderId = null, $origClientOrderId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         } else if ($origClientOrderId) {
-            $params['origClientOrderId'] = $origClientOrderId;
+            $request['origClientOrderId'] = $origClientOrderId;
         } else {
             throw new \Exception('futuresOrderStatus: either orderId or origClientOrderId must be set');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/order", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/order", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4905,28 +4800,25 @@ class API
      * @param string $orderId (optional) order id to get the response from (if is set it will get orders >= that orderId)
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
      */
-    public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, int $recvWindow = null)
+    public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/allOrders", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/allOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4943,18 +4835,14 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresOpenOrders($symbol = null, int $recvWindow = null)
+    public function futuresOpenOrders($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/openOrders", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/openOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4972,23 +4860,20 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function futuresOpenOrder(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    public function futuresOpenOrder(string $symbol, $orderId = null, $origClientOrderId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         } else if ($origClientOrderId) {
-            $params['origClientOrderId'] = $origClientOrderId;
+            $request['origClientOrderId'] = $origClientOrderId;
         } else {
             throw new \Exception('futuresOpenOrder: either orderId or origClientOrderId must be set');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/openOrder", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/openOrder", 'GET', array_merge($request, $params), true);
     }
     /**
      * futuresForceOrders gets all futures force orders
@@ -5010,30 +4895,26 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresForceOrders($symbol = null, $startTime = null, $endTime = null, $limit = null, $autoCloseType = null, $recvWindow = null)
+    public function futuresForceOrders($symbol = null, $startTime = null, $endTime = null, $limit = null, $autoCloseType = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($autoCloseType) {
-            $params['autoCloseType'] = $autoCloseType;
+            $request['autoCloseType'] = $autoCloseType;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/forceOrders", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/forceOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5056,31 +4937,28 @@ class API
      * @return array with error message or the trades details
      * @throws \Exception
      */
-    public function futuresMyTrades(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    public function futuresMyTrades(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
         if ($fromId) {
-            $params['fromId'] = $fromId;
+            $request['fromId'] = $fromId;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/userTrades", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/userTrades", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5088,9 +4966,9 @@ class API
      * another name for futuresMyTrades (for naming compatibility with spot)
      * @deprecated
      */
-    public function futuresHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    public function futuresHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, array $params = [])
     {
-        return $this->futuresMyTrades($symbol, $startTime, $endTime, $limit, $orderId, $fromId, $recvWindow);
+        return $this->futuresMyTrades($symbol, $startTime, $endTime, $limit, $orderId, $fromId, $params);
     }
 
     /**
@@ -5109,17 +4987,14 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetMarginMode(string $symbol, string $marginType, int $recvWindow = null)
+    public function futuresSetMarginMode(string $symbol, string $marginType, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'marginType' => $marginType,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/marginType", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/marginType", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5136,15 +5011,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPositionMode(int $recvWindow = null)
+    public function futuresPositionMode(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionSide/dual", 'GET', $params, true);
+        return $this->futuresRequest("v1/positionSide/dual", 'GET', $params, true);
     }
 
     /**
@@ -5162,16 +5031,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetPositionMode(bool $dualSidePosition, int $recvWindow = null)
+    public function futuresSetPositionMode(bool $dualSidePosition, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'dualSidePosition' => $dualSidePosition ? 'true' : 'false',
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionSide/dual", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/positionSide/dual", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5191,17 +5057,15 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetLeverage(int $leverage, string $symbol, int $recvWindow = null)
+    public function futuresSetLeverage(int $leverage, string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
             'fapi' => true,
             'leverage' => $leverage,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/leverage", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/leverage", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5218,15 +5082,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresMultiAssetsMarginMode(int $recvWindow = null)
+    public function futuresMultiAssetsMarginMode(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/multiAssetsMargin", 'GET', $params, true);
+        return $this->futuresRequest("v1/multiAssetsMargin", 'GET', $params, true);
     }
 
     /**
@@ -5244,16 +5102,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetMultiAssetsMarginMode(bool $multiAssetsMarginMode, int $recvWindow = null)
+    public function futuresSetMultiAssetsMarginMode(bool $multiAssetsMarginMode, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'multiAssetsMarginMode' => $multiAssetsMarginMode ? 'true' : 'false',
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/multiAssetsMarginMode", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/multiAssetsMarginMode", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5264,21 +5119,18 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    protected function modifyMarginHelper(string $symbol, string $amount, $addOrReduce, $positionSide = null, int $recvWindow = null)
+    protected function modifyMarginHelper(string $symbol, string $amount, $addOrReduce, $positionSide = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'amount' => $amount,
             'type' => $addOrReduce,
         ];
         if ($positionSide) {
-            $params['positionSide'] = $positionSide;
+            $request['positionSide'] = $positionSide;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionMargin", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/positionMargin", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5298,9 +5150,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresAddMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    public function futuresAddMargin(string $symbol, string $amount, $positionSide = null, array $params = [])
     {
-        return $this->modifyMarginHelper($symbol, $amount, 1, $positionSide, $recvWindow);
+        return $this->modifyMarginHelper($symbol, $amount, 1, $positionSide, $params);
     }
 
     /**
@@ -5320,9 +5172,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresReduceMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    public function futuresReduceMargin(string $symbol, string $amount, $positionSide = null, array $params = [])
     {
-        return $this->modifyMarginHelper($symbol, $amount, 2, $positionSide, $recvWindow);
+        return $this->modifyMarginHelper($symbol, $amount, 2, $positionSide, $params);
     }
 
     /**
@@ -5336,44 +5188,41 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params      (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPositions($symbol = null, $recvWindow = null, $api_version = 'v3')
+    public function futuresPositions($symbol = null, array $params = [], string $api_version = 'v3')
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
+
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresPositions: api_version must be either v2 or v3');
         }
-        return $this->httpRequest($api_version . "/positionRisk", 'GET', $params, true);
+        return $this->futuresRequest($api_version . "/positionRisk", 'GET', array_merge($request, $params), true);
     }
 
     /** futuresPositionsV2
      * @see futuresPositions
      */
-    public function futuresPositionsV2($symbol = null, int $recvWindow = null)
+    public function futuresPositionsV2($symbol = null, array $params = [])
     {
-        return $this->futuresPositions($symbol, $recvWindow, 'v2');
+        return $this->futuresPositions($symbol, $params, 'v2');
     }
 
     /**
      * futuresPositionsV3
      * @see futuresPositions
      */
-    public function futuresPositionsV3($symbol = null, int $recvWindow = null)
+    public function futuresPositionsV3($symbol = null, array $params = [])
     {
-        return $this->futuresPositions($symbol, $recvWindow, 'v3');
+        return $this->futuresPositions($symbol, $params, 'v3');
     }
 
     /**
@@ -5386,33 +5235,34 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPosition(string $symbol, $recvWindow = null, string $api_version = 'v3')
+    public function futuresPosition(string $symbol, array $params = [], string $api_version = 'v3')
     {
-        return $this->futuresPositions($symbol, $recvWindow, $api_version);
+        return $this->futuresPositions($symbol, $params, $api_version);
     }
 
     /**
      * futuresPositionV2
      * @see futuresPosition
      */
-    public function futuresPositionV2(string $symbol, int $recvWindow = null)
+    public function futuresPositionV2(string $symbol, array $params = [])
     {
-        return $this->futuresPositionsV2($symbol, $recvWindow, 'v2');
+        return $this->futuresPositionsV2($symbol, $params, 'v2');
     }
 
     /**
      * futuresPositionV3
      * @see futuresPosition
      */
-    public function futuresPositionV3(string $symbol, int $recvWindow = null)
+    public function futuresPositionV3(string $symbol, array $params = [])
     {
-        return $this->futuresPositionsV3($symbol, $recvWindow, 'v3');
+        return $this->futuresPositionsV3($symbol, $params, 'v3');
     }
 
     /**
@@ -5430,18 +5280,16 @@ class API
      * @return array with error message or the ADL quantile details
      * @throws \Exception
      */
-    public function futuresAdlQuantile($symbol = null, int $recvWindow = null)
+    public function futuresAdlQuantile($symbol = null, array $params = [])
     {
-        $params = [
+        $request = [
             'fapi' => true,
         ];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/adlQuantile", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/adlQuantile", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5460,30 +5308,29 @@ class API
      * @param string $addOrReduce (optional) "ADD" or "REDUCE" to filter the history
      * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
      */
-    public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, int $recvWindow = null)
+    public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($addOrReduce) {
             if (is_numeric($addOrReduce)) {
-                $params['addOrReduce'] = $addOrReduce;
+                $request['addOrReduce'] = $addOrReduce;
             } else if (is_string($addOrReduce)) {
                 $addOrReduce = strtoupper($addOrReduce);
                 if ($addOrReduce === 'ADD' || $addOrReduce === '1') {
-                    $params['addOrReduce'] = 1;
+                    $request['addOrReduce'] = 1;
                 } else if ($addOrReduce === 'REDUCE' || $addOrReduce === '2') {
-                    $params['addOrReduce'] = 2;
+                    $request['addOrReduce'] = 2;
                 } else {
                     throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
                 }
@@ -5491,10 +5338,8 @@ class API
                 throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
             }
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionMargin/history", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/positionMargin/history", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5506,36 +5351,37 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the balance details
      * @throws \Exception
      */
-    public function futuresBalances($recvWindow = null, string $api_version = 'v3')
+    public function futuresBalances(array $params = [], string $api_version = 'v3')
     {
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresBalances: api_version must be either v2 or v3');
         }
-        return $this->balances('futures', $recvWindow, 'v3');
+        return $this->balances('futures', $params, 'v3');
     }
 
     /**
      * futuresBalancesV2
      * see futuresBalances
      */
-    public function futuresBalancesV2(int $recvWindow = null)
+    public function futuresBalancesV2(array $params = [])
     {
-        return $this->futuresBalances($recvWindow, 'v2');
+        return $this->futuresBalances($params, 'v2');
     }
 
     /**
      * futuresBalancesV3
      * see futuresBalances
      */
-    public function futuresBalancesV3(int $recvWindow = null)
+    public function futuresBalancesV3(array $params = [])
     {
-        return $this->futuresBalances($recvWindow, 'v3');
+        return $this->futuresBalances($params, 'v3');
     }
 
     /**
@@ -5548,42 +5394,38 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or array of all the account information
      * @throws \Exception
      */
-    public function futuresAccount($recvWindow = null, string $api_version = 'v3')
+    public function futuresAccount(array $params = [], string $api_version = 'v3')
     {
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresAccount: api_version must be either v2 or v3');
         }
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($api_version . "/account", "GET", $params, true);
+
+        return $this->futuresRequest($api_version . "/account", "GET", $params, true);
     }
 
     /**
      * futuresAccountV2
      * see futuresAccount
      */
-    public function futuresAccountV2(int $recvWindow = null)
+    public function futuresAccountV2(array $params = [])
     {
-        return $this->futuresAccount($recvWindow, 'v2');
+        return $this->futuresAccount($params, 'v2');
     }
 
     /**
      * futuresAccountV3
      * see futuresAccount
      */
-    public function futuresAccountV3(int $recvWindow = null)
+    public function futuresAccountV3(array $params = [])
     {
-        return $this->futuresAccount($recvWindow, 'v3');
+        return $this->futuresAccount($params, 'v3');
     }
 
     /**
@@ -5601,16 +5443,13 @@ class API
      * @return array with error message or the trade fee details
      * @throws \Exception
      */
-    public function futuresTradeFee(string $symbol, int $recvWindow = null)
+    public function futuresTradeFee(string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/commissionRate", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/commissionRate", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5627,15 +5466,9 @@ class API
      * @return array with error message or the account configuration details
      * @throws \Exception
      */
-    public function futuresAccountConfig(int $recvWindow = null)
+    public function futuresAccountConfig(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/accountConfig", 'GET', $params, true);
+        return $this->futuresRequest("v1/accountConfig", 'GET', $params, true);
     }
 
     /**
@@ -5654,18 +5487,14 @@ class API
      * @return array with error message or the margin mode details
      * @throws \Exception
      */
-    public function futuresMarginModes($symbol = null, int $recvWindow = null)
+    public function futuresMarginModes($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/symbolConfig", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/symbolConfig", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5682,15 +5511,9 @@ class API
      * @return array with error message or the rate limit details
      * @throws \Exception
      */
-    public function futuresOrderRateLimit(int $recvWindow = null)
+    public function futuresOrderRateLimit(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/rateLimit/order", 'GET', $params, true);
+        return $this->futuresRequest("v1/rateLimit/order", 'GET', $params, true);
     }
 
     /**
@@ -5709,18 +5532,14 @@ class API
      * @return array with error message or the leverage details
      * @throws \Exception
      */
-    public function futuresLeverages($symbol = null, int $recvWindow = null)
+    public function futuresLeverages($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/leverageBracket", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/leverageBracket", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5768,33 +5587,29 @@ class API
      * @return array with error message or the income details
      * @throws \Exception
      */
-    public function futuresLedger($symbol = null, $incomeType = null, $startTime = null, $endTime = null, $limit = null, $page = null, int $recvWindow = null)
+    public function futuresLedger($symbol = null, $incomeType = null, $startTime = null, $endTime = null, $limit = null, $page = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($incomeType) {
-            $params['incomeType'] = $incomeType;
+            $request['incomeType'] = $incomeType;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($page) {
-            $params['page'] = $page;
+            $request['page'] = $page;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/income", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/income", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5813,51 +5628,42 @@ class API
      * @return array with error message or the trading status details
      * @throws \Exception
      */
-    public function futuresTradingStatus($symbol = null, int $recvWindow = null)
+    public function futuresTradingStatus($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/apiTradingStatus", 'GET', $params, true);
+
+        return $this->futuresRequest("v1/apiTradingStatus", 'GET', array_merge($request, $params), true);
     }
 
     /**
      * futuresDownloadId
      * helper for other metods for getting download id
      */
-    protected function futuresDownloadId($startTime, $endTime, $recvWindow = null, string $url = '')
+    protected function futuresDownloadId($startTime, $endTime, array $params = null, string $url = '')
     {
-        $params = [
+        $request = [
             'fapi' => true,
             'startTime' => $startTime,
             'endTime' => $endTime,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($url, 'GET', $params, true);
+
+        return $this->futuresRequest($url, 'GET', array_merge($request, $params), true);
     }
 
     /**
      * futuresDownloadLinkByDownloadId
      * helper for other metods for getting download link by download id
      */
-    protected function futuresDownloadLinkByDownloadId(string $downloadId, $recvWindow = null, string $url = '')
+    protected function futuresDownloadLinkByDownloadId(string $downloadId, array $params = null, string $url = '')
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'downloadId' => $downloadId,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($url, 'GET', $params, true);
+
+        return $this->futuresRequest($url, 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5878,9 +5684,9 @@ class API
      * @return array with error message or the response
      * @throws \Exception
      */
-    public function futuresDownloadIdForTransactions(int $startTime, int $endTime, int $recvWindow = null)
+    public function futuresDownloadIdForTransactions(int $startTime, int $endTime, array $params = [])
     {
-        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/income/asyn");
+        return $this->futuresDownloadId($startTime, $endTime, $params, "v1/income/asyn");
     }
 
     /**
@@ -5899,9 +5705,9 @@ class API
      * @return array with error message or the download link
      * @throws \Exception
      */
-    public function futuresDownloadTransactionsByDownloadId(string $downloadId, int $recvWindow = null)
+    public function futuresDownloadTransactionsByDownloadId(string $downloadId, array $params = [])
     {
-        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/income/asyn/id");
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $params, "v1/income/asyn/id");
     }
 
     /**
@@ -5922,9 +5728,9 @@ class API
      * @return array with error message or the response
      * @throws \Exception
      */
-    public function futuresDownloadIdForOrders(int $startTime, int $endTime, int $recvWindow = null)
+    public function futuresDownloadIdForOrders(int $startTime, int $endTime, array $params = [])
     {
-        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/order/asyn");
+        return $this->futuresDownloadId($startTime, $endTime, $params, "v1/order/asyn");
     }
 
     /**
@@ -5943,9 +5749,9 @@ class API
      * @return array with error message or the download link
      * @throws \Exception
      */
-    public function futuresDownloadOrdersByDownloadId(string $downloadId, int $recvWindow = null)
+    public function futuresDownloadOrdersByDownloadId(string $downloadId, array $params = [])
     {
-        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/order/asyn/id");
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $params, "v1/order/asyn/id");
     }
 
     /**
@@ -5966,9 +5772,9 @@ class API
      * @return array with error message or the response
      * @throws \Exception
      */
-    public function futuresDownloadIdForTrades(int $startTime, int $endTime, int $recvWindow = null)
+    public function futuresDownloadIdForTrades(int $startTime, int $endTime, array $params = [])
     {
-        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/trade/asyn");
+        return $this->futuresDownloadId($startTime, $endTime, $params, "v1/trade/asyn");
     }
 
     /**
@@ -5987,9 +5793,9 @@ class API
      * @return array with error message or the download link
      * @throws \Exception
      */
-    public function futuresDownloadTradesByDownloadId(string $downloadId, int $recvWindow = null)
+    public function futuresDownloadTradesByDownloadId(string $downloadId, array $params = [])
     {
-        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/trade/asyn/id");
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $params, "v1/trade/asyn/id");
     }
 
     /**
@@ -6007,16 +5813,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFeeBurn(bool $flag, int $recvWindow = null)
+    public function futuresFeeBurn(bool $flag, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'feeBurn' => $flag ? 'true' : 'false',
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/feeBurn", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/feeBurn", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -6033,15 +5836,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFeeBurnStatus(int $recvWindow = null)
+    public function futuresFeeBurnStatus(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/feeBurn", 'GET', $params, true);
+        return $this->futuresRequest("v1/feeBurn", 'GET', $params, true);
     }
 
     /**
@@ -6060,18 +5857,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertExchangeInfo($fromAsset = null, $toAsset = null)
+    public function convertExchangeInfo($fromAsset = null, $toAsset = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($fromAsset) {
-            $params['fromAsset'] = $fromAsset;
+            $request['fromAsset'] = $fromAsset;
         }
         if ($toAsset) {
-            $params['toAsset'] = $toAsset;
+            $request['toAsset'] = $toAsset;
         }
-        return $this->httpRequest("v1/convert/exchangeInfo", 'GET', $params);
+        return $this->futuresRequest("v1/convert/exchangeInfo", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -6093,27 +5888,24 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertSend(string $fromAsset, string $toAsset, $fromAmount = null, $toAmount = null, $validTime = null, int $recvWindow = null)
+    public function convertSend(string $fromAsset, string $toAsset, $fromAmount = null, $toAmount = null, $validTime = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'fromAsset' => $fromAsset,
             'toAsset' => $toAsset,
         ];
         if ($fromAmount) {
-            $params['fromAmount'] = $fromAmount;
+            $request['fromAmount'] = $fromAmount;
         } else if ($toAmount) {
-            $params['toAmount'] = $toAmount;
+            $request['toAmount'] = $toAmount;
         } else {
             throw new \Exception('convertSendRequest: fromAmount or toAmount must be set');
         }
         if ($validTime) {
-            $params['validTime'] = $validTime;
+            $request['validTime'] = $validTime;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/convert/getQuote", 'POST', $params, true);
+
+        return $this->futuresRequest("v1/convert/getQuote", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -6132,24 +5924,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertAccept(string $quoteId, int $recvWindow = null, array $params = [])
+    public function convertAccept(string $quoteId, array $params = [])
     {
         $request = [
             'quoteId' => $quoteId,
         ];
-        return $this->fapiRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
-    }
-
-    /**
-     * fapiRequest helper for creating a fapi httpRequest
-     */
-    protected function fapiRequest(string $url, string $method, array $params = [], $signed = false, int $recvWindow = null)
-    {
-        $params['fapi'] = true;
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($url, $method, $params, $signed);
+        return $this->futuresRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -6167,18 +5947,18 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertStatus($orderId = null, $quoteId = null)
+    public function convertStatus($orderId = null, $quoteId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         } else if ($quoteId) {
-            $params['quoteId'] = $quoteId;
+            $request['quoteId'] = $quoteId;
         } else {
             throw new \Exception('convertStatus: orderId or quoteId must be set');
         }
-        return $this->httpRequest("v1/convert/orderStatus", 'GET', $params, true);
+        return $this->futuresRequest("v1/convert/orderStatus", 'GET', array_merge($request, $params), true);
     }
 }

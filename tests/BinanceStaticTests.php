@@ -687,7 +687,7 @@ class BinanceStaticTests extends TestCase
     public function testTransfer()
     {
         try  {
-            $this->binance->transfer($this->type, $this->asset, $this->amount, $this->fromSymbol, $this->toSymbol, $this->recvWindow);
+            $this->binance->transfer($this->type, $this->asset, $this->amount, $this->fromSymbol, $this->toSymbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -707,7 +707,7 @@ class BinanceStaticTests extends TestCase
     public function testTransfersHistory()
     {
         try  {
-            $this->binance->transfersHistory($this->type, $this->startTime, $this->endTime, $this->limit, $this->current, $this->fromSymbol, $this->toSymbol, $this->recvWindow);
+            $this->binance->transfersHistory($this->type, $this->startTime, $this->endTime, $this->limit, $this->current, $this->fromSymbol, $this->toSymbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -889,7 +889,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesBalances()
     {
         try  {
-            $this->binance->balances('futures', $this->recvWindow);
+            $this->binance->balances('futures', [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -907,7 +907,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesBalancesV3()
     {
         try  {
-            $this->binance->balances('futures', $this->recvWindow, 'v3');
+            $this->binance->balances('futures', [ 'recvWindow' => $this->recvWindow ], 'v3');
 
         } catch (\Throwable $e) {
 
@@ -1798,7 +1798,7 @@ class BinanceStaticTests extends TestCase
         ];
 
         try  {
-            $this->binance->futuresBatchOrders([ $order ], $this->recvWindow);
+            $this->binance->futuresBatchOrders([ $order ], [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1855,7 +1855,7 @@ class BinanceStaticTests extends TestCase
         ];
 
         try  {
-            $this->binance->futuresEditOrders([ $order ], $this->recvWindow);
+            $this->binance->futuresEditOrders([ $order ], [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1878,7 +1878,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOrderAmendment()
     {
         try  {
-            $this->binance->futuresOrderAmendment($this->symbol, $this->orderId, $this->origClientOrderId, $this->startTime, $this->endTime, $this->limit, $this->recvWindow);
+            $this->binance->futuresOrderAmendment($this->symbol, $this->orderId, $this->origClientOrderId, $this->startTime, $this->endTime, $this->limit, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1921,7 +1921,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesCancelBatchOrdersByOrderIds()
     {
         try  {
-            $this->binance->futuresCancelBatchOrders($this->symbol, $this->orderIdList, null, $this->recvWindow);
+            $this->binance->futuresCancelBatchOrders($this->symbol, $this->orderIdList, null, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1940,7 +1940,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesCancelBatchOrdersByClientOrderIds()
     {
         try  {
-            $this->binance->futuresCancelBatchOrders($this->symbol, null, $this->origClientOrderIdList, $this->recvWindow);
+            $this->binance->futuresCancelBatchOrders($this->symbol, null, $this->origClientOrderIdList, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1959,7 +1959,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesCancelOpenOrders()
     {
         try  {
-            $this->binance->futuresCancelOpenOrders($this->symbol, $this->recvWindow);
+            $this->binance->futuresCancelOpenOrders($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1978,7 +1978,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesCountdownCancelAllOrders()
     {
         try  {
-            $this->binance->futuresCountdownCancelAllOrders($this->symbol, $this->countdownTime, $this->recvWindow);
+            $this->binance->futuresCountdownCancelAllOrders($this->symbol, $this->countdownTime, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -1995,7 +1995,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOrderStatusByOrderId()
     {
         try  {
-            $this->binance->futuresOrderStatus($this->symbol, $this->orderId, null, $this->recvWindow);
+            $this->binance->futuresOrderStatus($this->symbol, $this->orderId, null, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2015,7 +2015,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOrderStatusByClientOrderId()
     {
         try  {
-            $this->binance->futuresOrderStatus($this->symbol, null, $this->origClientOrderId, $this->recvWindow);
+            $this->binance->futuresOrderStatus($this->symbol, null, $this->origClientOrderId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2035,7 +2035,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAllOrders()
     {
         try  {
-            $this->binance->futuresAllOrders($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->recvWindow);
+            $this->binance->futuresAllOrders($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2058,7 +2058,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOpenOrders()
     {
         try  {
-            $this->binance->futuresOpenOrders($this->symbol, $this->recvWindow);
+            $this->binance->futuresOpenOrders($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2077,7 +2077,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOpenOrderByOrderId()
     {
         try  {
-            $this->binance->futuresOpenOrder($this->symbol, $this->orderId, null, $this->recvWindow);
+            $this->binance->futuresOpenOrder($this->symbol, $this->orderId, null, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2097,7 +2097,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOpenOrderByClientOrderId()
     {
         try  {
-            $this->binance->futuresOpenOrder($this->symbol, null, $this->origClientOrderId, $this->recvWindow);
+            $this->binance->futuresOpenOrder($this->symbol, null, $this->origClientOrderId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2117,7 +2117,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesForceOrders()
     {
         try  {
-            $this->binance->futuresForceOrders($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->autoCloseType, $this->recvWindow);
+            $this->binance->futuresForceOrders($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->autoCloseType, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2140,7 +2140,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesMyTrades()
     {
         try  {
-            $this->binance->futuresMyTrades($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->fromId, $this->recvWindow);
+            $this->binance->futuresMyTrades($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->fromId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2163,7 +2163,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesHistory()
     {
         try  {
-            $this->binance->futuresHistory($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->fromId, $this->recvWindow);
+            $this->binance->futuresHistory($this->symbol, $this->startTime, $this->endTime, $this->limit, $this->orderId, $this->fromId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2186,7 +2186,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesSetMarginMode()
     {
         try  {
-            $this->binance->futuresSetMarginMode($this->symbol, $this->marginType, $this->recvWindow);
+            $this->binance->futuresSetMarginMode($this->symbol, $this->marginType, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2203,7 +2203,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositionMode()
     {
         try  {
-            $this->binance->futuresPositionMode($this->recvWindow);
+            $this->binance->futuresPositionMode([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2219,7 +2219,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesSetPositionMode()
     {
         try  {
-            $this->binance->futuresSetPositionMode($this->dualSidePosition, $this->recvWindow);
+            $this->binance->futuresSetPositionMode($this->dualSidePosition, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2235,7 +2235,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesSetLeverage()
     {
         try  {
-            $this->binance->futuresSetLeverage($this->leverage, $this->symbol, $this->recvWindow);
+            $this->binance->futuresSetLeverage($this->leverage, $this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2252,7 +2252,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesMultiAssetsMarginMode()
     {
         try  {
-            $this->binance->futuresMultiAssetsMarginMode($this->recvWindow);
+            $this->binance->futuresMultiAssetsMarginMode([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2275,7 +2275,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesSetMultiAssetsMarginMode()
     {
         try  {
-            $this->binance->futuresSetMultiAssetsMarginMode($this->multiAssetsMarginMode, $this->recvWindow);
+            $this->binance->futuresSetMultiAssetsMarginMode($this->multiAssetsMarginMode, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2291,7 +2291,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAddMargin()
     {
         try  {
-            $this->binance->futuresAddMargin($this->symbol, $this->amount, $this->positionSide, $this->recvWindow);
+            $this->binance->futuresAddMargin($this->symbol, $this->amount, $this->positionSide, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2311,7 +2311,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesReduceMargin()
     {
         try  {
-            $this->binance->futuresReduceMargin($this->symbol, $this->amount, $this->positionSide, $this->recvWindow);
+            $this->binance->futuresReduceMargin($this->symbol, $this->amount, $this->positionSide, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2331,7 +2331,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositions()
     {
         try  {
-            $this->binance->futuresPositions($this->symbol, $this->recvWindow);
+            $this->binance->futuresPositions($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2349,7 +2349,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositionsV2()
     {
         try  {
-            $this->binance->futuresPositionsV2($this->symbol, $this->recvWindow);
+            $this->binance->futuresPositionsV2($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2367,7 +2367,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositionsV3()
     {
         try  {
-            $this->binance->futuresPositionsV3($this->symbol, $this->recvWindow);
+            $this->binance->futuresPositionsV3($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2385,7 +2385,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPosition()
     {
         try  {
-            $this->binance->futuresPosition($this->symbol, $this->recvWindow);
+            $this->binance->futuresPosition($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2403,7 +2403,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositionV2()
     {
         try  {
-            $this->binance->futuresPositionV2($this->symbol, $this->recvWindow);
+            $this->binance->futuresPositionV2($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2421,7 +2421,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositionV3()
     {
         try  {
-            $this->binance->futuresPositionV3($this->symbol, $this->recvWindow);
+            $this->binance->futuresPositionV3($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2439,7 +2439,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAdlQuantile()
     {
         try  {
-            $this->binance->futuresAdlQuantile($this->symbol, $this->recvWindow);
+            $this->binance->futuresAdlQuantile($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2457,7 +2457,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesPositionMarginChangeHistory()
     {
         try  {
-            $this->binance->futuresPositionMarginChangeHistory($this->symbol, $this->startTime, $this->endTime, $this->limit, 'ADD', $this->recvWindow);
+            $this->binance->futuresPositionMarginChangeHistory($this->symbol, $this->startTime, $this->endTime, $this->limit, 'ADD', [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2479,7 +2479,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAccount()
     {
         try  {
-            $this->binance->futuresAccount($this->recvWindow);
+            $this->binance->futuresAccount([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2496,7 +2496,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAccountV2()
     {
         try  {
-            $this->binance->futuresAccountV2($this->recvWindow);
+            $this->binance->futuresAccountV2([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2513,7 +2513,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAccountV3()
     {
         try  {
-            $this->binance->futuresAccountV3($this->recvWindow);
+            $this->binance->futuresAccountV3([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2530,7 +2530,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesTradeFee()
     {
         try  {
-            $this->binance->futuresTradeFee($this->symbol, $this->recvWindow);
+            $this->binance->futuresTradeFee($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2548,7 +2548,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesAccountConfig()
     {
         try  {
-            $this->binance->futuresAccountConfig($this->recvWindow);
+            $this->binance->futuresAccountConfig([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2565,7 +2565,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesMarginModes()
     {
         try  {
-            $this->binance->futuresMarginModes($this->symbol, $this->recvWindow);
+            $this->binance->futuresMarginModes($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2583,7 +2583,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesOrderRateLimit()
     {
         try  {
-            $this->binance->futuresOrderRateLimit($this->recvWindow);
+            $this->binance->futuresOrderRateLimit([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2600,7 +2600,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesLeverages()
     {
         try  {
-            $this->binance->futuresLeverages($this->symbol, $this->recvWindow);
+            $this->binance->futuresLeverages($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2618,7 +2618,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesLedger()
     {
         try  {
-            $this->binance->futuresLedger($this->symbol, $this->incomeType, $this->startTime, $this->endTime, $this->limit, $this->page, $this->recvWindow);
+            $this->binance->futuresLedger($this->symbol, $this->incomeType, $this->startTime, $this->endTime, $this->limit, $this->page, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2641,7 +2641,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesTradingStatus()
     {
         try  {
-            $this->binance->futuresTradingStatus($this->symbol, $this->recvWindow);
+            $this->binance->futuresTradingStatus($this->symbol, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2659,7 +2659,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesDownloadIdForTransactions()
     {
         try  {
-            $this->binance->futuresDownloadIdForTransactions($this->startTime, $this->endTime, $this->recvWindow);
+            $this->binance->futuresDownloadIdForTransactions($this->startTime, $this->endTime, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2678,7 +2678,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesDownloadTransactionsByDownloadId()
     {
         try  {
-            $this->binance->futuresDownloadTransactionsByDownloadId($this->downloadId, $this->recvWindow);
+            $this->binance->futuresDownloadTransactionsByDownloadId($this->downloadId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2696,7 +2696,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesDownloadIdForOrders()
     {
         try  {
-            $this->binance->futuresDownloadIdForOrders($this->startTime, $this->endTime, $this->recvWindow);
+            $this->binance->futuresDownloadIdForOrders($this->startTime, $this->endTime, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2715,7 +2715,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesDownloadOrdersByDownloadId()
     {
         try  {
-            $this->binance->futuresDownloadOrdersByDownloadId($this->downloadId, $this->recvWindow);
+            $this->binance->futuresDownloadOrdersByDownloadId($this->downloadId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2733,7 +2733,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesDownloadIdForTrades()
     {
         try  {
-            $this->binance->futuresDownloadIdForTrades($this->startTime, $this->endTime, $this->recvWindow);
+            $this->binance->futuresDownloadIdForTrades($this->startTime, $this->endTime, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2752,7 +2752,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesDownloadTradesByDownloadId()
     {
         try  {
-            $this->binance->futuresDownloadTradesByDownloadId($this->downloadId, $this->recvWindow);
+            $this->binance->futuresDownloadTradesByDownloadId($this->downloadId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2770,7 +2770,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesFeeBurn()
     {
         try  {
-            $this->binance->futuresFeeBurn(true, $this->recvWindow);
+            $this->binance->futuresFeeBurn(true, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2786,7 +2786,7 @@ class BinanceStaticTests extends TestCase
     public function testFuturesFeeBurnStatus()
     {
         try  {
-            $this->binance->futuresFeeBurnStatus($this->recvWindow);
+            $this->binance->futuresFeeBurnStatus([ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2821,7 +2821,7 @@ class BinanceStaticTests extends TestCase
     public function testConvertSend()
     {
         try  {
-            $this->binance->convertSend($this->fromAsset, $this->toAsset, $this->fromAmount, null, $this->validTime, $this->recvWindow);
+            $this->binance->convertSend($this->fromAsset, $this->toAsset, $this->fromAmount, null, $this->validTime, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
@@ -2840,7 +2840,7 @@ class BinanceStaticTests extends TestCase
     public function testConvertAccept()
     {
         try  {
-            $this->binance->convertAccept($this->quoteId, $this->recvWindow);
+            $this->binance->convertAccept($this->quoteId, [ 'recvWindow' => $this->recvWindow ]);
 
         } catch (\Throwable $e) {
 
