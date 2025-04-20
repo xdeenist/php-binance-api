@@ -1448,24 +1448,27 @@ class API
         curl_setopt($curl, $option, $query);
     }
 
-    protected function spotRequest($url, $method = "GET", $params = [], $signed = false)
+    public function spotRequest($url, $method = "GET", $params = [], $signed = false)
     {
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    protected function spotWalletRequest($url, $method = "GET", $params = [], $signed = false)
+    public function spotWalletRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['sapi'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    protected function futuresRequest($url, $method = "GET", $params = [], $signed = false)
+    public function futuresRequest($url, $method = "GET", $params = [], $signed = false, $recvWindow = null)
     {
         $params['fapi'] = true;
+        if ($recvWindow) {
+            $params['recvWindow'] = $recvWindow;
+        }
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    protected function fapiDataRequest($url, $method = "GET", $params = [], $signed = false)
+    public function fapiDataRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['fapiData'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
@@ -3360,9 +3363,9 @@ class API
      * @return array with error message or array with server time key
      * @throws \Exception
      */
-    public function futuresTime()
+    public function futuresTime(array $params = [])
     {
-        return $this->futuresRequest("v1/time", "GET");
+        return $this->futuresRequest("v1/time", "GET", $params);
     }
 
     /**
@@ -3377,10 +3380,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresExchangeInfo()
+    public function futuresExchangeInfo(array $params = [])
     {
         if (!$this->futuresExchangeInfo) {
-            $arr = $this->futuresRequest("v1/exchangeInfo", "GET");
+            $arr = $this->futuresRequest("v1/exchangeInfo", "GET", $params);
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch futures exchange info" . PHP_EOL;
                 $arr = array();
@@ -3415,21 +3418,20 @@ class API
      * @return array with error message or array of market depth
      * @throws \Exception
      */
-    public function futuresDepth(string $symbol, int $limit = null)
+    public function futuresDepth(string $symbol, int $limit = null, array $params = [])
     {
         if (isset($symbol) === false || is_string($symbol) === false) {
             // WPCS: XSS OK.
             echo "asset: expected bool false, " . gettype($symbol) . " given" . PHP_EOL;
         }
 
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        $json = $this->httpRequest("v1/depth", "GET", $params);
+        $json = $this->futuresRequest("v1/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch futures depth" . PHP_EOL;
             $json = [];
@@ -3461,16 +3463,15 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresRecentTrades(string $symbol, int $limit = null)
+    public function futuresRecentTrades(string $symbol, int $limit = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        return $this->httpRequest("v1/trades", "GET", $parameters);
+        return $this->futuresRequest("v1/trades", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3489,19 +3490,18 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresHistoricalTrades(string $symbol, int $limit = null, int $tradeId = null)
+    public function futuresHistoricalTrades(string $symbol, $limit = null, $tradeId = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($tradeId) {
-            $parameters['fromId'] = $tradeId;
+            $request['fromId'] = $tradeId;
         }
-        return $this->httpRequest("v1/historicalTrades", "GET", $parameters, true);
+        return $this->futuresRequest("v1/historicalTrades", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -3522,25 +3522,24 @@ class API
      * @return array with error message or array of market history
      * @throws \Exception
      */
-    public function futuresAggTrades(string $symbol, int $fromId = null, int $startTime = null, int $endTime = null, int $limit = null)
+    public function futuresAggTrades(string $symbol, int $fromId = null, int $startTime = null, int $endTime = null, int $limit = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($fromId) {
-            $parameters['fromId'] = $fromId;
+            $request['fromId'] = $fromId;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        return $this->tradesData($this->httpRequest("v1/aggTrades", "GET", $parameters));
+        return $this->tradesData($this->futuresRequest("v1/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
