@@ -509,7 +509,7 @@ class API
             "symbol" => $symbol,
             "orderId" => $orderid,
         ];
-        return $this->spotRequest("v3/order", "DELETE", array_merge($request, $params), true);
+        return $this->apiRequest("v3/order", "DELETE", array_merge($request, $params), true);
     }
 
     /**
@@ -529,7 +529,7 @@ class API
             "symbol" => $symbol,
             "orderId" => $orderid,
         ];
-        return $this->spotRequest("v3/order", "GET", array_merge($request, $params), true);
+        return $this->apiRequest("v3/order", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -550,7 +550,7 @@ class API
                 "symbol" => $symbol,
             ];
         }
-        return $this->spotRequest("v3/openOrders", "GET", array_merge($request, $params), true);
+        return $this->apiRequest("v3/openOrders", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -568,7 +568,7 @@ class API
                 "symbol" => $symbol,
             ];
         }
-        return $this->spotRequest("v3/openOrders", "DELETE", array_merge($request, $params), true);
+        return $this->apiRequest("v3/openOrders", "DELETE", array_merge($request, $params), true);
     }
 
     /**
@@ -592,7 +592,7 @@ class API
         if ($fromOrderId) {
             $request["orderId"] = $fromOrderId;
         }
-        return $this->spotRequest("v3/allOrders", "GET", array_merge($request, $params), true);
+        return $this->apiRequest("v3/allOrders", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -628,7 +628,7 @@ class API
             $request["endTime"] = $endTime;
         }
 
-        return $this->spotRequest("v3/myTrades", "GET", array_merge($request, $params), true);
+        return $this->apiRequest("v3/myTrades", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -654,7 +654,7 @@ class API
      */
     public function useServerTime(array $params = [])
     {
-        $request = $this->spotRequest("v3/time", "GET", $params);
+        $request = $this->apiRequest("v3/time", "GET", $params);
         if (isset($request['serverTime'])) {
             $this->info['timeOffset'] = $request['serverTime'] - (microtime(true) * 1000);
         }
@@ -670,7 +670,7 @@ class API
      */
     public function time(array $params = [])
     {
-        return $this->spotRequest("v3/time", "GET", $params);
+        return $this->apiRequest("v3/time", "GET", $params);
     }
 
     /**
@@ -698,13 +698,13 @@ class API
             if ($symbols) {
                 if (gettype($symbols) == "string") {
                     $request["symbol"] = $symbols;
-                    $arr = $this->spotRequest("v3/exchangeInfo", "GET", array_merge($request, $params));
+                    $arr = $this->apiRequest("v3/exchangeInfo", "GET", array_merge($request, $params));
                 }
                 if (gettype($symbols) == "array")  {
-                    $arr = $this->spotRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]', "GET", $params);
+                    $arr = $this->apiRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]', "GET", $params);
                 }
             } else {
-                $arr = $this->spotRequest("v3/exchangeInfo", "GET", $params);
+                $arr = $this->apiRequest("v3/exchangeInfo", "GET", $params);
             }
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch spot exchange info" . PHP_EOL;
@@ -738,7 +738,7 @@ class API
         $request = array();
         if ($asset != '' && gettype($asset) == 'string')
             $request['asset'] = $asset;
-        $arr = $this->spotWalletRequest("v1/asset/assetDetail", 'GET', array_merge($request, $params), true);
+        $arr = $this->sapiRequest("v1/asset/assetDetail", 'GET', array_merge($request, $params), true);
         // if asset was set, no backward compatibility needed as this was implemented later
         if (isset($params['asset']))
             return $arr;
@@ -790,7 +790,7 @@ class API
             $request['endTime'] = $endTime;
         }
 
-        return $this->spotWalletRequest("v1/asset/dribblet", 'GET', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/asset/dribblet", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -811,7 +811,7 @@ class API
             'assets' => $assets,
         ];
 
-        return $this->spotWalletRequest("v1/asset/dust", 'POST', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/asset/dust", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -827,7 +827,7 @@ class API
         $request = [
             "symbol" => $symbol,
         ];
-        return $this->spotWalletRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -848,7 +848,7 @@ class API
         if ($symbol != '' && gettype($symbol) == 'string')
             $request['symbol'] = $symbol;
 
-        return $this->spotWalletRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -896,7 +896,7 @@ class API
         if (is_null($orderId) === false && empty($orderId) === false) {
             $request['withdrawOrderId'] = $orderId;
         }
-        return $this->spotWalletRequest("v1/capital/withdraw/apply", "POST", array_merge($request, $params), true);
+        return $this->sapiRequest("v1/capital/withdraw/apply", "POST", array_merge($request, $params), true);
     }
 
     /**
@@ -921,7 +921,7 @@ class API
             $request['network'] = $network;
         }
 
-        $return = $this->spotWalletRequest("v1/capital/deposit/address", "GET", array_merge($request, $params), true);
+        $return = $this->sapiRequest("v1/capital/deposit/address", "GET", array_merge($request, $params), true);
 
         // Adding for backwards compatibility with wapi
         if (is_array($return) && !empty($return)) {
@@ -958,7 +958,7 @@ class API
         if (is_null($asset) === false) {
             $request['coin'] = $asset;
         }
-        $return = $this->spotWalletRequest("v1/capital/deposit/hisrec", "GET", array_merge($request, $params), true);
+        $return = $this->sapiRequest("v1/capital/deposit/hisrec", "GET", array_merge($request, $params), true);
 
         // Adding for backwards compatibility with wapi
         if (is_array($return) && !empty($return)) {
@@ -994,7 +994,7 @@ class API
         }
         // Wrapping in array for backwards compatibility with wapi
         $return = array(
-            'withdrawList' => $this->spotWalletRequest("v1/capital/withdraw/history", "GET", array_merge($request, $params), true)
+            'withdrawList' => $this->sapiRequest("v1/capital/withdraw/history", "GET", array_merge($request, $params), true)
             );
 
         // Adding for backwards compatibility with wapi
@@ -1090,7 +1090,7 @@ class API
         }
 
 
-        return $this->spotWalletRequest("v1/asset/transfer", 'POST', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/asset/transfer", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -1139,7 +1139,7 @@ class API
         }
 
 
-        return $this->spotWalletRequest("v1/asset/transfer", 'GET', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/asset/transfer", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -1152,7 +1152,7 @@ class API
      */
     public function prices(array $params = [])
     {
-        return $this->priceData($this->spotRequest("v3/ticker/price", "GET", $params));
+        return $this->priceData($this->apiRequest("v3/ticker/price", "GET", $params));
     }
 
     /**
@@ -1168,7 +1168,7 @@ class API
         $request = [
             "symbol" => $symbol,
         ];
-        $ticker = $this->spotRequest("v3/ticker/price", "GET", array_merge($request, $params));
+        $ticker = $this->apiRequest("v3/ticker/price", "GET", array_merge($request, $params));
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch price for $symbol" . PHP_EOL;
             return null;
@@ -1186,7 +1186,7 @@ class API
      */
     public function bookPrices(array $params = [])
     {
-        return $this->bookPriceData($this->spotRequest("v3/ticker/bookTicker", "GET", $params));
+        return $this->bookPriceData($this->apiRequest("v3/ticker/bookTicker", "GET", $params));
     }
 
     /**
@@ -1199,7 +1199,7 @@ class API
      */
     public function account(array $params = [])
     {
-        return $this->spotRequest("v3/account", "GET", $params, true);
+        return $this->apiRequest("v3/account", "GET", $params, true);
     }
 
     /**
@@ -1219,7 +1219,7 @@ class API
                 'symbol' => $symbol,
             ];
         }
-        return $this->spotRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
+        return $this->apiRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
     }
 
     /**
@@ -1236,7 +1236,7 @@ class API
         $request = [
             "symbol" => $symbol,
         ];
-        return $this->tradesData($this->spotRequest("v1/aggTrades", "GET", array_merge($request, $params)));
+        return $this->tradesData($this->apiRequest("v1/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
@@ -1265,13 +1265,13 @@ class API
             $request["fromId"] = $tradeId;
         } else {
             // if there is no tradeId given, we can use v3/trades, weight is 1 and not 5
-            return $this->spotRequest("v3/trades", "GET", array_merge($request, $params));
+            return $this->apiRequest("v3/trades", "GET", array_merge($request, $params));
         }
 
         // The endpoint cannot handle extra parameters like 'timestamp' or 'signature',
         // but it needs the http header with the key so we need to construct it here
         $query = http_build_query(array_merge($request, $params), '', '&');
-        return $this->spotRequest("v3/historicalTrades?$query");
+        return $this->apiRequest("v3/historicalTrades?$query");
     }
 
     /**
@@ -1298,7 +1298,7 @@ class API
             "symbol" => $symbol,
             "limit" => $limit,
         ];
-        $json = $this->spotRequest("v1/depth", "GET", array_merge($request, $params));
+        $json = $this->apiRequest("v1/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch depth" . PHP_EOL;
             $json = [];
@@ -1363,7 +1363,7 @@ class API
      */
     public function coins(array $params = [])
     {
-        return $this->spotWalletRequest("v1/capital/config/getall", 'GET', $params, true);
+        return $this->sapiRequest("v1/capital/config/getall", 'GET', $params, true);
     }
 
     /**
@@ -1444,24 +1444,24 @@ class API
         curl_setopt($curl, $option, $query);
     }
 
-    public function spotRequest($url, $method = "GET", $params = [], $signed = false)
+    public function apiRequest($url, $method = "GET", $params = [], $signed = false)
     {
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    public function spotWalletRequest($url, $method = "GET", $params = [], $signed = false)
+    public function sapiRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['sapi'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    public function futuresRequest($url, $method = "GET", $params = [], $signed = false)
+    public function fapiRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['fapi'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
     }
 
-    public function futuresDataRequest($url, $method = "GET", $params = [], $signed = false)
+    public function fapiDataRequest($url, $method = "GET", $params = [], $signed = false)
     {
         $params['fapiData'] = true;
         return $this->httpRequest($url, $method, $params, $signed);
@@ -1819,7 +1819,7 @@ class API
         }
 
         $qstring = ($test === false) ? "v3/order" : "v3/order/test";
-        return $this->spotRequest($qstring, "POST", array_merge($request, $params), true);
+        return $this->apiRequest($qstring, "POST", array_merge($request, $params), true);
     }
 
     /**
@@ -1859,7 +1859,7 @@ class API
             $request["endTime"] = $endTime;
         }
 
-        $response = $this->spotRequest("v1/klines", "GET", array_merge($request, $params));
+        $response = $this->apiRequest("v1/klines", "GET", array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
@@ -3113,21 +3113,21 @@ class API
     public function systemStatus(array $params = [])
     {
         $arr = array();
-        $api_status = $this->spotRequest("v3/ping", 'GET', $params);
+        $api_status = $this->apiRequest("v3/ping", 'GET', $params);
         if ( empty($api_status) ) {
             $arr['api']['status']  = 'ping ok';
         } else {
             $arr['api']['status']  = $api_status;
         }
 
-        $fapi_status = $this->futuresRequest("v1/ping", 'GET', $params);
+        $fapi_status = $this->fapiRequest("v1/ping", 'GET', $params);
         if ( empty($fapi_status) ) {
             $arr['fapi']['status'] = 'ping ok';
         } else {
             $arr['fapi']['status'] = $fapi_status;
         }
 
-        $arr['sapi'] = $this->spotWalletRequest("v1/system/status", 'GET', $params);
+        $arr['sapi'] = $this->sapiRequest("v1/system/status", 'GET', $params);
         return $arr;
     }
 
@@ -3162,7 +3162,7 @@ class API
         if ($nbrDays != 5)
             $request['limit'] = $nbrDays;
 
-        return $this->spotWalletRequest("v1/accountSnapshot", 'GET', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/accountSnapshot", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -3178,7 +3178,7 @@ class API
     public function accountStatus(array $params = [])
     {
         $arr = array();
-        $arr['sapi'] = $this->spotWalletRequest("v1/account/status", 'GET', $params, true);
+        $arr['sapi'] = $this->sapiRequest("v1/account/status", 'GET', $params, true);
         return $arr;
     }
 
@@ -3194,7 +3194,7 @@ class API
      */
     public function apiRestrictions(array $params = [])
     {
-        return $this->spotWalletRequest("v1/account/apiRestrictions", 'GET', $params, true);
+        return $this->sapiRequest("v1/account/apiRestrictions", 'GET', $params, true);
     }
 
     /**
@@ -3210,7 +3210,7 @@ class API
     public function apiTradingStatus(array $params = [])
     {
         $arr = array();
-        $arr['sapi'] = $this->spotWalletRequest("v1/account/apiTradingStatus", 'GET', $params, true);
+        $arr['sapi'] = $this->sapiRequest("v1/account/apiTradingStatus", 'GET', $params, true);
         return $arr;
     }
 
@@ -3277,7 +3277,7 @@ class API
                 $request[$flag] = $params[$flag];
         }
 
-        return $this->spotRequest("v3/order/oco", "POST", $request, true);
+        return $this->apiRequest("v3/order/oco", "POST", $request, true);
     }
 
     /**
@@ -3297,7 +3297,7 @@ class API
         $request = [
             'symbol' => $symbol,
         ];
-        $ticker = $this->spotRequest("v3/avgPrice", "GET", array_merge($request, $params));
+        $ticker = $this->apiRequest("v3/avgPrice", "GET", array_merge($request, $params));
         if (is_array($ticker) === false) {
             echo "Error: unable to fetch avg price" . PHP_EOL;
             $ticker = [];
@@ -3337,7 +3337,7 @@ class API
             'quoteQty'   => $quoteQty,
         ];
 
-        return $this->spotWalletRequest("v1/bswap/quote", 'GET', array_merge($request, $params), true);
+        return $this->sapiRequest("v1/bswap/quote", 'GET', array_merge($request, $params), true);
     }
 
     /*********************************************
@@ -3358,7 +3358,7 @@ class API
      */
     public function futuresTime(array $params = [])
     {
-        return $this->futuresRequest("v1/time", "GET", $params);
+        return $this->fapiRequest("v1/time", "GET", $params);
     }
 
     /**
@@ -3376,7 +3376,7 @@ class API
     public function futuresExchangeInfo(array $params = [])
     {
         if (!$this->futuresExchangeInfo) {
-            $arr = $this->futuresRequest("v1/exchangeInfo", "GET", $params);
+            $arr = $this->fapiRequest("v1/exchangeInfo", "GET", $params);
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch futures exchange info" . PHP_EOL;
                 $arr = array();
@@ -3424,7 +3424,7 @@ class API
         if ($limit) {
             $request['limit'] = $limit;
         }
-        $json = $this->futuresRequest("v1/depth", "GET", array_merge($request, $params));
+        $json = $this->fapiRequest("v1/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch futures depth" . PHP_EOL;
             $json = [];
@@ -3464,7 +3464,7 @@ class API
         if ($limit) {
             $request['limit'] = $limit;
         }
-        return $this->futuresRequest("v1/trades", "GET", array_merge($request, $params));
+        return $this->fapiRequest("v1/trades", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3494,7 +3494,7 @@ class API
         if ($tradeId) {
             $request['fromId'] = $tradeId;
         }
-        return $this->futuresRequest("v1/historicalTrades", "GET", array_merge($request, $params), true);
+        return $this->fapiRequest("v1/historicalTrades", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -3532,7 +3532,7 @@ class API
         if ($limit) {
             $request['limit'] = $limit;
         }
-        return $this->tradesData($this->futuresRequest("v1/aggTrades", "GET", array_merge($request, $params)));
+        return $this->tradesData($this->fapiRequest("v1/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
@@ -3715,7 +3715,7 @@ class API
             $request['contractType'] = $contractType;
         }
 
-        $response = $this->futuresRequest("v1/{$klineType}", 'GET', array_merge($request, $params));
+        $response = $this->fapiRequest("v1/{$klineType}", 'GET', array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
@@ -3751,7 +3751,7 @@ class API
         if ($symbol) {
             $request['symbol'] = $symbol;
         }
-        return $this->futuresRequest("v1/premiumIndex", "GET", array_merge($request, $params));
+        return $this->fapiRequest("v1/premiumIndex", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3785,7 +3785,7 @@ class API
         if ($endTime) {
             $request['endTime'] = $endTime;
         }
-        return $this->futuresRequest("v1/fundingRate", "GET", array_merge($request, $params));
+        return $this->fapiRequest("v1/fundingRate", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3802,7 +3802,7 @@ class API
      */
     public function futuresFundingInfo(array $params = [])
     {
-        return $this->futuresRequest("v1/fundingInfo", "GET", $params);
+        return $this->fapiRequest("v1/fundingInfo", "GET", $params);
     }
 
     /**
@@ -3827,7 +3827,7 @@ class API
         if ($symbol) {
             $request['symbol'] = $symbol;
         }
-        return $this->futuresRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
+        return $this->fapiRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3849,7 +3849,7 @@ class API
         $request = [
             'symbol' => $symbol,
         ];
-        $ticker = $this->futuresRequest("v1/ticker/price", "GET", array_merge($request, $params));
+        $ticker = $this->fapiRequest("v1/ticker/price", "GET", array_merge($request, $params));
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
             return null;
@@ -3871,7 +3871,7 @@ class API
      */
     public function futuresPrices(array $params = [])
     {
-        return $this->priceData($this->futuresRequest("v1/ticker/price", "GET", $params));
+        return $this->priceData($this->fapiRequest("v1/ticker/price", "GET", $params));
     }
 
     /**
@@ -3893,7 +3893,7 @@ class API
         $request = [
             'symbol' => $symbol,
         ];
-        $ticker = $this->futuresRequest("v2/ticker/price", "GET", $request);
+        $ticker = $this->fapiRequest("v2/ticker/price", "GET", $request);
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
             return null;
@@ -3915,7 +3915,7 @@ class API
      */
     public function futuresPricesV2(array $params = [])
     {
-        return $this->priceData($this->futuresRequest("v2/ticker/price", "GET", $params));
+        return $this->priceData($this->fapiRequest("v2/ticker/price", "GET", $params));
     }
 
     /**
@@ -3940,7 +3940,7 @@ class API
         if ($symbol) {
             $request['symbol'] = $symbol;
         }
-        return $this->futuresRequest("v1/ticker/bookTicker", "GET", array_merge($request, $params));
+        return $this->fapiRequest("v1/ticker/bookTicker", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3961,7 +3961,7 @@ class API
             'pair' => $symbol,
         ];
 
-        return $this->futuresDataRequest("delivery-price", "GET", array_merge($request, $params));
+        return $this->fapiDataRequest("delivery-price", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3983,14 +3983,14 @@ class API
         $request = [
             'symbol'=> $symbol,
         ];
-        return $this->futuresRequest("v1/openInterest", 'GET', array_merge($request, $params));
+        return $this->fapiRequest("v1/openInterest", 'GET', array_merge($request, $params));
     }
 
     /**
-     * symbolPeriodLimitStartEndFuturesDataRequest
+     * sapieriodLimitStartEndFuturesDataRequest
      * helper for routing GET methods that require symbol, period, limit, startTime and endTime
      */
-    private function symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, $url, array $params = [])
+    private function sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, $url, array $params = [])
     {
         $request = [
             'symbol' => $symbol,
@@ -4005,7 +4005,7 @@ class API
         if ($endTime) {
             $request['endTime'] = $endTime;
         }
-        return $this->futuresDataRequest($url, 'GET', array_merge($request, $params));
+        return $this->fapiDataRequest($url, 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4026,7 +4026,7 @@ class API
      */
     public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', $params);
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', $params);
     }
 
     /**
@@ -4047,7 +4047,7 @@ class API
      */
     public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', $params);
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', $params);
     }
 
     /**
@@ -4068,7 +4068,7 @@ class API
      */
     public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', $params);
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', $params);
     }
 
     /**
@@ -4089,7 +4089,7 @@ class API
      */
     public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', $params);
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', $params);
     }
 
     /**
@@ -4110,7 +4110,7 @@ class API
      */
     public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', $params);
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', $params);
     }
 
 
@@ -4147,7 +4147,7 @@ class API
         if ($endTime) {
             $request['endTime'] = $endTime;
         }
-        return $this->futuresDataRequest("basis", 'GET', array_merge($request, $params));
+        return $this->fapiDataRequest("basis", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4170,7 +4170,7 @@ class API
         $request = [
             'symbol' => $symbol,
         ];
-        return $this->futuresRequest("v1/indexInfo", 'GET', array_merge($request, $params));
+        return $this->fapiRequest("v1/indexInfo", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4195,7 +4195,7 @@ class API
         if ($symbol) {
             $request['symbol'] = $symbol;
         }
-        return $this->futuresRequest("v1/assetIndex", 'GET', array_merge($request, $params));
+        return $this->fapiRequest("v1/assetIndex", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4217,7 +4217,7 @@ class API
         $request = [
             'symbol' => $symbol,
         ];
-        return $this->futuresRequest("v1/constituents", 'GET', array_merge($request, $params));
+        return $this->fapiRequest("v1/constituents", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4342,7 +4342,7 @@ class API
     {
         $request = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $params);
         $qstring = ($test === false) ? 'v1/order' : 'v1/order/test';
-        return $this->futuresRequest($qstring, 'POST', $request, true);
+        return $this->fapiRequest($qstring, 'POST', $request, true);
     }
 
     /**
@@ -4547,7 +4547,7 @@ class API
         // current endpoint accepts orders list as a json string in the query string
         $encodedOrders = json_encode($formatedOrders);
         $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
-        return $this->futuresRequest($url, 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest($url, 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -4583,7 +4583,7 @@ class API
         }
         unset($request['type']);
         unset($request['newClientOrderId']);
-        return $this->futuresRequest("v1/order", 'PUT', $request, true);
+        return $this->fapiRequest("v1/order", 'PUT', $request, true);
     }
 
     /**
@@ -4606,7 +4606,7 @@ class API
 
         // current endpoint accepts orders list as a json string in the query string
         $request['batchOrders'] = json_encode($formatedOrders);
-        return $this->futuresRequest("v1/batchOrders", 'PUT', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/batchOrders", 'PUT', array_merge($request, $params), true);
     }
 
     /**
@@ -4649,7 +4649,7 @@ class API
             $request['limit'] = $limit;
         }
 
-        return $this->futuresRequest("v1/orderAmendment", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/orderAmendment", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4677,7 +4677,7 @@ class API
         } else if (!isset($params['origClientOrderId'])) {
             throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
         }
-        return $this->futuresRequest("v1/order", 'DELETE', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/order", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4711,7 +4711,7 @@ class API
             throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
         }
 
-        return $this->futuresRequest("v1/batchOrders", 'DELETE', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/batchOrders", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4733,7 +4733,7 @@ class API
             'symbol' => $symbol,
         ];
 
-        return $this->futuresRequest("v1/allOpenOrders", 'DELETE', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/allOpenOrders", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4758,7 +4758,7 @@ class API
             'countdownTime' => $countdownTime,
         ];
 
-        return $this->futuresRequest("v1/countdownCancelAll", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/countdownCancelAll", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -4790,7 +4790,7 @@ class API
             throw new \Exception('futuresOrderStatus: either orderId or origClientOrderId must be set');
         }
 
-        return $this->futuresRequest("v1/order", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/order", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4830,7 +4830,7 @@ class API
             $request['orderId'] = $orderId;
         }
 
-        return $this->futuresRequest("v1/allOrders", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/allOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4855,7 +4855,7 @@ class API
             $request['symbol'] = $symbol;
         }
 
-        return $this->futuresRequest("v1/openOrders", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/openOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4887,7 +4887,7 @@ class API
             throw new \Exception('futuresOpenOrder: either orderId or origClientOrderId must be set');
         }
 
-        return $this->futuresRequest("v1/openOrder", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/openOrder", 'GET', array_merge($request, $params), true);
     }
     /**
      * futuresForceOrders gets all futures force orders
@@ -4929,7 +4929,7 @@ class API
             $request['autoCloseType'] = $autoCloseType;
         }
 
-        return $this->futuresRequest("v1/forceOrders", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/forceOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4974,7 +4974,7 @@ class API
             $request['fromId'] = $fromId;
         }
 
-        return $this->futuresRequest("v1/userTrades", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/userTrades", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5011,7 +5011,7 @@ class API
             'marginType' => $marginType,
         ];
 
-        return $this->futuresRequest("v1/marginType", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/marginType", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5031,7 +5031,7 @@ class API
      */
     public function futuresPositionMode(array $params = [])
     {
-        return $this->futuresRequest("v1/positionSide/dual", 'GET', $params, true);
+        return $this->fapiRequest("v1/positionSide/dual", 'GET', $params, true);
     }
 
     /**
@@ -5056,7 +5056,7 @@ class API
             'dualSidePosition' => $dualSidePosition ? 'true' : 'false',
         ];
 
-        return $this->futuresRequest("v1/positionSide/dual", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/positionSide/dual", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5084,7 +5084,7 @@ class API
             'leverage' => $leverage,
         ];
 
-        return $this->futuresRequest("v1/leverage", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/leverage", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5104,7 +5104,7 @@ class API
      */
     public function futuresMultiAssetsMarginMode(array $params = [])
     {
-        return $this->futuresRequest("v1/multiAssetsMargin", 'GET', $params, true);
+        return $this->fapiRequest("v1/multiAssetsMargin", 'GET', $params, true);
     }
 
     /**
@@ -5129,7 +5129,7 @@ class API
             'multiAssetsMarginMode' => $multiAssetsMarginMode ? 'true' : 'false',
         ];
 
-        return $this->futuresRequest("v1/multiAssetsMarginMode", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/multiAssetsMarginMode", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5151,7 +5151,7 @@ class API
             $request['positionSide'] = $positionSide;
         }
 
-        return $this->futuresRequest("v1/positionMargin", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/positionMargin", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5228,7 +5228,7 @@ class API
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresPositions: api_version must be either v2 or v3');
         }
-        return $this->futuresRequest($api_version . "/positionRisk", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest($api_version . "/positionRisk", 'GET', array_merge($request, $params), true);
     }
 
     /** futuresPositionsV2
@@ -5311,7 +5311,7 @@ class API
             $request['symbol'] = $symbol;
         }
 
-        return $this->futuresRequest("v1/adlQuantile", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/adlQuantile", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5362,7 +5362,7 @@ class API
             }
         }
 
-        return $this->futuresRequest("v1/positionMargin/history", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/positionMargin/history", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5430,7 +5430,7 @@ class API
             throw new \Exception('futuresAccount: api_version must be either v2 or v3');
         }
 
-        return $this->futuresRequest($api_version . "/account", "GET", $params, true);
+        return $this->fapiRequest($api_version . "/account", "GET", $params, true);
     }
 
     /**
@@ -5473,7 +5473,7 @@ class API
             'symbol' => $symbol,
         ];
 
-        return $this->futuresRequest("v1/commissionRate", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/commissionRate", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5493,7 +5493,7 @@ class API
      */
     public function futuresAccountConfig(array $params = [])
     {
-        return $this->futuresRequest("v1/accountConfig", 'GET', $params, true);
+        return $this->fapiRequest("v1/accountConfig", 'GET', $params, true);
     }
 
     /**
@@ -5520,7 +5520,7 @@ class API
             $request['symbol'] = $symbol;
         }
 
-        return $this->futuresRequest("v1/symbolConfig", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/symbolConfig", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5540,7 +5540,7 @@ class API
      */
     public function futuresOrderRateLimit(array $params = [])
     {
-        return $this->futuresRequest("v1/rateLimit/order", 'GET', $params, true);
+        return $this->fapiRequest("v1/rateLimit/order", 'GET', $params, true);
     }
 
     /**
@@ -5567,7 +5567,7 @@ class API
             $request['symbol'] = $symbol;
         }
 
-        return $this->futuresRequest("v1/leverageBracket", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/leverageBracket", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5638,7 +5638,7 @@ class API
             $request['page'] = $page;
         }
 
-        return $this->futuresRequest("v1/income", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/income", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5665,7 +5665,7 @@ class API
             $request['symbol'] = $symbol;
         }
 
-        return $this->futuresRequest("v1/apiTradingStatus", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/apiTradingStatus", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5679,7 +5679,7 @@ class API
             'endTime' => $endTime,
         ];
 
-        return $this->futuresRequest($url, 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest($url, 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5692,7 +5692,7 @@ class API
             'downloadId' => $downloadId,
         ];
 
-        return $this->futuresRequest($url, 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest($url, 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5855,7 +5855,7 @@ class API
             'feeBurn' => $flag ? 'true' : 'false',
         ];
 
-        return $this->futuresRequest("v1/feeBurn", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/feeBurn", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5875,7 +5875,7 @@ class API
      */
     public function futuresFeeBurnStatus(array $params = [])
     {
-        return $this->futuresRequest("v1/feeBurn", 'GET', $params, true);
+        return $this->fapiRequest("v1/feeBurn", 'GET', $params, true);
     }
 
     /**
@@ -5903,7 +5903,7 @@ class API
         if ($toAsset) {
             $request['toAsset'] = $toAsset;
         }
-        return $this->futuresRequest("v1/convert/exchangeInfo", 'GET', array_merge($request, $params));
+        return $this->fapiRequest("v1/convert/exchangeInfo", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -5943,7 +5943,7 @@ class API
             $request['validTime'] = $validTime;
         }
 
-        return $this->futuresRequest("v1/convert/getQuote", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/convert/getQuote", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5967,7 +5967,7 @@ class API
         $request = [
             'quoteId' => $quoteId,
         ];
-        return $this->futuresRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5995,6 +5995,6 @@ class API
         } else {
             throw new \Exception('convertStatus: orderId or quoteId must be set');
         }
-        return $this->futuresRequest("v1/convert/orderStatus", 'GET', array_merge($request, $params), true);
+        return $this->fapiRequest("v1/convert/orderStatus", 'GET', array_merge($request, $params), true);
     }
 }
