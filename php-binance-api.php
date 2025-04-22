@@ -60,6 +60,7 @@ class API
     protected $requestCount = 0; // /< This stores the amount of API requests
     protected $httpDebug = false; // /< If you enable this, curl will output debugging information
     protected $subscriptions = []; // /< View all websocket subscriptions
+    protected $recvWindow = null; // /< The amount of time in milliseconds to wait for a response from the server for endpoints that accept a recvWindow parameter
 
     // /< value of available onOrder assets
 
@@ -434,7 +435,7 @@ class API
     public function marketQuoteSell(string $symbol, $quantity, array $params = [])
     {
         $params['isQuoteOrder'] = true;
-        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][2]['minQty']);
+        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][1]['minQty']);
         $quantity = $this->floorDecimal($quantity, $c);
 
         return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $params);
@@ -470,7 +471,7 @@ class API
      */
     public function marketSell(string $symbol, $quantity, array $params = [])
     {
-        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][2]['minQty']);
+        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][1]['minQty']);
         $quantity = $this->floorDecimal($quantity, $c);
 
         return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $params);
@@ -1494,6 +1495,10 @@ class API
                 $this->downloadCurlCaBundle();
             }
         }
+        if ((!isset ($params['recvWindow'])) && (!is_null($this->recvWindow))) {
+            $params['recvWindow'] = $this->recvWindow;
+            print_r($params);
+        }
 
         $base = $this->base;
         if ($this->useTestnet) {
@@ -1768,7 +1773,6 @@ class API
             "side" => $side,
             "type" => $type,
             "quantity" => $quantity,
-            "recvWindow" => 60000,
         ];
 
         // someone has preformated there 8 decimal point double already
@@ -3238,7 +3242,6 @@ class API
         $request = [
             "symbol" => $symbol,
             "side" => $side,
-            "recvWindow" => 60000,
         ];
 
         if (is_numeric($quantity) === false) {
