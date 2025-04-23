@@ -1497,7 +1497,6 @@ class API
         }
         if ((!isset ($params['recvWindow'])) && (!is_null($this->recvWindow))) {
             $params['recvWindow'] = $this->recvWindow;
-            print_r($params);
         }
 
         $base = $this->base;
