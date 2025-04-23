@@ -60,6 +60,7 @@ class API
     protected $requestCount = 0; // /< This stores the amount of API requests
     protected $httpDebug = false; // /< If you enable this, curl will output debugging information
     protected $subscriptions = []; // /< View all websocket subscriptions
+    protected $recvWindow = null; // /< The amount of time in milliseconds to wait for a response from the server for endpoints that accept a recvWindow parameter
 
     // /< value of available onOrder assets
 
@@ -147,7 +148,7 @@ class API
      * @param $file string file location
      * @return null
      */
-    protected function setupApiConfigFromFile(string $file = null)
+    protected function setupApiConfigFromFile(?string $file = null)
     {
         $file = is_null($file) ? getenv("HOME") . "/.config/jaggedsoft/php-binance-api.json" : $file;
 
@@ -173,7 +174,7 @@ class API
      * @param $file string file location
      * @return null
      */
-    protected function setupCurlOptsFromFile(string $file = null)
+    protected function setupCurlOptsFromFile(?string $file = null)
     {
         $file = is_null($file) ? getenv("HOME") . "/.config/jaggedsoft/php-binance-api.json" : $file;
 
@@ -196,7 +197,7 @@ class API
      *
      * @return null
      */
-    protected function setupProxyConfigFromFile(string $file = null)
+    protected function setupProxyConfigFromFile(?string $file = null)
     {
         $file = is_null($file) ? getenv("HOME") . "/.config/jaggedsoft/php-binance-api.json" : $file;
 
@@ -265,12 +266,12 @@ class API
      * @param $quantity string the quantity required
      * @param $price string price per unit you want to spend
      * @param $type string type of order
-     * @param $flags array addtional options for order type
+     * @param $params array addtional options for order type
      * @return array with error message or the order details
      */
-    public function buy(string $symbol, $quantity, $price, string $type = "LIMIT", array $flags = [])
+    public function buy(string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [])
     {
-        return $this->order("BUY", $symbol, $quantity, $price, $type, $flags);
+        return $this->order("BUY", $symbol, $quantity, $price, $type, $params);
     }
 
     /**
@@ -282,12 +283,12 @@ class API
      * @param $quantity string the quantity required
      * @param $price string price per unit you want to spend
      * @param $type string config
-     * @param $flags array config
+     * @param $params array config
      * @return array with error message or empty or the order details
      */
-    public function buyTest(string $symbol, $quantity, $price, string $type = "LIMIT", array $flags = [])
+    public function buyTest(string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [])
     {
-        return $this->order("BUY", $symbol, $quantity, $price, $type, $flags, true);
+        return $this->order("BUY", $symbol, $quantity, $price, $type, $params, true);
     }
 
     /**
@@ -312,12 +313,12 @@ class API
      * @param $quantity string the quantity required
      * @param $price string price per unit you want to spend
      * @param $type string type of order
-     * @param $flags array addtional options for order type
+     * @param $params array addtional options for order type
      * @return array with error message or the order details
      */
-    public function sell(string $symbol, $quantity, $price, string $type = "LIMIT", array $flags = [])
+    public function sell(string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [])
     {
-        return $this->order("SELL", $symbol, $quantity, $price, $type, $flags);
+        return $this->order("SELL", $symbol, $quantity, $price, $type, $params);
     }
 
     /**
@@ -329,12 +330,12 @@ class API
      * @param $quantity string the quantity required
      * @param $price string price per unit you want to spend
      * @param $type array config
-     * @param $flags array config
+     * @param $params array config
      * @return array with error message or empty or the order details
      */
-    public function sellTest(string $symbol, $quantity, $price, string $type = "LIMIT", array $flags = [])
+    public function sellTest(string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [])
     {
-        return $this->order("SELL", $symbol, $quantity, $price, $type, $flags, true);
+        return $this->order("SELL", $symbol, $quantity, $price, $type, $params, true);
     }
 
     /**
@@ -345,14 +346,14 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity of the quote to use
-     * @param $flags array additional options for order type
+     * @param $params array additional options for order type
      * @return array with error message or the order details
      */
-    public function marketQuoteBuy(string $symbol, $quantity, array $flags = [])
+    public function marketQuoteBuy(string $symbol, $quantity, array $params = [])
     {
-        $flags['isQuoteOrder'] = true;
+        $params['isQuoteOrder'] = true;
 
-        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $flags);
+        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $params);
     }
 
     /**
@@ -362,14 +363,14 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity of the quote to use
-     * @param $flags array additional options for order type
+     * @param $params array additional options for order type
      * @return array with error message or the order details
      */
-    public function marketQuoteBuyTest(string $symbol, $quantity, array $flags = [])
+    public function marketQuoteBuyTest(string $symbol, $quantity, array $params = [])
     {
-        $flags['isQuoteOrder'] = true;
+        $params['isQuoteOrder'] = true;
 
-        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $flags, true);
+        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $params, true);
     }
 
     /**
@@ -380,12 +381,12 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity required
-     * @param $flags array addtional options for order type
+     * @param $params array addtional options for order type
      * @return array with error message or the order details
      */
-    public function marketBuy(string $symbol, $quantity, array $flags = [])
+    public function marketBuy(string $symbol, $quantity, array $params = [])
     {
-        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $flags);
+        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $params);
     }
 
     /**
@@ -395,12 +396,12 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity required
-     * @param $flags array addtional options for order type
+     * @param $params array addtional options for order type
      * @return array with error message or the order details
      */
-    public function marketBuyTest(string $symbol, $quantity, array $flags = [])
+    public function marketBuyTest(string $symbol, $quantity, array $params = [])
     {
-        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $flags, true);
+        return $this->order("BUY", $symbol, $quantity, 0, "MARKET", $params, true);
     }
 
 
@@ -428,16 +429,16 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity of the quote you want to obtain
-     * @param $flags array additional options for order type
+     * @param $params array additional options for order type
      * @return array with error message or the order details
      */
-    public function marketQuoteSell(string $symbol, $quantity, array $flags = [])
+    public function marketQuoteSell(string $symbol, $quantity, array $params = [])
     {
-        $flags['isQuoteOrder'] = true;
-        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][2]['minQty']);
+        $params['isQuoteOrder'] = true;
+        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][1]['minQty']);
         $quantity = $this->floorDecimal($quantity, $c);
 
-        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $flags);
+        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $params);
     }
 
     /**
@@ -447,14 +448,14 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity of the quote you want to obtain
-     * @param $flags array additional options for order type
+     * @param $params array additional options for order type
      * @return array with error message or the order details
      */
-    public function marketQuoteSellTest(string $symbol, $quantity, array $flags = [])
+    public function marketQuoteSellTest(string $symbol, $quantity, array $params = [])
     {
-        $flags['isQuoteOrder'] = true;
+        $params['isQuoteOrder'] = true;
 
-        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $flags, true);
+        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $params, true);
     }
 
     /**
@@ -465,15 +466,15 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity required
-     * @param $flags array addtional options for order type
+     * @param $params array addtional options for order type
      * @return array with error message or the order details
      */
-    public function marketSell(string $symbol, $quantity, array $flags = [])
+    public function marketSell(string $symbol, $quantity, array $params = [])
     {
-        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][2]['minQty']);
+        $c = $this->numberOfDecimals($this->exchangeInfo()['symbols'][$symbol]['filters'][1]['minQty']);
         $quantity = $this->floorDecimal($quantity, $c);
 
-        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $flags);
+        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $params);
     }
 
     /**
@@ -483,12 +484,12 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $quantity string the quantity required
-     * @param $flags array addtional options for order type
+     * @param $params array addtional options for order type
      * @return array with error message or the order details
      */
-    public function marketSellTest(string $symbol, $quantity, array $flags = [])
+    public function marketSellTest(string $symbol, $quantity, array $params = [])
     {
-        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $flags, true);
+        return $this->order("SELL", $symbol, $quantity, 0, "MARKET", $params, true);
     }
 
     /**
@@ -499,17 +500,17 @@ class API
      *
      * @param $symbol string the currency symbol
      * @param $orderid string the orderid to cancel
-     * @param $flags array of optional options like ["side"=>"sell"]
+     * @param $params array of optional options like ["side"=>"sell"]
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function cancel(string $symbol, $orderid, $flags = [])
+    public function cancel(string $symbol, string $orderid, $params = [])
     {
-        $params = [
+        $request = [
             "symbol" => $symbol,
             "orderId" => $orderid,
         ];
-        return $this->httpRequest("v3/order", "DELETE", array_merge($params, $flags), true);
+        return $this->apiRequest("v3/order", "DELETE", array_merge($request, $params), true);
     }
 
     /**
@@ -523,12 +524,13 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function orderStatus(string $symbol, $orderid)
+    public function orderStatus(string $symbol, string $orderid, array $params = [])
     {
-        return $this->httpRequest("v3/order", "GET", [
+        $request = [
             "symbol" => $symbol,
             "orderId" => $orderid,
-        ], true);
+        ];
+        return $this->apiRequest("v3/order", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -541,15 +543,15 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function openOrders(string $symbol = null)
+    public function openOrders($symbol = null, array $params = [])
     {
-        $params = [];
+        $request = [];
         if (is_null($symbol) != true) {
-            $params = [
+            $request = [
                 "symbol" => $symbol,
             ];
         }
-        return $this->httpRequest("v3/openOrders", "GET", $params, true);
+        return $this->apiRequest("v3/openOrders", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -559,15 +561,15 @@ class API
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function cancelOpenOrders(string $symbol = null)
+    public function cancelOpenOrders($symbol = null, array $params = [])
     {
-        $params = [];
+        $request = [];
         if (is_null($symbol) != true) {
-            $params = [
+            $request = [
                 "symbol" => $symbol,
             ];
         }
-        return $this->httpRequest("v3/openOrders", "DELETE", $params, true);
+        return $this->apiRequest("v3/openOrders", "DELETE", array_merge($request, $params), true);
     }
 
     /**
@@ -584,12 +586,14 @@ class API
      */
     public function orders(string $symbol, int $limit = 500, int $fromOrderId = 0, array $params = [])
     {
-        $params["symbol"] = $symbol;
-        $params["limit"] = $limit;
+        $request = [
+            "symbol" => $symbol,
+            "limit" => $limit,
+        ];
         if ($fromOrderId) {
-            $params["orderId"] = $fromOrderId;
+            $request["orderId"] = $fromOrderId;
         }
-        return $this->httpRequest("v3/allOrders", "GET", $params, true);
+        return $this->apiRequest("v3/allOrders", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -609,23 +613,23 @@ class API
      * @return array with error message or array of orderDetails array
      * @throws \Exception
      */
-    public function history(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null)
+    public function history(string $symbol, int $limit = 500, int $fromTradeId = -1, ?int $startTime = null, ?int $endTime = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             "symbol" => $symbol,
             "limit" => $limit,
         ];
         if ($fromTradeId > 0) {
-            $parameters["fromId"] = $fromTradeId;
+            $request["fromId"] = $fromTradeId;
         }
         if (isset($startTime)) {
-            $parameters["startTime"] = $startTime;
+            $request["startTime"] = $startTime;
         }
         if (isset($endTime)) {
-            $parameters["endTime"] = $endTime;
+            $request["endTime"] = $endTime;
         }
 
-        return $this->httpRequest("v3/myTrades", "GET", $parameters, true);
+        return $this->apiRequest("v3/myTrades", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -636,9 +640,9 @@ class API
      * @return array with error message or array of orderDetails array
      * @throws \Exception
      */
-    public function myTrades(string $symbol, int $limit = 500, int $fromTradeId = -1, int $startTime = null, int $endTime = null)
+    public function myTrades(string $symbol, int $limit = 500, int $fromTradeId = -1, ?int $startTime = null, ?int $endTime = null, array $params = [])
     {
-        return $this->history($symbol, $limit, $fromTradeId, $startTime, $endTime);
+        return $this->history($symbol, $limit, $fromTradeId, $startTime, $endTime, $params);
     }
 
     /**
@@ -649,9 +653,9 @@ class API
      * @return null
      * @throws \Exception
      */
-    public function useServerTime()
+    public function useServerTime(array $params = [])
     {
-        $request = $this->httpRequest("v3/time");
+        $request = $this->apiRequest("v3/time", "GET", $params);
         if (isset($request['serverTime'])) {
             $this->info['timeOffset'] = $request['serverTime'] - (microtime(true) * 1000);
         }
@@ -665,9 +669,9 @@ class API
      * @return array with error message or array with server time key
      * @throws \Exception
      */
-    public function time()
+    public function time(array $params = [])
     {
-        return $this->httpRequest("v3/time");
+        return $this->apiRequest("v3/time", "GET", $params);
     }
 
     /**
@@ -688,20 +692,20 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function exchangeInfo($symbols = null)
+    public function exchangeInfo($symbols = null, array $params = [])
     {
         if (!$this->exchangeInfo) {
             $arr = array();
             if ($symbols) {
                 if (gettype($symbols) == "string") {
-                    $parameters["symbol"] = $symbols;
-                    $arr = $this->httpRequest("v3/exchangeInfo", "GET", $parameters);
+                    $request["symbol"] = $symbols;
+                    $arr = $this->apiRequest("v3/exchangeInfo", "GET", array_merge($request, $params));
                 }
                 if (gettype($symbols) == "array")  {
-                    $arr = $this->httpRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]');
+                    $arr = $this->apiRequest("v3/exchangeInfo?symbols=" . '["' . implode('","', $symbols) . '"]', "GET", $params);
                 }
             } else {
-                $arr = $this->httpRequest("v3/exchangeInfo");
+                $arr = $this->apiRequest("v3/exchangeInfo", "GET", $params);
             }
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch spot exchange info" . PHP_EOL;
@@ -730,12 +734,12 @@ class API
      *
      * @return array containing the response
      */
-    public function assetDetail($asset = '')
+    public function assetDetail($asset = '', array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if ($asset != '' && gettype($asset) == 'string')
-            $params['asset'] = $asset;
-        $arr = $this->httpRequest("v1/asset/assetDetail", 'GET', $params, true);
+            $request['asset'] = $asset;
+        $arr = $this->sapiRequest("v1/asset/assetDetail", 'GET', array_merge($request, $params), true);
         // if asset was set, no backward compatibility needed as this was implemented later
         if (isset($params['asset']))
             return $arr;
@@ -779,15 +783,15 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function dustLog($startTime = NULL, $endTime = NULL)
+    public function dustLog($startTime = NULL, $endTime = NULL, array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if (!empty($startTime) && !empty($endTime)) {
-            $params['startTime'] = $startTime;
-            $params['endTime'] = $endTime;
+            $request['startTime'] = $startTime;
+            $request['endTime'] = $endTime;
         }
 
-        return $this->httpRequest("v1/asset/dribblet", 'GET', $params, true);
+        return $this->sapiRequest("v1/asset/dribblet", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -802,12 +806,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function dustTransfer($assets)
+    public function dustTransfer($assets, array $params = [])
     {
-        $params["sapi"] = true;
-        $params["asset"] = $assets;
+        $request = [
+            'assets' => $assets,
+        ];
 
-        return $this->httpRequest("v1/asset/dust", 'POST', $params, true);
+        return $this->sapiRequest("v1/asset/dust", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -818,13 +823,12 @@ class API
      * @param string $symbol
      * @return mixed
      */
-    public function tradeFee(string $symbol)
+    public function tradeFee(string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             "symbol" => $symbol,
-            "sapi" => true,
         ];
-        return $this->httpRequest("v1/asset/tradeFee", 'GET', $params, true);
+        return $this->sapiRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -839,13 +843,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function commissionFee($symbol = '')
+    public function commissionFee($symbol = '', array $params = [])
     {
-        $params = array('sapi' => true);
+        $request = array();
         if ($symbol != '' && gettype($symbol) == 'string')
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
 
-        return $this->httpRequest("v1/asset/tradeFee", 'GET', $params, true);
+        return $this->sapiRequest("v1/asset/tradeFee", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -870,9 +874,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function withdraw(string $asset, string $address, $amount, $addressTag = null, $addressName = "", bool $transactionFeeFlag = false, $network = null, $orderId = null)
+    public function withdraw(string $asset, string $address, $amount, $addressTag = null, $addressName = "", bool $transactionFeeFlag = false, $network = null, $orderId = null, array $params = [])
     {
-        $options = [
+        $request = [
             "coin" => $asset,
             "address" => $address,
             "amount" => $amount,
@@ -880,20 +884,20 @@ class API
         ];
 
         if (is_null($addressName) === false && empty($addressName) === false) {
-            $options['name'] = str_replace(' ', '%20', $addressName);
+            $request['name'] = str_replace(' ', '%20', $addressName);
         }
         if (is_null($addressTag) === false && empty($addressTag) === false) {
-            $options['addressTag'] = $addressTag;
+            $request['addressTag'] = $addressTag;
         }
-        if ($transactionFeeFlag) $options['transactionFeeFlag'] = true;
+        if ($transactionFeeFlag) $request['transactionFeeFlag'] = true;
 
         if (is_null($network) === false && empty($network) === false) {
-            $options['network'] = $network;
+            $request['network'] = $network;
         }
         if (is_null($orderId) === false && empty($orderId) === false) {
-            $options['withdrawOrderId'] = $orderId;
+            $request['withdrawOrderId'] = $orderId;
         }
-        return $this->httpRequest("v1/capital/withdraw/apply", "POST", $options, true);
+        return $this->sapiRequest("v1/capital/withdraw/apply", "POST", array_merge($request, $params), true);
     }
 
     /**
@@ -909,17 +913,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function depositAddress(string $asset, $network = null)
+    public function depositAddress(string $asset, $network = null, array $params = [])
     {
-        $params = [
-            "sapi" => true,
+        $request = [
             "coin" => $asset,
         ];
         if (is_null($network) === false && empty($network) === false) {
-            $params['network'] = $network;
+            $request['network'] = $network;
         }
 
-        $return = $this->httpRequest("v1/capital/deposit/address", "GET", $params, true);
+        $return = $this->sapiRequest("v1/capital/deposit/address", "GET", array_merge($request, $params), true);
 
         // Adding for backwards compatibility with wapi
         if (is_array($return) && !empty($return)) {
@@ -950,13 +953,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function depositHistory(string $asset = null, array $params = [])
+    public function depositHistory(?string $asset = null, array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if (is_null($asset) === false) {
-            $params['coin'] = $asset;
+            $request['coin'] = $asset;
         }
-        $return = $this->httpRequest("v1/capital/deposit/hisrec", "GET", $params, true);
+        $return = $this->sapiRequest("v1/capital/deposit/hisrec", "GET", array_merge($request, $params), true);
 
         // Adding for backwards compatibility with wapi
         if (is_array($return) && !empty($return)) {
@@ -984,15 +987,15 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function withdrawHistory(string $asset = null, array $params = [])
+    public function withdrawHistory(?string $asset = null, array $params = [])
     {
-        $params["sapi"] = true;
+        $request = array();
         if (is_null($asset) === false) {
-            $params['coin'] = $asset;
+            $request['coin'] = $asset;
         }
         // Wrapping in array for backwards compatibility with wapi
         $return = array(
-            'withdrawList' => $this->httpRequest("v1/capital/withdraw/history", "GET", $params, true)
+            'withdrawList' => $this->sapiRequest("v1/capital/withdraw/history", "GET", array_merge($request, $params), true)
             );
 
         // Adding for backwards compatibility with wapi
@@ -1011,9 +1014,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function withdrawFee(string $asset)
+    public function withdrawFee(string $asset, array $params = [])
     {
-        $return = $this->assetDetail();
+        $return = $this->assetDetail('', $params);
 
         if (isset($return['success'], $return['assetDetail'], $return['assetDetail'][$asset]) && $return['success']) {
             return $return['assetDetail'][$asset];
@@ -1066,31 +1069,29 @@ class API
      * @param string $amount (mandatory) the amount to transfer
      * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
      * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, int $recvWindow = null)
+    public function transfer(string $type, string $asset, string $amount, $fromSymbol = null, $toSymbol = null, array $params = [])
     {
-        $params = [
+        $request = [
             'type' => $type,
             'asset' => $asset,
             'amount' => $amount,
-            'sapi' => true,
         ];
         // todo: check this method with real account
         if ($fromSymbol) {
-            $params['fromSymbol'] = $fromSymbol;
+            $request['fromSymbol'] = $fromSymbol;
         }
         if ($toSymbol) {
-            $params['toSymbol'] = $toSymbol;
-        }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
+            $request['toSymbol'] = $toSymbol;
         }
 
-        return $this->httpRequest("v1/asset/transfer", 'POST', $params, true);
+
+        return $this->sapiRequest("v1/asset/transfer", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -1107,41 +1108,39 @@ class API
      * @param int    $current (optional) default 1
      * @param string $fromSymbol (optional) must be sent when type are ISOLATEDMARGIN_MARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
      * @param string $toSymbol (optional) must be sent when type are MARGIN_ISOLATEDMARGIN and ISOLATEDMARGIN_ISOLATEDMARGIN
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, $recvWindow = null)
+    public function transfersHistory(string $type, $startTime = null, $endTime = null, $limit = null, $current = null, $fromSymbol = null, $toSymbol = null, array $params = [])
     {
-        $params = [
+        $request = [
             'type' => $type,
-            'sapi' => true,
         ];
         // todo: check this method with real account
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['size'] = $limit;
+            $request['size'] = $limit;
         }
         if ($current) {
-            $params['current'] = $current;
+            $request['current'] = $current;
         }
         if ($fromSymbol) {
-            $params['fromSymbol'] = $fromSymbol;
+            $request['fromSymbol'] = $fromSymbol;
         }
         if ($toSymbol) {
-            $params['toSymbol'] = $toSymbol;
-        }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
+            $request['toSymbol'] = $toSymbol;
         }
 
-        return $this->httpRequest("v1/asset/transfer", 'GET', $params, true);
+
+        return $this->sapiRequest("v1/asset/transfer", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -1152,9 +1151,9 @@ class API
      * @return array with error message or array of all the currencies prices
      * @throws \Exception
      */
-    public function prices()
+    public function prices(array $params = [])
     {
-        return $this->priceData($this->httpRequest("v3/ticker/price"));
+        return $this->priceData($this->apiRequest("v3/ticker/price", "GET", $params));
     }
 
     /**
@@ -1165,9 +1164,12 @@ class API
      * @return array with error message or array with symbol price
      * @throws \Exception
      */
-    public function price(string $symbol)
+    public function price(string $symbol, array $params = [])
     {
-        $ticker = $this->httpRequest("v3/ticker/price", "GET", ["symbol" => $symbol]);
+        $request = [
+            "symbol" => $symbol,
+        ];
+        $ticker = $this->apiRequest("v3/ticker/price", "GET", array_merge($request, $params));
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch price for $symbol" . PHP_EOL;
             return null;
@@ -1183,9 +1185,9 @@ class API
      * @return array with error message or array of all the book prices
      * @throws \Exception
      */
-    public function bookPrices()
+    public function bookPrices(array $params = [])
     {
-        return $this->bookPriceData($this->httpRequest("v3/ticker/bookTicker"));
+        return $this->bookPriceData($this->apiRequest("v3/ticker/bookTicker", "GET", $params));
     }
 
     /**
@@ -1196,9 +1198,9 @@ class API
      * @return array with error message or array of all the account information
      * @throws \Exception
      */
-    public function account()
+    public function account(array $params = [])
     {
-        return $this->httpRequest("v3/account", "GET", [], true);
+        return $this->apiRequest("v3/account", "GET", $params, true);
     }
 
     /**
@@ -1210,15 +1212,15 @@ class API
      * @return array with error message or array of prevDay change
      * @throws \Exception
      */
-    public function prevDay(string $symbol = null)
+    public function prevDay(?string $symbol = null, array $params = [])
     {
-        $additionalData = [];
+        $request = [];
         if (is_null($symbol) === false) {
-            $additionalData = [
+            $request = [
                 'symbol' => $symbol,
             ];
         }
-        return $this->httpRequest("v1/ticker/24hr", "GET", $additionalData);
+        return $this->apiRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
     }
 
     /**
@@ -1230,11 +1232,12 @@ class API
      * @return array with error message or array of market history
      * @throws \Exception
      */
-    public function aggTrades(string $symbol)
+    public function aggTrades(string $symbol, array $params = [])
     {
-        return $this->tradesData($this->httpRequest("v1/aggTrades", "GET", [
+        $request = [
             "symbol" => $symbol,
-        ]));
+        ];
+        return $this->tradesData($this->apiRequest("v1/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
@@ -1253,23 +1256,23 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function historicalTrades(string $symbol, int $limit = 500, int $tradeId = -1)
+    public function historicalTrades(string $symbol, int $limit = 500, int $tradeId = -1, array $params = [])
     {
-        $parameters = [
+        $request = [
             "symbol" => $symbol,
             "limit" => $limit,
         ];
         if ($tradeId > 0) {
-            $parameters["fromId"] = $tradeId;
+            $request["fromId"] = $tradeId;
         } else {
             // if there is no tradeId given, we can use v3/trades, weight is 1 and not 5
-            return $this->httpRequest("v3/trades", "GET", $parameters);
+            return $this->apiRequest("v3/trades", "GET", array_merge($request, $params));
         }
 
         // The endpoint cannot handle extra parameters like 'timestamp' or 'signature',
         // but it needs the http header with the key so we need to construct it here
-        $query = http_build_query($parameters, '', '&');
-        return $this->httpRequest("v3/historicalTrades?$query");
+        $query = http_build_query(array_merge($request, $params), '', '&');
+        return $this->apiRequest("v3/historicalTrades?$query");
     }
 
     /**
@@ -1282,7 +1285,7 @@ class API
      * @return array with error message or array of market depth
      * @throws \Exception
      */
-    public function depth(string $symbol, int $limit = 100)
+    public function depth(string $symbol, int $limit = 100, array $params = [])
     {
         if (is_int($limit) === false) {
             $limit = 100;
@@ -1292,10 +1295,11 @@ class API
             // WPCS: XSS OK.
             echo "asset: expected bool false, " . gettype($symbol) . " given" . PHP_EOL;
         }
-        $json = $this->httpRequest("v1/depth", "GET", [
+        $request = [
             "symbol" => $symbol,
             "limit" => $limit,
-        ]);
+        ];
+        $json = $this->apiRequest("v1/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch depth" . PHP_EOL;
             $json = [];
@@ -1317,23 +1321,21 @@ class API
      * $balances = $api->balances();
      *
      * @param string $market_type (optional) market type - "spot" or "futures" (default is "spot")
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
+     * @param array  $params      (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the transfer to complete (not for spot)
      * @param string $api_version (optional) not for spot - the api version to use (default is v2)
      *
      * @return array with error message or array of balances
      * @throws \Exception
      */
-    public function balances(string $market_type = 'spot', $recvWindow = null, string $api_version = 'v2')
+    public function balances(string $market_type = 'spot', array $params = [], string $api_version = 'v2')
     {
         $is_spot = $market_type === 'spot';
-        $params = [];
+        $request = [];
         if ($is_spot) {
             $url = "v3/account";
         } else {
-            $params['fapi'] = true;
-            if ($recvWindow) {
-                $params['recvWindow'] = $recvWindow;
-            }
+            $request['fapi'] = true;
             if ($api_version === 'v2') {
                 $url = "v2/balance";
             } else if ($api_version === 'v3') {
@@ -1342,7 +1344,7 @@ class API
                 throw new \Exception("Invalid API version specified. Use 'v2' or 'v3'.");
             }
         }
-        $response = $this->httpRequest($url, "GET", $params, true);
+        $response = $this->httpRequest($url, "GET", array_merge($request, $params), true);
         if (is_array($response) === false) {
             echo "Error: unable to fetch your account details" . PHP_EOL;
         }
@@ -1360,9 +1362,9 @@ class API
      * @return array with error message or array containing coins
      * @throws \Exception
      */
-    public function coins()
+    public function coins(array $params = [])
     {
-        return $this->httpRequest("v1/capital/config/getall", 'GET', [ 'sapi' => true ], true);
+        return $this->sapiRequest("v1/capital/config/getall", 'GET', $params, true);
     }
 
     /**
@@ -1443,6 +1445,29 @@ class API
         curl_setopt($curl, $option, $query);
     }
 
+    public function apiRequest($url, $method = "GET", $params = [], $signed = false)
+    {
+        return $this->httpRequest($url, $method, $params, $signed);
+    }
+
+    public function sapiRequest($url, $method = "GET", $params = [], $signed = false)
+    {
+        $params['sapi'] = true;
+        return $this->httpRequest($url, $method, $params, $signed);
+    }
+
+    public function fapiRequest($url, $method = "GET", $params = [], $signed = false)
+    {
+        $params['fapi'] = true;
+        return $this->httpRequest($url, $method, $params, $signed);
+    }
+
+    public function fapiDataRequest($url, $method = "GET", $params = [], $signed = false)
+    {
+        $params['fapiData'] = true;
+        return $this->httpRequest($url, $method, $params, $signed);
+    }
+
     /**
      * httpRequest curl wrapper for all http api requests.
      * You can't call this function directly, use the helper functions
@@ -1469,6 +1494,9 @@ class API
             if (file_exists(getcwd() . '/ca.pem') === false) {
                 $this->downloadCurlCaBundle();
             }
+        }
+        if ((!isset ($params['recvWindow'])) && (!is_null($this->recvWindow))) {
+            $params['recvWindow'] = $this->recvWindow;
         }
 
         $base = $this->base;
@@ -1732,19 +1760,18 @@ class API
      * @param $quantity string in the order
      * @param $price string for the order
      * @param $type string is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc.
-     * @param $flags array additional transaction options
+     * @param $params array additional transaction options
      * @param $test bool whether to test or not, test only validates the query
      * @return array containing the response
      * @throws \Exception
      */
-    public function order(string $side, string $symbol, $quantity, $price, string $type = "LIMIT", array $flags = [], bool $test = false)
+    public function order(string $side, string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [], bool $test = false)
     {
-        $opt = [
+        $request = [
             "symbol" => $symbol,
             "side" => $side,
             "type" => $type,
             "quantity" => $quantity,
-            "recvWindow" => 60000,
         ];
 
         // someone has preformated there 8 decimal point double already
@@ -1765,35 +1792,37 @@ class API
         }
 
         if ($type === "LIMIT" || $type === "STOP_LOSS_LIMIT" || $type === "TAKE_PROFIT_LIMIT") {
-            $opt["price"] = $price;
-            $opt["timeInForce"] = "GTC";
+            $request["price"] = $price;
+            $request["timeInForce"] = "GTC";
         }
 
-        if ($type === "MARKET" && isset($flags['isQuoteOrder']) && $flags['isQuoteOrder']) {
-            unset($opt['quantity']);
-            $opt['quoteOrderQty'] = $quantity;
+        if ($type === "MARKET" && isset($params['isQuoteOrder']) && $params['isQuoteOrder']) {
+            unset($request['quantity']);
+            unset($params['quantity']);
+            unset($params['isQuoteOrder']);
+            $request['quoteOrderQty'] = $quantity;
         }
 
-        if (isset($flags['stopPrice'])) {
-            $opt['stopPrice'] = $flags['stopPrice'];
+        if (isset($params['stopPrice'])) {
+            $request['stopPrice'] = $params['stopPrice'];
         }
 
-        if (isset($flags['icebergQty'])) {
-            $opt['icebergQty'] = $flags['icebergQty'];
+        if (isset($params['icebergQty'])) {
+            $request['icebergQty'] = $params['icebergQty'];
         }
 
-        if (isset($flags['newOrderRespType'])) {
-            $opt['newOrderRespType'] = $flags['newOrderRespType'];
+        if (isset($params['newOrderRespType'])) {
+            $request['newOrderRespType'] = $params['newOrderRespType'];
         }
 
-        if (isset($flags['newClientOrderId'])) {
-            $opt['newClientOrderId'] = $flags['newClientOrderId'];
+        if (isset($params['newClientOrderId'])) {
+            $request['newClientOrderId'] = $params['newClientOrderId'];
         } else {
-            $opt['newClientOrderId'] = $this->generateSpotClientOrderId();
+            $request['newClientOrderId'] = $this->generateSpotClientOrderId();
         }
 
         $qstring = ($test === false) ? "v3/order" : "v3/order/test";
-        return $this->httpRequest($qstring, "POST", $opt, true);
+        return $this->apiRequest($qstring, "POST", array_merge($request, $params), true);
     }
 
     /**
@@ -1810,30 +1839,30 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function candlesticks(string $symbol, string $interval = "5m", int $limit = null, $startTime = null, $endTime = null)
+    public function candlesticks(string $symbol, string $interval = "5m", ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
         if (!isset($this->charts[$symbol])) {
             $this->charts[$symbol] = [];
         }
 
-        $opt = [
+        $request = [
             "symbol" => $symbol,
             "interval" => $interval,
         ];
 
         if ($limit) {
-            $opt["limit"] = $limit;
+            $request["limit"] = $limit;
         }
 
         if ($startTime) {
-            $opt["startTime"] = $startTime;
+            $request["startTime"] = $startTime;
         }
 
         if ($endTime) {
-            $opt["endTime"] = $endTime;
+            $request["endTime"] = $endTime;
         }
 
-        $response = $this->httpRequest("v1/klines", "GET", $opt);
+        $response = $this->apiRequest("v1/klines", "GET", array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
@@ -2238,7 +2267,7 @@ class API
      * @param $json array of the depth infomration
      * @return array of the depth information
      */
-    protected function depthData(string $symbol, array $json, string $product_type = null)
+    protected function depthData(string $symbol, array $json, ?string $product_type = null)
     {
         $bids = $asks = [];
         foreach ($json['bids'] as $obj) {
@@ -2643,7 +2672,7 @@ class API
      * @return null
      * @throws \Exception
      */
-    public function chart($symbols, string $interval = "30m", callable $callback = null, $limit = 500)
+    public function chart($symbols, string $interval = "30m", ?callable $callback = null, $limit = 500)
     {
         if (is_null($callback)) {
             throw new Exception("You must provide a valid callback");
@@ -2727,7 +2756,7 @@ class API
      * @return null
      * @throws \Exception
      */
-    public function kline($symbols, string $interval = "30m", callable $callback = null)
+    public function kline($symbols, string $interval = "30m", ?callable $callback = null)
     {
         if (is_null($callback)) {
             throw new Exception("You must provide a valid callback");
@@ -3084,24 +3113,24 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function systemStatus()
+    public function systemStatus(array $params = [])
     {
         $arr = array();
-        $api_status = $this->httpRequest("v3/ping", 'GET');
+        $api_status = $this->apiRequest("v3/ping", 'GET', $params);
         if ( empty($api_status) ) {
             $arr['api']['status']  = 'ping ok';
         } else {
             $arr['api']['status']  = $api_status;
         }
 
-        $fapi_status = $this->httpRequest("v1/ping", 'GET', [ 'fapi' => true ]);
+        $fapi_status = $this->fapiRequest("v1/ping", 'GET', $params);
         if ( empty($fapi_status) ) {
             $arr['fapi']['status'] = 'ping ok';
         } else {
             $arr['fapi']['status'] = $fapi_status;
         }
 
-        $arr['sapi'] = $this->httpRequest("v1/system/status", 'GET', [ 'sapi' => true ]);
+        $arr['sapi'] = $this->sapiRequest("v1/system/status", 'GET', $params);
         return $arr;
     }
 
@@ -3120,24 +3149,23 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function accountSnapshot($type, $nbrDays = 5, $startTime = 0, $endTime = 0)
+    public function accountSnapshot($type, $nbrDays = 5, $startTime = 0, $endTime = 0, array $params = [])
     {
         if ($nbrDays < 5 || $nbrDays > 30)
             $nbrDays = 5;
 
-        $params = [
-            'sapi' => true,
+        $request = [
             'type' => $type,
             ];
 
         if ($startTime > 0)
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         if ($endTime > 0)
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         if ($nbrDays != 5)
-            $params['limit'] = $nbrDays;
+            $request['limit'] = $nbrDays;
 
-        return $this->httpRequest("v1/accountSnapshot", 'GET', $params, true);
+        return $this->sapiRequest("v1/accountSnapshot", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -3150,10 +3178,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function accountStatus()
+    public function accountStatus(array $params = [])
     {
         $arr = array();
-        $arr['sapi'] = $this->httpRequest("v1/account/status", 'GET', [ 'sapi' => true ], true);
+        $arr['sapi'] = $this->sapiRequest("v1/account/status", 'GET', $params, true);
         return $arr;
     }
 
@@ -3167,9 +3195,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function apiRestrictions()
+    public function apiRestrictions(array $params = [])
     {
-        return $this->httpRequest("v1/account/apiRestrictions", 'GET', ['sapi' => true], true);
+        return $this->sapiRequest("v1/account/apiRestrictions", 'GET', $params, true);
     }
 
     /**
@@ -3182,10 +3210,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function apiTradingStatus()
+    public function apiTradingStatus(array $params = [])
     {
         $arr = array();
-        $arr['sapi'] = $this->httpRequest("v1/account/apiTradingStatus", 'GET', [ 'sapi' => true ], true);
+        $arr['sapi'] = $this->sapiRequest("v1/account/apiTradingStatus", 'GET', $params, true);
         return $arr;
     }
 
@@ -3203,56 +3231,55 @@ class API
      * @param int    $stopprice  (mandatory)   Stop Price
      * @param int    $stoplimitprice        (optional)   Stop Limit Price
      * @param int    $stoplimittimeinforce  (optional)   GTC, FOK or IOC
-     * @param array  $flags                 (optional)   Extra flags/parameters
+     * @param array  $params                 (optional)   Extra flags/parameters
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function ocoOrder(string $side, string $symbol, $quantity, $price, $stopprice, $stoplimitprice = null, $stoplimittimeinforce = 'GTC', array $flags = [])
+    public function ocoOrder(string $side, string $symbol, $quantity, $price, $stopprice, $stoplimitprice = null, $stoplimittimeinforce = 'GTC', array $params = [])
     {
-        $opt = [
+        $request = [
             "symbol" => $symbol,
             "side" => $side,
-            "recvWindow" => 60000,
         ];
 
         if (is_numeric($quantity) === false) {
             $error = "Parameter quantity expected numeric for ' $side . ' ' . $symbol .', got " . gettype($quantity);
             trigger_error($error, E_USER_ERROR);
         } else {
-            $opt['quantity'] = $quantity;
+            $request['quantity'] = $quantity;
         }
 
         if (is_numeric($price) === false) {
             $error = "Parameter price expected numeric for ' $side . ' ' . $symbol .', got " . gettype($price);
             trigger_error($error, E_USER_ERROR);
         } else {
-            $opt['price'] = $price;
+            $request['price'] = $price;
         }
 
         if (is_numeric($stopprice) === false) {
             $error = "Parameter stopprice expected numeric for ' $side . ' ' . $symbol .', got " . gettype($stopprice);
             trigger_error($error, E_USER_ERROR);
         } else {
-            $opt['stopPrice'] = $stopprice;
+            $request['stopPrice'] = $stopprice;
         }
 
         if (is_null($stoplimitprice) === false && empty($stoplimitprice) === false) {
-            $opt['stopLimitPrice'] = $stoplimitprice;
+            $request['stopLimitPrice'] = $stoplimitprice;
             if ( ($stoplimittimeinforce == 'FOK') || ($stoplimittimeinforce == 'IOC') ) {
-                $opt['stopLimitTimeInForce'] = $stoplimittimeinforce;
+                $request['stopLimitTimeInForce'] = $stoplimittimeinforce;
             } else {
-                $opt['stopLimitTimeInForce'] = 'GTC'; // `Good 'till cancel`. Needed if flag `stopLimitPrice` used.
+                $request['stopLimitTimeInForce'] = 'GTC'; // `Good 'till cancel`. Needed if flag `stopLimitPrice` used.
             }
         }
 
         // Check other flags
         foreach (array('icebergQty','stopIcebergQty','listClientOrderId','limitClientOrderId','stopClientOrderId','newOrderRespType') as $flag) {
-            if ( isset($flags[$flag]) && !empty($flags[$flag]) )
-                $opt[$flag] = $flags[$flag];
+            if ( isset($params[$flag]) && !empty($params[$flag]) )
+                $request[$flag] = $params[$flag];
         }
 
-        return $this->httpRequest("v3/order/oco", "POST", $opt, true);
+        return $this->apiRequest("v3/order/oco", "POST", $request, true);
     }
 
     /**
@@ -3267,9 +3294,12 @@ class API
     * @return string with symbol price
     * @throws \Exception
     */
-    public function avgPrice(string $symbol)
+    public function avgPrice(string $symbol, array $params = [])
     {
-        $ticker = $this->httpRequest("v3/avgPrice", "GET", ["symbol" => $symbol]);
+        $request = [
+            'symbol' => $symbol,
+        ];
+        $ticker = $this->apiRequest("v3/avgPrice", "GET", array_merge($request, $params));
         if (is_array($ticker) === false) {
             echo "Error: unable to fetch avg price" . PHP_EOL;
             $ticker = [];
@@ -3302,15 +3332,14 @@ class API
     * @return array containing the response
     * @throws \Exception
     */
-    public function bswapQuote($baseAsset, $quoteAsset, $quoteQty) {
-        $opt = [
-            'sapi'       => true,
+    public function bswapQuote($baseAsset, $quoteAsset, $quoteQty, array $params = []) {
+        $request = [
             'quoteAsset' => $quoteAsset,
             'baseAsset'  => $baseAsset,
             'quoteQty'   => $quoteQty,
         ];
 
-        return $this->httpRequest("v1/bswap/quote", 'GET', $opt, true);
+        return $this->sapiRequest("v1/bswap/quote", 'GET', array_merge($request, $params), true);
     }
 
     /*********************************************
@@ -3329,9 +3358,9 @@ class API
      * @return array with error message or array with server time key
      * @throws \Exception
      */
-    public function futuresTime()
+    public function futuresTime(array $params = [])
     {
-        return $this->httpRequest("v1/time", "GET", [ 'fapi' => true ]);
+        return $this->fapiRequest("v1/time", "GET", $params);
     }
 
     /**
@@ -3346,10 +3375,10 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresExchangeInfo()
+    public function futuresExchangeInfo(array $params = [])
     {
         if (!$this->futuresExchangeInfo) {
-            $arr = $this->httpRequest("v1/exchangeInfo", "GET", [ 'fapi' => true ]);
+            $arr = $this->fapiRequest("v1/exchangeInfo", "GET", $params);
             if ((is_array($arr) === false) || empty($arr)) {
                 echo "Error: unable to fetch futures exchange info" . PHP_EOL;
                 $arr = array();
@@ -3384,21 +3413,20 @@ class API
      * @return array with error message or array of market depth
      * @throws \Exception
      */
-    public function futuresDepth(string $symbol, int $limit = null)
+    public function futuresDepth(string $symbol, ?int $limit = null, array $params = [])
     {
         if (isset($symbol) === false || is_string($symbol) === false) {
             // WPCS: XSS OK.
             echo "asset: expected bool false, " . gettype($symbol) . " given" . PHP_EOL;
         }
 
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        $json = $this->httpRequest("v1/depth", "GET", $params);
+        $json = $this->fapiRequest("v1/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch futures depth" . PHP_EOL;
             $json = [];
@@ -3430,16 +3458,15 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresRecentTrades(string $symbol, int $limit = null)
+    public function futuresRecentTrades(string $symbol, ?int $limit = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        return $this->httpRequest("v1/trades", "GET", $parameters);
+        return $this->fapiRequest("v1/trades", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3458,19 +3485,18 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresHistoricalTrades(string $symbol, int $limit = null, int $tradeId = null)
+    public function futuresHistoricalTrades(string $symbol, $limit = null, $tradeId = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($tradeId) {
-            $parameters['fromId'] = $tradeId;
+            $request['fromId'] = $tradeId;
         }
-        return $this->httpRequest("v1/historicalTrades", "GET", $parameters, true);
+        return $this->fapiRequest("v1/historicalTrades", "GET", array_merge($request, $params), true);
     }
 
     /**
@@ -3491,25 +3517,24 @@ class API
      * @return array with error message or array of market history
      * @throws \Exception
      */
-    public function futuresAggTrades(string $symbol, int $fromId = null, int $startTime = null, int $endTime = null, int $limit = null)
+    public function futuresAggTrades(string $symbol, ?int $fromId = null, ?int $startTime = null, ?int $endTime = null, ?int $limit = null, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($fromId) {
-            $parameters['fromId'] = $fromId;
+            $request['fromId'] = $fromId;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        return $this->tradesData($this->httpRequest("v1/aggTrades", "GET", $parameters));
+        return $this->tradesData($this->fapiRequest("v1/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
@@ -3535,9 +3560,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresCandlesticks(string $symbol, string $interval = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'klines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'klines', null, $params);
     }
 
     /**
@@ -3564,9 +3589,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresContinuousCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    public function futuresContinuousCandlesticks(string $symbol, string $interval = '5m', ?int $limit = null, $startTime = null, $endTime = null, $contractType = 'PERPETUAL', array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'continuousKlines', $contractType);
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'continuousKlines', $contractType, $params);
     }
 
     /**
@@ -3592,9 +3617,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresIndexPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresIndexPriceCandlesticks(string $symbol, string $interval = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'indexPriceKlines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'indexPriceKlines', null, $params);
     }
 
     /**
@@ -3620,9 +3645,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresMarkPriceCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresMarkPriceCandlesticks(string $symbol, string $interval = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'markPriceKlines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'markPriceKlines', null, $params);
     }
 
     /**
@@ -3648,16 +3673,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPremiumIndexCandlesticks(string $symbol, string $interval = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresPremiumIndexCandlesticks(string $symbol, string $interval = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines');
+        return $this->futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, 'premiumIndexKlines', null, $params);
     }
 
     /**
      * futuresCandlesticksHelper
      * helper for routing the futuresCandlesticks, futuresContinuousCandlesticks, futuresIndexPriceCandlesticks, futuresMarkPriceCandlesticks and futuresPremiumIndexKlines
      */
-    private function futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, $klineType, $contractType = null)
+    private function futuresCandlesticksHelper($symbol, $interval, $limit, $startTime, $endTime, $klineType, $contractType = null, $params = [])
     {
         if (!isset($this->charts['futures'])) {
             $this->charts['futures'] = [];
@@ -3671,29 +3696,28 @@ class API
         if (!isset($this->charts['futures'][$symbol][$contractType][$interval])) {
             $this->charts['futures'][$symbol][$contractType][$interval] = [];
         }
-        $params = [
+        $request = [
             'interval' => $interval,
-            'fapi' => true,
         ];
         if ($klineType === 'continuousKlines' || $klineType === 'indexPriceKlines') {
-            $params['pair'] = $symbol;
+            $request['pair'] = $symbol;
         } else {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($contractType) {
-            $params['contractType'] = $contractType;
+            $request['contractType'] = $contractType;
         }
 
-        $response = $this->httpRequest("v1/{$klineType}", 'GET', $params);
+        $response = $this->fapiRequest("v1/{$klineType}", 'GET', array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
@@ -3723,15 +3747,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresMarkPrice(string $symbol = null)
+    public function futuresMarkPrice(?string $symbol = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/premiumIndex", "GET", $parameters);
+        return $this->fapiRequest("v1/premiumIndex", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3750,24 +3772,22 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFundingRateHistory(string $symbol = null, int $limit = null, $startTime = null, $endTime = null)
+    public function futuresFundingRateHistory(?string $symbol = null, ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
-        return $this->httpRequest("v1/fundingRate", "GET", $parameters);
+        return $this->fapiRequest("v1/fundingRate", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3782,12 +3802,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFundingInfo()
+    public function futuresFundingInfo(array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
-        return $this->httpRequest("v1/fundingInfo", "GET", $parameters);
+        return $this->fapiRequest("v1/fundingInfo", "GET", $params);
     }
 
     /**
@@ -3806,15 +3823,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPrevDay(string $symbol = null)
+    public function futuresPrevDay(?string $symbol = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/ticker/24hr", "GET", $parameters);
+        return $this->fapiRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3831,13 +3846,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPrice(string $symbol)
+    public function futuresPrice(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        $ticker = $this->httpRequest("v1/ticker/price", "GET", $parameters);
+        $ticker = $this->fapiRequest("v1/ticker/price", "GET", array_merge($request, $params));
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
             return null;
@@ -3857,12 +3871,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPrices()
+    public function futuresPrices(array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
-        return $this->priceData($this->httpRequest("v1/ticker/price", "GET", $parameters));
+        return $this->priceData($this->fapiRequest("v1/ticker/price", "GET", $params));
     }
 
     /**
@@ -3879,13 +3890,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPriceV2(string $symbol)
+    public function futuresPriceV2(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        $ticker = $this->httpRequest("v2/ticker/price", "GET", $parameters);
+        $ticker = $this->fapiRequest("v2/ticker/price", "GET", $request);
         if (!isset($ticker['price'])) {
             echo "Error: unable to fetch futures price for $symbol" . PHP_EOL;
             return null;
@@ -3905,12 +3915,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPricesV2()
+    public function futuresPricesV2(array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
-        return $this->priceData($this->httpRequest("v2/ticker/price", "GET", $parameters));
+        return $this->priceData($this->fapiRequest("v2/ticker/price", "GET", $params));
     }
 
     /**
@@ -3929,15 +3936,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSymbolOrderBookTicker(string $symbol = null): array
+    public function futuresSymbolOrderBookTicker(?string $symbol = null, array $params = []): array
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/ticker/bookTicker", "GET", $parameters);
+        return $this->fapiRequest("v1/ticker/bookTicker", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3952,14 +3957,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresDeliveryPrice(string $symbol): array
+    public function futuresDeliveryPrice(string $symbol, array $params = []): array
     {
-        $parameters = [
+        $request = [
             'pair' => $symbol,
-            'fapiData' => true,
         ];
 
-        return $this->httpRequest("delivery-price", "GET", $parameters);
+        return $this->fapiDataRequest("delivery-price", "GET", array_merge($request, $params));
     }
 
     /**
@@ -3976,36 +3980,34 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOpenInterest(string $symbol): array
+    public function futuresOpenInterest(string $symbol, array $params = []): array
     {
-        $parameters = [
+        $request = [
             'symbol'=> $symbol,
-            'fapi' => true,
         ];
-        return $this->httpRequest("v1/openInterest", 'GET', $parameters);
+        return $this->fapiRequest("v1/openInterest", 'GET', array_merge($request, $params));
     }
 
     /**
-     * symbolPeriodLimitStartEndRequest
+     * sapieriodLimitStartEndFuturesDataRequest
      * helper for routing GET methods that require symbol, period, limit, startTime and endTime
      */
-    private function symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, $url, $base = 'fapi', $contractType = null)
+    private function sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, $url, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
             'period' => $period,
         ];
-        $parameters[$base] = true;
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
-        return $this->httpRequest($url, 'GET', $parameters);
+        return $this->fapiDataRequest($url, 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4024,9 +4026,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOpenInterestHistory(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresOpenInterestHistory(string $symbol, string $period = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', 'fapiData');
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'openInterestHist', $params);
     }
 
     /**
@@ -4045,9 +4047,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresTopLongShortPositionRatio(string $symbol, string $period = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', 'fapiData');
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortPositionRatio', $params);
     }
 
     /**
@@ -4066,9 +4068,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresTopLongShortAccountRatio(string $symbol, string $period = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', 'fapiData');
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'topLongShortAccountRatio', $params);
     }
 
     /**
@@ -4087,9 +4089,9 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresGlobalLongShortAccountRatio(string $symbol, string $period = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', 'fapiData');
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'globalLongShortAccountRatio', $params);
     }
 
     /**
@@ -4108,10 +4110,11 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', int $limit = null, $startTime = null, $endTime = null)
+    public function futuresTakerLongShortRatio(string $symbol, string $period = '5m', ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
     {
-        return $this->symbolPeriodLimitStartEndRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', 'fapiData');
+        return $this->sapieriodLimitStartEndFuturesDataRequest($symbol, $period, $limit, $startTime, $endTime, 'takerlongshortRatio', $params);
     }
+
 
     /**
      * futuresBasis get future basis for symbol
@@ -4130,24 +4133,23 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresBasis(string $symbol, string $period = '5m', int $limit = 30, $startTime = null, $endTime = null, $contractType = 'PERPETUAL')
+    public function futuresBasis(string $symbol, string $period = '5m', int $limit = 30, $startTime = null, $endTime = null, $contractType = 'PERPETUAL', array $params = [])
     {
-        $parameters = [
+        $request = [
             'pair' => $symbol,
             'period' => $period,
             'contractType' => $contractType,
-            'fapiData' => true,
         ];
         if ($limit) {
-            $parameters['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($startTime) {
-            $parameters['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $parameters['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
-        return $this->httpRequest("basis", 'GET', $parameters);
+        return $this->fapiDataRequest("basis", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4165,13 +4167,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresIndexInfo(string $symbol)
+    public function futuresIndexInfo(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        return $this->httpRequest("v1/indexInfo", 'GET', $parameters);
+        return $this->fapiRequest("v1/indexInfo", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4190,15 +4191,13 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresAssetIndex(string $symbol = null)
+    public function futuresAssetIndex(?string $symbol = null, array $params = [])
     {
-        $parameters = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $parameters['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        return $this->httpRequest("v1/assetIndex", 'GET', $parameters);
+        return $this->fapiRequest("v1/assetIndex", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4215,13 +4214,12 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresConstituents(string $symbol)
+    public function futuresConstituents(string $symbol, array $params = [])
     {
-        $parameters = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        return $this->httpRequest("v1/constituents", 'GET', $parameters);
+        return $this->fapiRequest("v1/constituents", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -4230,8 +4228,8 @@ class API
      * @return array containing the request
      * @throws \Exception
      */
-    protected function createFuturesOrderRequest(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = []) {
-        $opt = [
+    protected function createFuturesOrderRequest(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $params = []) {
+        $request = [
             'symbol' => $symbol,
             'side' => $side,
             'type' => $type,
@@ -4249,11 +4247,11 @@ class API
                 // WPCS: XSS OK.
                 echo "warning: quantity expected numeric got " . gettype($quantity) . PHP_EOL;
             }
-            if (isset($flags['closePosition']) && $flags['closePosition'] === true) {
+            if (isset($params['closePosition']) && $params['closePosition'] === true) {
                 // WPCS: XSS OK.
                 echo "warning: closePosition is set to true, quantity will be ignored" . PHP_EOL;
             } else {
-                $opt['quantity'] = $quantity;
+                $request['quantity'] = $quantity;
             }
         }
 
@@ -4263,90 +4261,47 @@ class API
         }
 
         if ($type === "LIMIT" || $type === "STOP_LOSS_LIMIT" || $type === "TAKE_PROFIT_LIMIT") {
-            $opt["price"] = $price;
-            if (!isset($flags['timeInForce'])) {
-                $opt['timeInForce'] = 'GTC';
+            $request["price"] = $price;
+            if (!isset($params['timeInForce'])) {
+                $request['timeInForce'] = 'GTC';
             }
         }
 
-        if (isset($flags['positionSide'])) {
-            $opt['positionSide'] = $flags['positionSide'];
-        }
-
-        if (isset($flags['timeInForce'])) {
-            $opt['timeInForce'] = $flags['timeInForce'];
-        }
-
-        if (isset($flags['reduceOnly'])) {
-            $reduceOnly = $flags['reduceOnly'];
+        if (isset($params['reduceOnly'])) {
+            $reduceOnly = $params['reduceOnly'];
             if ($reduceOnly === true) {
-                $opt['reduceOnly'] = 'true';
+                $request['reduceOnly'] = 'true';
             } else {
-                $opt['reduceOnly'] = 'false';
+                $request['reduceOnly'] = 'false';
             }
+            unset($params['reduceOnly']);
         }
 
-        if (isset($flags['newClientOrderId'])) {
-            $opt['newClientOrderId'] = $flags['newClientOrderId'];
-        } else {
-            $opt['newClientOrderId'] = $this->generateFuturesClientOrderId();
+        if (!isset($params['newClientOrderId'])) {
+            $request['newClientOrderId'] = $this->generateFuturesClientOrderId();
         }
 
-        if (isset($flags['stopPrice'])) {
-            $opt['stopPrice'] = $flags['stopPrice'];
-        }
-
-        if (isset($flags['closePosition'])) {
-            $closePosition = $flags['closePosition'];
+        if (isset($params['closePosition'])) {
+            $closePosition = $params['closePosition'];
             if ($closePosition === true) {
-                $opt['closePosition'] = 'true';
+                $request['closePosition'] = 'true';
             } else {
-                $opt['closePosition'] = 'false';
+                $request['closePosition'] = 'false';
             }
+            unset($params['closePosition']);
         }
 
-        if (isset($flags['activationPrice'])) {
-            $opt['activationPrice'] = $flags['activationPrice'];
-        }
-
-        if (isset($flags['callbackRate'])) {
-            $opt['callbackRate'] = $flags['callbackRate'];
-        }
-
-        if (isset($flags['workingType'])) {
-            $opt['workingType'] = $flags['workingType'];
-        }
-
-        if (isset($flags['priceProtect'])) {
-            $priceProtect = $flags['priceProtect'];
+        if (isset($params['priceProtect'])) {
+            $priceProtect = $params['priceProtect'];
             if ($priceProtect === true) {
-                $opt['priceProtect'] = 'TRUE';
+                $request['priceProtect'] = 'TRUE';
             } else {
-                $opt['priceProtect'] = 'FALSE';
+                $request['priceProtect'] = 'FALSE';
             }
+            unset($params['priceProtect']);
         }
 
-        if (isset($flags['newOrderRespType'])) {
-            $opt['newOrderRespType'] = $flags['newOrderRespType'];
-        }
-
-        if (isset($flags['priceMatch'])) {
-            $opt['priceMatch'] = $flags['priceMatch'];
-        }
-
-        if (isset($flags['selfTradePreventionMode'])) {
-            $opt['selfTradePreventionMode'] = $flags['selfTradePreventionMode'];
-        }
-
-        if (isset($flags['goodTillDate'])) {
-            $opt['goodTillDate'] = $flags['goodTillDate'];
-        }
-
-        if (isset($flags['recvWindow'])) {
-            $opt['recvWindow'] = $flags['recvWindow'];
-        }
-
-        return $opt;
+        return array_merge($request, $params);
     }
 
     /**
@@ -4365,32 +4320,31 @@ class API
      * @param string $quantity (optional) of the order (Cannot be sent with closePosition=true (Close-All))
      * @param string $price (optional) price per unit
      * @param string $type (mandatory) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc.
-     * @param array $flags (optional) additional transaction options
-     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
-     * - @param string $flags['timeInForce']
-     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
-     * - @param string $flags['newClientOrderId'] new client order id
-     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
-     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
-     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
-     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
-     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
-     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
-     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
-     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
-     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
-     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param int    $flags['recvWindow']
+     * @param array $params (optional) additional transaction options
+     * - @param string $params['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $params['timeInForce']
+     * - @param bool   $params['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $params['newClientOrderId'] new client order id
+     * - @param string $params['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $params['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $params['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $params['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $params['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $params['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $params['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $params['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $params['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $params['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param int    $params['recvWindow']
      * @param $test bool whether to test or not, test only validates the query
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [], $test = false)
+    public function futuresOrder(string $side, string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $params = [], $test = false)
     {
-        $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $flags);
-        $opt['fapi'] = true;
+        $request = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, $type, $params);
         $qstring = ($test === false) ? 'v1/order' : 'v1/order/test';
-        return $this->httpRequest($qstring, 'POST', $opt, true);
+        return $this->fapiRequest($qstring, 'POST', $request, true);
     }
 
     /**
@@ -4417,27 +4371,27 @@ class API
      * @param string $quantity (optional) the quantity required
      * @param string $price (optional) price per unit
      * @param string $type (mandatory) type of order
-     * @param array $flags (optional) addtional options for order type
-     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
-     * - @param string $flags['timeInForce']
-     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
-     * - @param string $flags['newClientOrderId'] new client order id
-     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
-     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
-     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
-     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
-     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
-     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
-     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
-     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
-     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
-     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param int    $flags['recvWindow']
+     * @param array $params (optional) addtional options for order type
+     * - @param string $params['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $params['timeInForce']
+     * - @param bool   $params['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $params['newClientOrderId'] new client order id
+     * - @param string $params['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $params['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $params['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $params['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $params['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $params['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $params['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $params['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $params['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $params['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param int    $params['recvWindow']
      * @return array with error message or the order details
      */
-    public function futuresBuy(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    public function futuresBuy(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $params = [])
     {
-        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags);
+        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $params);
     }
 
     /**
@@ -4447,9 +4401,9 @@ class API
      *
      * params and return value are the same as @see futuresBuy()
      */
-    public function futuresBuyTest(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    public function futuresBuyTest(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $params = [])
     {
-        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $flags, true);
+        return $this->futuresOrder('BUY', $symbol, $quantity, $price, $type, $params, true);
     }
 
     /**
@@ -4476,27 +4430,27 @@ class API
      * @param string $quantity (optional) the quantity required
      * @param string $price (optional) price per unit
      * @param string $type (mandatory) type of order
-     * @param array $flags (optional) addtional options for order type
-     * - @param string $flags['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
-     * - @param string $flags['timeInForce']
-     * - @param bool   $flags['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
-     * - @param string $flags['newClientOrderId'] new client order id
-     * - @param string $flags['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
-     * - @param bool   $flags['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
-     * - @param string $flags['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
-     * - @param string $flags['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
-     * - @param string $flags['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
-     * - @param bool   $flags['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
-     * - @param string $flags['newOrderRespType'] response type, default "RESULT", other option is "ACK"
-     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
-     * - @param string $flags['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
-     * - @param string $flags['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
-     * - @param int    $flags['recvWindow']
+     * @param array $params (optional) addtional options for order type
+     * - @param string $params['positionSide'] position side, "BOTH" for One-way Mode; "LONG" or "SHORT" for Hedge Mode (mandatory for Hedge Mode)
+     * - @param string $params['timeInForce']
+     * - @param bool   $params['reduceOnly'] default false (Cannot be sent in Hedge Mode; cannot be sent with closePosition=true)
+     * - @param string $params['newClientOrderId'] new client order id
+     * - @param string $params['stopPrice'] stop price (Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders)
+     * - @param bool   $params['closePosition'] Close-All (used with STOP_MARKET or TAKE_PROFIT_MARKET orders)
+     * - @param string $params['activationPrice'] Used with TRAILING_STOP_MARKET orders, default as the latest price (supporting different workingType)
+     * - @param string $params['callbackRate'] Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+     * - @param string $params['workingType'] stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
+     * - @param bool   $params['priceProtect'] Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders (default false)
+     * - @param string $params['newOrderRespType'] response type, default "RESULT", other option is "ACK"
+     * - @param string $params['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param string $params['selfTradePreventionMode'] EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+     * - @param string $params['goodTillDate'] order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+     * - @param int    $params['recvWindow']
      * @return array with error message or the order details
      */
-    public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $flags = [])
+    public function futuresSell(string $symbol, $quantity = null, $price = null, string $type = 'LIMIT', array $params = [])
     {
-        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags);
+        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $params);
     }
 
     /**
@@ -4506,19 +4460,19 @@ class API
      *
      * params and return value are the same as @see futuresSell()
      */
-    public function futuresSellTest(string $symbol, $quantity = null, $price = null, $type = null, array $flags = [])
+    public function futuresSellTest(string $symbol, $quantity = null, $price = null, $type = null, array $params = [])
     {
         if ($type === null) {
             $type = 'LIMIT';
         }
-        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $flags, true);
+        return $this->futuresOrder('SELL', $symbol, $quantity, $price, $type, $params, true);
     }
 
     /**
      * createBatchOrdersRequest
      * helper for creating the request for multiple futures orders
      * @param array $orders (mandatory) array of orders to be placed
-     * objects in the array should contain literally the same keys as the @see futuresOrder but without the recvWindow
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the $params[recvWindow]
      *
      * @return array containing the request
      * @throws \Exception
@@ -4534,8 +4488,8 @@ class API
             if (!isset($order['price'])) {
                 $order['price'] = null;
             }
-            if (!isset($order['flags'])) {
-                $order['flags'] = [];
+            if (!isset($order['params'])) {
+                $order['params'] = [];
             }
             if (!isset($order['type'])) {
                 $order['type'] = 'LIMIT';
@@ -4546,7 +4500,7 @@ class API
                 $order['quantity'],
                 $order['price'],
                 $order['type'],
-                $order['flags']
+                $order['params']
             );
             if (isset($formatedOrder['recvWindow'])) {
                 // remove recvWindow from the order
@@ -4574,17 +4528,15 @@ class API
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Place-Multiple-Orders
      *
      * @param array $orders (mandatory) array of orders to be placed
-     * objects in the array should contain literally the same keys as the @see futuresOrder but without the $flags['recvWindow']
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * objects in the array should contain literally the same keys as the @see futuresOrder but without the $params['recvWindow']
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response or error message
      * @throws \Exception
      */
-    public function futuresBatchOrders(array $orders, int $recvWindow = null)
+    public function futuresBatchOrders(array $orders, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
         $formatedOrders = $this->createBatchOrdersRequest($orders);
         if (count($formatedOrders) > 5) {
             throw new \Exception('futuresBatchOrders: max 5 orders allowed');
@@ -4592,13 +4544,12 @@ class API
         if (count($formatedOrders) < 1) {
             throw new \Exception('futuresBatchOrders: at least 1 order required');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
+        $request = [];
+
         // current endpoint accepts orders list as a json string in the query string
         $encodedOrders = json_encode($formatedOrders);
         $url = 'v1/batchOrders?batchOrders=' . $encodedOrders;
-        return $this->httpRequest($url, 'POST', $params, true);
+        return $this->fapiRequest($url, 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -4608,34 +4559,33 @@ class API
      *
      * @param string $symbol (mandatory) market symbol
      * @param string $side (mandatory) "BUY" or "SELL"
-     * @param string $orderId (optional) order id to be modified (mandatory if $flags['origClientOrderId'] is not set)
+     * @param string $orderId (optional) order id to be modified (mandatory if $params['origClientOrderId'] is not set)
      * @param string $quantity (optional) of the order (Cannot be sent for orders with closePosition=true (Close-All))
      * @param string $price (mandatory) price per unit
-     * @param array $flags (optional) additional options
-     * - @param string $flags['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
-     * - @param int    $flags['recvWindow']
-     * - @param string $flags['origClientOrderId'] client order id to be modified (mandatory if $orderId is not set)
+     * @param array $params (optional) additional options
+     * - @param string $params['priceMatch'] only avaliable for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+     * - @param int    $params['recvWindow']
+     * - @param string $params['origClientOrderId'] client order id to be modified (mandatory if $orderId is not set)
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresEditOrder(string $symbol, string $side, string $quantity, string $price, $orderId = null, array $flags = [])
+    public function futuresEditOrder(string $symbol, string $side, string $quantity, string $price, $orderId = null, array $params = [])
     {
-        $opt = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $flags);
+        $request = $this->createFuturesOrderRequest($side, $symbol, $quantity, $price, 'LIMIT', $params);
         $origClientOrderId = null;
-        if (isset($flags['origClientOrderId'])) {
-            $origClientOrderId = $flags['origClientOrderId'];
-            $opt['origClientOrderId'] = $origClientOrderId;
+        if (isset($params['origClientOrderId'])) {
+            $origClientOrderId = $params['origClientOrderId'];
+            $request['origClientOrderId'] = $origClientOrderId;
         }
         if (!$origClientOrderId && !$orderId) {
             throw new \Exception('futuresEditOrder: either orderId or origClientOrderId must be set');
         }
         if ($orderId) {
-            $opt['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
-        unset($opt['type']);
-        unset($opt['newClientOrderId']);
-        $opt['fapi'] = true;
-        return $this->httpRequest("v1/order", 'PUT', $opt, true);
+        unset($request['type']);
+        unset($request['newClientOrderId']);
+        return $this->fapiRequest("v1/order", 'PUT', $request, true);
     }
 
     /**
@@ -4644,24 +4594,21 @@ class API
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Multiple-Orders
      *
      * @param array $orders (mandatory) array of orders to be modified
-     * objects in the array should contain literally the same keys as the @see futuresEditOrder but without the $flags['recvWindow']
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * objects in the array should contain literally the same keys as the @see futuresEditOrder but without the $params['recvWindow']
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response or error message
      * @throws \Exception
      */
-    public function futuresEditOrders(array $orders, $recvWindow = null)
+    public function futuresEditOrders(array $orders, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
         $formatedOrders = $this->createBatchOrdersRequest($orders, true);
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
+        $request = [];
+
         // current endpoint accepts orders list as a json string in the query string
-        $params['batchOrders'] = json_encode($formatedOrders);
-        return $this->httpRequest("v1/batchOrders", 'PUT', $params, true);
+        $request['batchOrders'] = json_encode($formatedOrders);
+        return $this->fapiRequest("v1/batchOrders", 'PUT', array_merge($request, $params), true);
     }
 
     /**
@@ -4677,36 +4624,34 @@ class API
      * @param int    $startTime (optional) timestamp in ms to get modification history from INCLUSIVE
      * @param int    $endTime (optional) timestamp in ms to get modification history until INCLUSIVE
      * @param int    $limit (optional) limit the amount of open interest history (default 50, max 100)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params   (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresOrderAmendment(string $symbol, $orderId = null, $origClientOrderId = null, $startTime = null, $endTime = null, $limit = null, int $recvWindow = null)
+    public function futuresOrderAmendment(string $symbol, $orderId = null, $origClientOrderId = null, $startTime = null, $endTime = null, $limit = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
         if ($origClientOrderId) {
-            $params['origClientOrderId'] = $origClientOrderId;
+            $request['origClientOrderId'] = $origClientOrderId;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/orderAmendment", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/orderAmendment", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4716,26 +4661,25 @@ class API
      * $order = $api->futuresCancel("BNBBTC", $orderid);
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param string $orderid (optional) the orderid to cancel (mandatory if $flags['origClientOrderId'] is not set)
-     * @param array  $flags (optional) additional options
-     * - @param string $flags['origClientOrderId'] original client order id to cancel
-     * - @param int    $flags['recvWindow'] the time in milliseconds to wait for a response
+     * @param string $orderid (optional) the orderid to cancel (mandatory if $params['origClientOrderId'] is not set)
+     * @param array  $params (optional) additional options
+     * - @param string $params['origClientOrderId'] original client order id to cancel
+     * - @param int    $params['recvWindow'] the time in milliseconds to wait for a response
      *
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function futuresCancel(string $symbol, $orderid, $flags = [])
+    public function futuresCancel(string $symbol, $orderid, $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderid) {
-            $params['orderId'] = $orderid;
-        } else if (!isset($flags['origClientOrderId'])) {
+            $request['orderId'] = $orderid;
+        } else if (!isset($params['origClientOrderId'])) {
             throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
         }
-        return $this->httpRequest("v1/order", 'DELETE', array_merge($params, $flags), true);
+        return $this->fapiRequest("v1/order", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4747,31 +4691,29 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param array  $orderIdList (optional) list of ids to cancel (mandatory if origClientOrderIdList is not set)
      * @param array  $origClientOrderIdList (optional) list of client order ids to cancel (mandatory if orderIdList is not set)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCancelBatchOrders(string $symbol, $orderIdList = null, $origClientOrderIdList = null, int $recvWindow = null)
+    public function futuresCancelBatchOrders(string $symbol, $orderIdList = null, $origClientOrderIdList = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderIdList) {
             $idsString = json_encode($orderIdList);
             // remove quotes and spaces
-            $params['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
+            $request['orderIdList'] = str_replace(' ', '', str_replace('"', '', str_replace("'", '', $idsString)));
         } else if ($origClientOrderIdList) {
             // remove spaces between the ids
-            $params['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
+            $request['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
         } else {
             throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/batchOrders", 'DELETE', $params, true);
+
+        return $this->fapiRequest("v1/batchOrders", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4787,16 +4729,13 @@ class API
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCancelOpenOrders(string $symbol, int $recvWindow = null)
+    public function futuresCancelOpenOrders(string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/allOpenOrders", 'DELETE', $params, true);
+
+        return $this->fapiRequest("v1/allOpenOrders", 'DELETE', array_merge($request, $params), true);
     }
 
     /**
@@ -4808,22 +4747,20 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param int    $countdownTime (mandatory) countdown in milliseconds (0 to stop the timer)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresCountdownCancelAllOrders(string $symbol, int $countdownTime, int $recvWindow = null)
+    public function futuresCountdownCancelAllOrders(string $symbol, int $countdownTime, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'countdownTime' => $countdownTime,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/countdownCancelAll", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/countdownCancelAll", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -4836,28 +4773,26 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
      * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function futuresOrderStatus(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    public function futuresOrderStatus(string $symbol, $orderId = null, $origClientOrderId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         } else if ($origClientOrderId) {
-            $params['origClientOrderId'] = $origClientOrderId;
+            $request['origClientOrderId'] = $origClientOrderId;
         } else {
             throw new \Exception('futuresOrderStatus: either orderId or origClientOrderId must be set');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/order", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/order", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4873,30 +4808,31 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
      * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
      * @param string $orderId (optional) order id to get the response from (if is set it will get orders >= that orderId)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
+     *
+     * @return array with error message or the orders details
+     * @throws \Exception
      */
-    public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, int $recvWindow = null)
+    public function futuresAllOrders(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/allOrders", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/allOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4908,23 +4844,20 @@ class API
      * $orders = $api->futuresOpenOrders("BNBBTC");
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresOpenOrders($symbol = null, int $recvWindow = null)
+    public function futuresOpenOrders($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/openOrders", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/openOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -4937,28 +4870,26 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $orderId (optional) order id to get the response for (mandatory if origClientOrderId is not set)
      * @param string $origClientOrderId (optional) original client order id to get the response for (mandatory if orderId is not set)
-     * @param string $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function futuresOpenOrder(string $symbol, $orderId = null, $origClientOrderId = null, int $recvWindow = null)
+    public function futuresOpenOrder(string $symbol, $orderId = null, $origClientOrderId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         } else if ($origClientOrderId) {
-            $params['origClientOrderId'] = $origClientOrderId;
+            $request['origClientOrderId'] = $origClientOrderId;
         } else {
             throw new \Exception('futuresOpenOrder: either orderId or origClientOrderId must be set');
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/openOrder", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/openOrder", 'GET', array_merge($request, $params), true);
     }
     /**
      * futuresForceOrders gets all futures force orders
@@ -4975,35 +4906,32 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get orders until INCLUSIVE
      * @param int    $limit (optional) limit the amount of orders (default 500, max 1000)
      * @param string $autoCloseType (optional) "LIQUIDATION" for liquidation orders, "ADL" for ADL orders
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the orders details
      * @throws \Exception
      */
-    public function futuresForceOrders($symbol = null, $startTime = null, $endTime = null, $limit = null, $autoCloseType = null, $recvWindow = null)
+    public function futuresForceOrders($symbol = null, $startTime = null, $endTime = null, $limit = null, $autoCloseType = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($autoCloseType) {
-            $params['autoCloseType'] = $autoCloseType;
+            $request['autoCloseType'] = $autoCloseType;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/forceOrders", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/forceOrders", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5021,36 +4949,34 @@ class API
      * @param int    $limit (optional) limit the amount of trades (default 500, max 1000)
      * @param string $orderId (optional) order id to get the trades for
      * @param string $fromId (optional) trade id to get the trades from (if is set it will get trades >= that Id)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the trades details
      * @throws \Exception
      */
-    public function futuresMyTrades(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    public function futuresMyTrades(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         }
         if ($fromId) {
-            $params['fromId'] = $fromId;
+            $request['fromId'] = $fromId;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/userTrades", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/userTrades", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5058,9 +4984,9 @@ class API
      * another name for futuresMyTrades (for naming compatibility with spot)
      * @deprecated
      */
-    public function futuresHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, int $recvWindow = null)
+    public function futuresHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $orderId = null, $fromId = null, array $params = [])
     {
-        return $this->futuresMyTrades($symbol, $startTime, $endTime, $limit, $orderId, $fromId, $recvWindow);
+        return $this->futuresMyTrades($symbol, $startTime, $endTime, $limit, $orderId, $fromId, $params);
     }
 
     /**
@@ -5074,22 +5000,20 @@ class API
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $marginType (mandatory) margin type, "CROSSED" or "ISOLATED"
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetMarginMode(string $symbol, string $marginType, int $recvWindow = null)
+    public function futuresSetMarginMode(string $symbol, string $marginType, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'marginType' => $marginType,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/marginType", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/marginType", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5101,20 +5025,15 @@ class API
      *
      * @property int $weight 30
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresPositionMode(int $recvWindow = null)
+    public function futuresPositionMode(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionSide/dual", 'GET', $params, true);
+        return $this->fapiRequest("v1/positionSide/dual", 'GET', $params, true);
     }
 
     /**
@@ -5127,21 +5046,19 @@ class API
      * @property int $weight 1
      *
      * @param bool $dualSidePosition (mandatory) true for Hedge Mode, false for One-way Mode
-     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetPositionMode(bool $dualSidePosition, int $recvWindow = null)
+    public function futuresSetPositionMode(bool $dualSidePosition, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'dualSidePosition' => $dualSidePosition ? 'true' : 'false',
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionSide/dual", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/positionSide/dual", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5156,22 +5073,20 @@ class API
      *
      * @param int    $leverage (mandatory) leverage to be set (min 1, max 125)
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetLeverage(int $leverage, string $symbol, int $recvWindow = null)
+    public function futuresSetLeverage(int $leverage, string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'leverage' => $leverage,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/leverage", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/leverage", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5183,20 +5098,15 @@ class API
      *
      * @property int $weight 30
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresMultiAssetsMarginMode(int $recvWindow = null)
+    public function futuresMultiAssetsMarginMode(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/multiAssetsMargin", 'GET', $params, true);
+        return $this->fapiRequest("v1/multiAssetsMargin", 'GET', $params, true);
     }
 
     /**
@@ -5209,21 +5119,19 @@ class API
      * @property int $weight 1
      *
      * @param bool $multiAssetsMarginMode (mandatory) true for multi-assets mode, false for single-asset mode
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresSetMultiAssetsMarginMode(bool $multiAssetsMarginMode, int $recvWindow = null)
+    public function futuresSetMultiAssetsMarginMode(bool $multiAssetsMarginMode, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'multiAssetsMarginMode' => $multiAssetsMarginMode ? 'true' : 'false',
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/multiAssetsMarginMode", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/multiAssetsMarginMode", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5234,21 +5142,18 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    protected function modifyMarginHelper(string $symbol, string $amount, $addOrReduce, $positionSide = null, int $recvWindow = null)
+    protected function modifyMarginHelper(string $symbol, string $amount, $addOrReduce, $positionSide = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
             'amount' => $amount,
             'type' => $addOrReduce,
         ];
         if ($positionSide) {
-            $params['positionSide'] = $positionSide;
+            $request['positionSide'] = $positionSide;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionMargin", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/positionMargin", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5263,14 +5168,15 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $amount (mandatory) amount to be added
      * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresAddMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    public function futuresAddMargin(string $symbol, string $amount, $positionSide = null, array $params = [])
     {
-        return $this->modifyMarginHelper($symbol, $amount, 1, $positionSide, $recvWindow);
+        return $this->modifyMarginHelper($symbol, $amount, 1, $positionSide, $params);
     }
 
     /**
@@ -5285,14 +5191,15 @@ class API
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
      * @param string $amount (mandatory) amount to be removed
      * @param string $positionSide (optional) position side - "BOTH" for non-hedged and "LONG" or "SHORT" for hedged (mandatory for hedged positions)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresReduceMargin(string $symbol, string $amount, $positionSide = null, int $recvWindow = null)
+    public function futuresReduceMargin(string $symbol, string $amount, $positionSide = null, array $params = [])
     {
-        return $this->modifyMarginHelper($symbol, $amount, 2, $positionSide, $recvWindow);
+        return $this->modifyMarginHelper($symbol, $amount, 2, $positionSide, $params);
     }
 
     /**
@@ -5306,44 +5213,41 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params      (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPositions($symbol = null, $recvWindow = null, $api_version = 'v3')
+    public function futuresPositions($symbol = null, array $params = [], string $api_version = 'v3')
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
+
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresPositions: api_version must be either v2 or v3');
         }
-        return $this->httpRequest($api_version . "/positionRisk", 'GET', $params, true);
+        return $this->fapiRequest($api_version . "/positionRisk", 'GET', array_merge($request, $params), true);
     }
 
     /** futuresPositionsV2
      * @see futuresPositions
      */
-    public function futuresPositionsV2($symbol = null, int $recvWindow = null)
+    public function futuresPositionsV2($symbol = null, array $params = [])
     {
-        return $this->futuresPositions($symbol, $recvWindow, 'v2');
+        return $this->futuresPositions($symbol, $params, 'v2');
     }
 
     /**
      * futuresPositionsV3
      * @see futuresPositions
      */
-    public function futuresPositionsV3($symbol = null, int $recvWindow = null)
+    public function futuresPositionsV3($symbol = null, array $params = [])
     {
-        return $this->futuresPositions($symbol, $recvWindow, 'v3');
+        return $this->futuresPositions($symbol, $params, 'v3');
     }
 
     /**
@@ -5356,33 +5260,34 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the position details
      * @throws \Exception
      */
-    public function futuresPosition(string $symbol, $recvWindow = null, string $api_version = 'v3')
+    public function futuresPosition(string $symbol, array $params = [], string $api_version = 'v3')
     {
-        return $this->futuresPositions($symbol, $recvWindow, $api_version);
+        return $this->futuresPositions($symbol, $params, $api_version);
     }
 
     /**
      * futuresPositionV2
      * @see futuresPosition
      */
-    public function futuresPositionV2(string $symbol, int $recvWindow = null)
+    public function futuresPositionV2(string $symbol, array $params = [])
     {
-        return $this->futuresPositionsV2($symbol, $recvWindow, 'v2');
+        return $this->futuresPositionsV2($symbol, $params, 'v2');
     }
 
     /**
      * futuresPositionV3
      * @see futuresPosition
      */
-    public function futuresPositionV3(string $symbol, int $recvWindow = null)
+    public function futuresPositionV3(string $symbol, array $params = [])
     {
-        return $this->futuresPositionsV3($symbol, $recvWindow, 'v3');
+        return $this->futuresPositionsV3($symbol, $params, 'v3');
     }
 
     /**
@@ -5395,23 +5300,20 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the ADL quantile details
      * @throws \Exception
      */
-    public function futuresAdlQuantile($symbol = null, int $recvWindow = null)
+    public function futuresAdlQuantile($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/adlQuantile", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/adlQuantile", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5428,32 +5330,32 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get history until INCLUSIVE
      * @param int    $limit (optional) limit the amount of history (default 500)
      * @param string $addOrReduce (optional) "ADD" or "REDUCE" to filter the history
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      */
-    public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, int $recvWindow = null)
+    public function futuresPositionMarginChangeHistory(string $symbol, $startTime = null, $endTime = null, $limit = null, $addOrReduce = null, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($addOrReduce) {
             if (is_numeric($addOrReduce)) {
-                $params['addOrReduce'] = $addOrReduce;
+                $request['addOrReduce'] = $addOrReduce;
             } else if (is_string($addOrReduce)) {
                 $addOrReduce = strtoupper($addOrReduce);
                 if ($addOrReduce === 'ADD' || $addOrReduce === '1') {
-                    $params['addOrReduce'] = 1;
+                    $request['addOrReduce'] = 1;
                 } else if ($addOrReduce === 'REDUCE' || $addOrReduce === '2') {
-                    $params['addOrReduce'] = 2;
+                    $request['addOrReduce'] = 2;
                 } else {
                     throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
                 }
@@ -5461,10 +5363,8 @@ class API
                 throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
             }
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/positionMargin/history", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/positionMargin/history", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5476,36 +5376,37 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or the balance details
      * @throws \Exception
      */
-    public function futuresBalances($recvWindow = null, string $api_version = 'v3')
+    public function futuresBalances(array $params = [], string $api_version = 'v3')
     {
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresBalances: api_version must be either v2 or v3');
         }
-        return $this->balances('futures', $recvWindow, 'v3');
+        return $this->balances('futures', $params, 'v3');
     }
 
     /**
      * futuresBalancesV2
      * see futuresBalances
      */
-    public function futuresBalancesV2(int $recvWindow = null)
+    public function futuresBalancesV2(array $params = [])
     {
-        return $this->futuresBalances($recvWindow, 'v2');
+        return $this->futuresBalances($params, 'v2');
     }
 
     /**
      * futuresBalancesV3
      * see futuresBalances
      */
-    public function futuresBalancesV3(int $recvWindow = null)
+    public function futuresBalancesV3(array $params = [])
     {
-        return $this->futuresBalances($recvWindow, 'v3');
+        return $this->futuresBalances($params, 'v3');
     }
 
     /**
@@ -5518,42 +5419,38 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
      * @return array with error message or array of all the account information
      * @throws \Exception
      */
-    public function futuresAccount($recvWindow = null, string $api_version = 'v3')
+    public function futuresAccount(array $params = [], string $api_version = 'v3')
     {
         if ($api_version !== 'v2' && $api_version !== 'v3') {
             throw new \Exception('futuresAccount: api_version must be either v2 or v3');
         }
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($api_version . "/account", "GET", $params, true);
+
+        return $this->fapiRequest($api_version . "/account", "GET", $params, true);
     }
 
     /**
      * futuresAccountV2
      * see futuresAccount
      */
-    public function futuresAccountV2(int $recvWindow = null)
+    public function futuresAccountV2(array $params = [])
     {
-        return $this->futuresAccount($recvWindow, 'v2');
+        return $this->futuresAccount($params, 'v2');
     }
 
     /**
      * futuresAccountV3
      * see futuresAccount
      */
-    public function futuresAccountV3(int $recvWindow = null)
+    public function futuresAccountV3(array $params = [])
     {
-        return $this->futuresAccount($recvWindow, 'v3');
+        return $this->futuresAccount($params, 'v3');
     }
 
     /**
@@ -5566,21 +5463,19 @@ class API
      * @property int $weight 20
      *
      * @param string $symbol (mandatory) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the trade fee details
      * @throws \Exception
      */
-    public function futuresTradeFee(string $symbol, int $recvWindow = null)
+    public function futuresTradeFee(string $symbol, array $params = [])
     {
-        $params = [
+        $request = [
             'symbol' => $symbol,
-            'fapi' => true,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/commissionRate", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/commissionRate", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5592,20 +5487,15 @@ class API
      *
      * @property int $weight 5
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the account configuration details
      * @throws \Exception
      */
-    public function futuresAccountConfig(int $recvWindow = null)
+    public function futuresAccountConfig(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/accountConfig", 'GET', $params, true);
+        return $this->fapiRequest("v1/accountConfig", 'GET', $params, true);
     }
 
     /**
@@ -5619,23 +5509,20 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the margin mode details
      * @throws \Exception
      */
-    public function futuresMarginModes($symbol = null, int $recvWindow = null)
+    public function futuresMarginModes($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/symbolConfig", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/symbolConfig", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5647,20 +5534,15 @@ class API
      *
      * @property int $weight 1
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the rate limit details
      * @throws \Exception
      */
-    public function futuresOrderRateLimit(int $recvWindow = null)
+    public function futuresOrderRateLimit(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/rateLimit/order", 'GET', $params, true);
+        return $this->fapiRequest("v1/rateLimit/order", 'GET', $params, true);
     }
 
     /**
@@ -5674,23 +5556,20 @@ class API
      * @property int $weight 1
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the leverage details
      * @throws \Exception
      */
-    public function futuresLeverages($symbol = null, int $recvWindow = null)
+    public function futuresLeverages($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/leverageBracket", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/leverageBracket", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5733,38 +5612,35 @@ class API
      * @param int    $endTime (optional) timestamp in ms to get income until INCLUSIVE
      * @param int    $limit (optional) limit the amount of income (default 100, max 1000)
      * @param int    $page (optional) number of page to get
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the income details
      * @throws \Exception
      */
-    public function futuresLedger($symbol = null, $incomeType = null, $startTime = null, $endTime = null, $limit = null, $page = null, int $recvWindow = null)
+    public function futuresLedger($symbol = null, $incomeType = null, $startTime = null, $endTime = null, $limit = null, $page = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
         if ($incomeType) {
-            $params['incomeType'] = $incomeType;
+            $request['incomeType'] = $incomeType;
         }
         if ($startTime) {
-            $params['startTime'] = $startTime;
+            $request['startTime'] = $startTime;
         }
         if ($endTime) {
-            $params['endTime'] = $endTime;
+            $request['endTime'] = $endTime;
         }
         if ($limit) {
-            $params['limit'] = $limit;
+            $request['limit'] = $limit;
         }
         if ($page) {
-            $params['page'] = $page;
+            $request['page'] = $page;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/income", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/income", 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5778,56 +5654,47 @@ class API
      * weigth is 1 if symbol is provided
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the trading status details
      * @throws \Exception
      */
-    public function futuresTradingStatus($symbol = null, int $recvWindow = null)
+    public function futuresTradingStatus($symbol = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($symbol) {
-            $params['symbol'] = $symbol;
+            $request['symbol'] = $symbol;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/apiTradingStatus", 'GET', $params, true);
+
+        return $this->fapiRequest("v1/apiTradingStatus", 'GET', array_merge($request, $params), true);
     }
 
     /**
      * futuresDownloadId
      * helper for other metods for getting download id
      */
-    protected function futuresDownloadId($startTime, $endTime, $recvWindow = null, string $url = '')
+    protected function futuresDownloadId($startTime, $endTime, ?array $params = null, string $url = '')
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'startTime' => $startTime,
             'endTime' => $endTime,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($url, 'GET', $params, true);
+
+        return $this->fapiRequest($url, 'GET', array_merge($request, $params), true);
     }
 
     /**
      * futuresDownloadLinkByDownloadId
      * helper for other metods for getting download link by download id
      */
-    protected function futuresDownloadLinkByDownloadId(string $downloadId, $recvWindow = null, string $url = '')
+    protected function futuresDownloadLinkByDownloadId(string $downloadId, ?array $params = null, string $url = '')
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'downloadId' => $downloadId,
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($url, 'GET', $params, true);
+
+        return $this->fapiRequest($url, 'GET', array_merge($request, $params), true);
     }
 
     /**
@@ -5843,14 +5710,15 @@ class API
      *
      * @param int $startTime (optional) timestamp in ms to get transactions from INCLUSIVE
      * @param int $endTime (optional) timestamp in ms to get transactions until INCLUSIVE
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the response
      * @throws \Exception
      */
-    public function futuresDownloadIdForTransactions(int $startTime, int $endTime, int $recvWindow = null)
+    public function futuresDownloadIdForTransactions(int $startTime, int $endTime, array $params = [])
     {
-        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/income/asyn");
+        return $this->futuresDownloadId($startTime, $endTime, $params, "v1/income/asyn");
     }
 
     /**
@@ -5864,14 +5732,15 @@ class API
      * @property int $weight 10
      *
      * @param string $downloadId (mandatory) download id
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the download link
      * @throws \Exception
      */
-    public function futuresDownloadTransactionsByDownloadId(string $downloadId, int $recvWindow = null)
+    public function futuresDownloadTransactionsByDownloadId(string $downloadId, array $params = [])
     {
-        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/income/asyn/id");
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $params, "v1/income/asyn/id");
     }
 
     /**
@@ -5887,14 +5756,15 @@ class API
      *
      * @param int $startTime (optional) timestamp in ms to get orders from INCLUSIVE
      * @param int $endTime (optional) timestamp in ms to get orders until INCLUSIVE
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the response
      * @throws \Exception
      */
-    public function futuresDownloadIdForOrders(int $startTime, int $endTime, int $recvWindow = null)
+    public function futuresDownloadIdForOrders(int $startTime, int $endTime, array $params = [])
     {
-        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/order/asyn");
+        return $this->futuresDownloadId($startTime, $endTime, $params, "v1/order/asyn");
     }
 
     /**
@@ -5908,14 +5778,15 @@ class API
      * @property int $weight 10
      *
      * @param string $downloadId (mandatory) download id
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the download link
      * @throws \Exception
      */
-    public function futuresDownloadOrdersByDownloadId(string $downloadId, int $recvWindow = null)
+    public function futuresDownloadOrdersByDownloadId(string $downloadId, array $params = [])
     {
-        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/order/asyn/id");
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $params, "v1/order/asyn/id");
     }
 
     /**
@@ -5931,14 +5802,15 @@ class API
      *
      * @param int $startTime (optional) timestamp in ms to get trades from INCLUSIVE
      * @param int $endTime (optional) timestamp in ms to get trades until INCLUSIVE
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the response
      * @throws \Exception
      */
-    public function futuresDownloadIdForTrades(int $startTime, int $endTime, int $recvWindow = null)
+    public function futuresDownloadIdForTrades(int $startTime, int $endTime, array $params = [])
     {
-        return $this->futuresDownloadId($startTime, $endTime, $recvWindow, "v1/trade/asyn");
+        return $this->futuresDownloadId($startTime, $endTime, $params, "v1/trade/asyn");
     }
 
     /**
@@ -5952,14 +5824,15 @@ class API
      * @property int $weight 10
      *
      * @param string $downloadId (mandatory) download id
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array with error message or the download link
      * @throws \Exception
      */
-    public function futuresDownloadTradesByDownloadId(string $downloadId, int $recvWindow = null)
+    public function futuresDownloadTradesByDownloadId(string $downloadId, array $params = [])
     {
-        return $this->futuresDownloadLinkByDownloadId($downloadId, $recvWindow, "v1/trade/asyn/id");
+        return $this->futuresDownloadLinkByDownloadId($downloadId, $params, "v1/trade/asyn/id");
     }
 
     /**
@@ -5972,21 +5845,19 @@ class API
      * @property int $weight 1
      *
      * @param bool $flag (mandatory) true for BNB Fee Discount On, false for BNB Fee Discount Off
-     * @param int  $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFeeBurn(bool $flag, int $recvWindow = null)
+    public function futuresFeeBurn(bool $flag, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'feeBurn' => $flag ? 'true' : 'false',
         ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/feeBurn", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/feeBurn", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -5998,20 +5869,15 @@ class API
      *
      * @property int $weight 30
      *
-     * @param int $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function futuresFeeBurnStatus(int $recvWindow = null)
+    public function futuresFeeBurnStatus(array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/feeBurn", 'GET', $params, true);
+        return $this->fapiRequest("v1/feeBurn", 'GET', $params, true);
     }
 
     /**
@@ -6030,18 +5896,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertExchangeInfo($fromAsset = null, $toAsset = null)
+    public function convertExchangeInfo($fromAsset = null, $toAsset = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($fromAsset) {
-            $params['fromAsset'] = $fromAsset;
+            $request['fromAsset'] = $fromAsset;
         }
         if ($toAsset) {
-            $params['toAsset'] = $toAsset;
+            $request['toAsset'] = $toAsset;
         }
-        return $this->httpRequest("v1/convert/exchangeInfo", 'GET', $params);
+        return $this->fapiRequest("v1/convert/exchangeInfo", 'GET', array_merge($request, $params));
     }
 
     /**
@@ -6058,32 +5922,30 @@ class API
      * @param string $fromAmount (optional) mandatory if $toAmount is not set
      * @param string $toAmount (optional) mandatory if $fromAmount is not set
      * @param string $validTime (optional) deafault "10s"
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertSend(string $fromAsset, string $toAsset, $fromAmount = null, $toAmount = null, $validTime = null, int $recvWindow = null)
+    public function convertSend(string $fromAsset, string $toAsset, $fromAmount = null, $toAmount = null, $validTime = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
+        $request = [
             'fromAsset' => $fromAsset,
             'toAsset' => $toAsset,
         ];
         if ($fromAmount) {
-            $params['fromAmount'] = $fromAmount;
+            $request['fromAmount'] = $fromAmount;
         } else if ($toAmount) {
-            $params['toAmount'] = $toAmount;
+            $request['toAmount'] = $toAmount;
         } else {
             throw new \Exception('convertSendRequest: fromAmount or toAmount must be set');
         }
         if ($validTime) {
-            $params['validTime'] = $validTime;
+            $request['validTime'] = $validTime;
         }
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest("v1/convert/getQuote", 'POST', $params, true);
+
+        return $this->fapiRequest("v1/convert/getQuote", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -6096,30 +5958,18 @@ class API
      * @property int $weight 200
      *
      * @param string $quoteId (mandatory) the quote ID to accept
-     * @param int    $recvWindow (optional) the time in milliseconds to wait for a response
-     * @param array  $params (optional) additional parameters
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      *
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertAccept(string $quoteId, int $recvWindow = null, array $params = [])
+    public function convertAccept(string $quoteId, array $params = [])
     {
         $request = [
             'quoteId' => $quoteId,
         ];
-        return $this->fapiRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true, $recvWindow);
-    }
-
-    /**
-     * fapiRequest helper for creating a fapi httpRequest
-     */
-    protected function fapiRequest(string $url, string $method, array $params = [], $signed = false, int $recvWindow = null)
-    {
-        $params['fapi'] = true;
-        if ($recvWindow) {
-            $params['recvWindow'] = $recvWindow;
-        }
-        return $this->httpRequest($url, $method, $params, $signed);
+        return $this->fapiRequest("v1/convert/acceptQuote", 'POST', array_merge($request, $params), true);
     }
 
     /**
@@ -6137,18 +5987,16 @@ class API
      * @return array containing the response
      * @throws \Exception
      */
-    public function convertStatus($orderId = null, $quoteId = null)
+    public function convertStatus($orderId = null, $quoteId = null, array $params = [])
     {
-        $params = [
-            'fapi' => true,
-        ];
+        $request = [];
         if ($orderId) {
-            $params['orderId'] = $orderId;
+            $request['orderId'] = $orderId;
         } else if ($quoteId) {
-            $params['quoteId'] = $quoteId;
+            $request['quoteId'] = $quoteId;
         } else {
             throw new \Exception('convertStatus: orderId or quoteId must be set');
         }
-        return $this->httpRequest("v1/convert/orderStatus", 'GET', $params, true);
+        return $this->fapiRequest("v1/convert/orderStatus", 'GET', array_merge($request, $params), true);
     }
 }
