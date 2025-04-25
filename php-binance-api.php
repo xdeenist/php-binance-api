@@ -648,6 +648,8 @@ class API
     /**
      * useServerTime adds the 'useServerTime'=>true to the API request to avoid time errors
      *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/general-endpoints
+     *
      * $api->useServerTime();
      *
      * @return null
@@ -664,6 +666,8 @@ class API
     /**
      * time Gets the server time
      *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/general-endpoints
+     *
      * $time = $api->time();
      *
      * @return array with error message or array with server time key
@@ -677,7 +681,7 @@ class API
     /**
      * exchangeInfo -  Gets the complete exchange info, including limits, currency options etc.
      *
-     * @link https://binance-docs.github.io/apidocs/spot/en/#exchange-information
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/general-endpoints
      *
      * $info = $api->exchangeInfo();
      * $info = $api->exchangeInfo('BTCUSDT');
@@ -1146,6 +1150,8 @@ class API
     /**
      * prices get all the current prices
      *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints#symbol-price-ticker
+     *
      * $ticker = $api->prices();
      *
      * @return array with error message or array of all the currencies prices
@@ -1158,6 +1164,8 @@ class API
 
     /**
      * price get the latest price of a symbol
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints#symbol-price-ticker
      *
      * $price = $api->price( "ETHBTC" );
      *
@@ -1206,9 +1214,13 @@ class API
     /**
      * prevDay get 24hr ticker price change statistics for symbols
      *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
+     *
      * $prevDay = $api->prevDay("BNBBTC");
      *
-     * @param $symbol (optional) symbol to get the previous day change for
+     * @param string $symbol (optional) symbol to get the previous day change for
+     * @param array $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param array  $params['symbols'] (optional) the symbols to get the previous day change for (e.g. ["BNBBTC","ETHBTC"])
      * @return array with error message or array of prevDay change
      * @throws \Exception
      */
@@ -1220,11 +1232,85 @@ class API
                 'symbol' => $symbol,
             ];
         }
-        return $this->apiRequest("v1/ticker/24hr", "GET", array_merge($request, $params));
+        $symbols = [];
+        if (isset($params['symbols'])) {
+            $symbols = $params['symbols'];
+            unset($params['symbols']);
+        }
+        if (!empty($symbols)) {
+            $request['symbols'] = json_encode($symbols);
+        }
+        return $this->apiRequest("v3/ticker/24hr", "GET", array_merge($request, $params));
+    }
+
+    /**
+     * tradingDay get 24hr ticker price change statistics for symbols
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
+     *
+     * $tradingDay = $api->tradingDay("BNBBTC");
+     * $tradingDay = $api->tradingDay(null, ["BNBBTC","ETHBTC"]);
+     *
+     * @param string $symbol (optional) symbol to get the info for - mandatory if symbols is not set
+     * @param array  $symbols (optional) the symbols to get the info for (e.g. ["BNBBTC","ETHBTC"]) - mandatory if symbol is not set
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param string $params['timeZone'] (optional) default is 0 (UTC) - time zone to use for the response
+     * - @param string $params['type'] (optional) FULL or MINI - the format of the response (default is FULL)
+     * @return array with error message or array of prevDay change
+     * @throws \Exception
+     */
+    public function tradingDay(?string $symbol = null, ?array $symbols = null, array $params = [])
+    {
+        $request = [];
+        if (!is_null($symbol) && is_string($symbol)) {
+            $request['symbol'] = $symbol;
+        } elseif (is_array($symbols) && !empty($symbols)) {
+            $request['symbols'] = json_encode($symbols);
+        } else {
+            throw new \Exception("tradingDay(): Either symbol or symbols must be set");
+        }
+        return $this->apiRequest("v3/ticker/tradingDay", "GET", array_merge($request, $params));
+    }
+
+    /**
+     * rollingWindowPriceChange get ticker price change statistics for symbols for a rolling window
+     * - 1m, 2m... 59m for minutes
+     * - 1h, 2h... 23h - for hours
+     * - 1d.. 7d - for days
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
+     *
+     * $priceChange = $api->rollingWindowPriceChange("BNBBTC");
+     * $priceChange = $api->rollingWindowPriceChange(null, ["BNBBTC","ETHBTC"], '2d');
+     *
+     * @param string $symbol (optional) symbol to get the info for - mandatory if symbols is not set
+     * @param array  $symbols (optional) the symbols to get the info for (e.g. ["BNBBTC","ETHBTC"]) - mandatory if symbol is not set
+     * @param string $windowSize (optional) the size of the rolling window (e.g. 1m, 2m, 1h, 2h, 1d, 2d) - default is 1d
+     * @param array  $params (optional) an array of additional parameters that the API endpoint allows
+     * - @param string $params['type'] (optional) FULL or MINI - the format of the response (default is FULL)
+     * @return array with error message or array of prevDay change
+     * @throws \Exception
+     */
+    public function rollingWindowPriceChange(?string $symbol = null, array $symbols = null, string $windowSize = null, array $params = [])
+    {
+        $request = [];
+        if (!is_null($symbol) && is_string($symbol)) {
+            $request['symbol'] = $symbol;
+        } elseif (is_array($symbols) && !empty($symbols)) {
+            $request['symbols'] = json_encode($symbols);
+        } else {
+            throw new \Exception("tradingDay(): Either symbol or symbols must be set");
+        }
+        if (!is_null($windowSize)) {
+            $request['windowSize'] = $windowSize;
+        }
+        return $this->apiRequest("v3/ticker", "GET", array_merge($request, $params));
     }
 
     /**
      * aggTrades get Market History / Aggregate Trades
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
      *
      * $trades = $api->aggTrades("BNBBTC");
      *
@@ -1243,8 +1329,7 @@ class API
     /**
      * historicalTrades - Get historical trades for a specific currency
      *
-     * @link https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#old-trade-lookup-market_data
-     * @link https://binance-docs.github.io/apidocs/spot/en/#old-trade-lookup
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
      *
      * @property int $weight 5
      * Standard weight is 5 but if no tradeId is given, weight is 1
@@ -1277,6 +1362,8 @@ class API
 
     /**
      * depth get Market depth
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
      *
      * $depth = $api->depth("ETHBTC");
      *
@@ -1682,7 +1769,6 @@ class API
         if (isset($header['x-mbx-used-weight-1m'])) {
             $this->setXMbxUsedWeight1m($header['x-mbx-used-weight-1m']);
         }
-
         if (isset($json['msg']) && !empty($json['msg'])) {
             if ($json['msg'] !== 'success' && $url != 'v1/system/status' && $url != 'v3/systemStatus.html' && $url != 'v3/accountStatus.html' && $url != 'v1/allOpenOrders') {
                 // should always output error, not only on httpdebug
@@ -1828,6 +1914,8 @@ class API
     /**
      * candlesticks get the candles for the given intervals
      * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
      *
      * $candles = $api->candlesticks("BNBBTC", "5m");
      *
@@ -3146,7 +3234,7 @@ class API
     /**
      * systemStatus - Status indicator for api sapi
      *
-     * @link https://binance-docs.github.io/apidocs/spot/en/#test-connectivity
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/general-endpoints
      * @link https://binance-docs.github.io/apidocs/spot/en/#system-status-system
      * @link https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api
      *
@@ -3326,6 +3414,8 @@ class API
 
     /**
     * avgPrice - get the average price of a symbol based on the last 5 minutes
+    *
+    * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
     *
     * $avgPrice = $api->avgPrice( "ETHBTC" );
     *
