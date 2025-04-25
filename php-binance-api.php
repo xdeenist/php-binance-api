@@ -1237,7 +1237,7 @@ class API
         $request = [
             "symbol" => $symbol,
         ];
-        return $this->tradesData($this->apiRequest("v1/aggTrades", "GET", array_merge($request, $params)));
+        return $this->tradesData($this->apiRequest("v3/aggTrades", "GET", array_merge($request, $params)));
     }
 
     /**
@@ -1299,7 +1299,7 @@ class API
             "symbol" => $symbol,
             "limit" => $limit,
         ];
-        $json = $this->apiRequest("v1/depth", "GET", array_merge($request, $params));
+        $json = $this->apiRequest("v3/depth", "GET", array_merge($request, $params));
         if (is_array($json) === false) {
             echo "Error: unable to fetch depth" . PHP_EOL;
             $json = [];
@@ -1862,20 +1862,62 @@ class API
             $request["endTime"] = $endTime;
         }
 
-        $response = $this->apiRequest("v1/klines", "GET", array_merge($request, $params));
+        $response = $this->apiRequest("v3/klines", "GET", array_merge($request, $params));
 
         if (is_array($response) === false) {
             return [];
         }
 
         if (count($response) === 0) {
-            echo "warning: v1/klines returned empty array, usually a blip in the connection or server" . PHP_EOL;
+            echo "warning: v3/klines returned empty array, usually a blip in the connection or server" . PHP_EOL;
             return [];
         }
 
         $ticks = $this->chartData($symbol, $interval, $response);
         $this->charts[$symbol][$interval] = $ticks;
         return $ticks;
+    }
+
+    /**
+     * uiCandlesticks return modified kline data, optimized for presentation of candlestick charts
+     * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
+     *
+     * $candles = $api->uiCandlesticks("BNBBTC", "5m");
+     *
+     * @param $symbol market symbol to get the response for, e.g. ETHUSDT
+     * @param $interval string to request
+     * @param $limit int limit the amount of candles
+     * @param $startTime string request candle information starting from here
+     * @param $endTime string request candle information ending here
+     * @param $params array additional parameters
+     * - @param string $params['timeZone'] (optional) default is 0 (UTC) - time zone to use for the response
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function uiCandlesticks(string $symbol, string $interval = "5m", ?int $limit = null, $startTime = null, $endTime = null, array $params = [])
+    {
+        $request = [
+            "symbol" => $symbol,
+            "interval" => $interval,
+        ];
+
+        if ($limit) {
+            $request["limit"] = $limit;
+        }
+
+        if ($startTime) {
+            $request["startTime"] = $startTime;
+        }
+
+        if ($endTime) {
+            $request["endTime"] = $endTime;
+        }
+
+        $response = $this->apiRequest("v3/uiKlines", "GET", array_merge($request, $params));
+
+        return $response;
     }
 
     /**
