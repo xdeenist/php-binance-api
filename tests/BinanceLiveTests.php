@@ -238,6 +238,72 @@ class BinanceLiveTests extends TestCase
         $this->assertIsInt($res['count']);
     }
 
+    public function testTradingDaySpot()
+    {
+        $res = $this->spotBinance->tradingDay($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('priceChange', $res);
+        $this->assertIsNumeric($res['priceChange']);
+        $this->assertArrayHasKey('priceChangePercent', $res);
+        $this->assertIsNumeric($res['priceChangePercent']);
+        $this->assertArrayHasKey('weightedAvgPrice', $res);
+        $this->assertIsNumeric($res['weightedAvgPrice']);
+        $this->assertArrayHasKey('openPrice', $res);
+        $this->assertIsNumeric($res['openPrice']);
+        $this->assertArrayHasKey('highPrice', $res);
+        $this->assertIsNumeric($res['highPrice']);
+        $this->assertArrayHasKey('lowPrice', $res);
+        $this->assertIsNumeric($res['lowPrice']);
+        $this->assertArrayHasKey('volume', $res);
+        $this->assertIsNumeric($res['volume']);
+        $this->assertArrayHasKey('quoteVolume', $res);
+        $this->assertIsNumeric($res['quoteVolume']);
+        $this->assertArrayHasKey('openTime', $res);
+        $this->assertIsInt($res['openTime']);
+        $this->assertArrayHasKey('closeTime', $res);
+        $this->assertIsInt($res['closeTime']);
+        $this->assertArrayHasKey('firstId', $res);
+        $this->assertIsInt($res['firstId']);
+        $this->assertArrayHasKey('lastId', $res);
+        $this->assertIsInt($res['lastId']);
+        $this->assertArrayHasKey('count', $res);
+        $this->assertIsInt($res['count']);
+    }
+
+    public function testRollingWindowPriceChangeSpot()
+    {
+        $res = $this->spotBinance->rollingWindowPriceChange($this->symbol, null, '3m');
+        $this->assertIsArray($res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('priceChange', $res);
+        $this->assertIsNumeric($res['priceChange']);
+        $this->assertArrayHasKey('priceChangePercent', $res);
+        $this->assertIsNumeric($res['priceChangePercent']);
+        $this->assertArrayHasKey('weightedAvgPrice', $res);
+        $this->assertIsNumeric($res['weightedAvgPrice']);
+        $this->assertArrayHasKey('openPrice', $res);
+        $this->assertIsNumeric($res['openPrice']);
+        $this->assertArrayHasKey('highPrice', $res);
+        $this->assertIsNumeric($res['highPrice']);
+        $this->assertArrayHasKey('lowPrice', $res);
+        $this->assertIsNumeric($res['lowPrice']);
+        $this->assertArrayHasKey('volume', $res);
+        $this->assertIsNumeric($res['volume']);
+        $this->assertArrayHasKey('quoteVolume', $res);
+        $this->assertIsNumeric($res['quoteVolume']);
+        $this->assertArrayHasKey('openTime', $res);
+        $this->assertIsInt($res['openTime']);
+        $this->assertArrayHasKey('closeTime', $res);
+        $this->assertIsInt($res['closeTime']);
+        $this->assertArrayHasKey('firstId', $res);
+        $this->assertIsInt($res['firstId']);
+        $this->assertArrayHasKey('lastId', $res);
+        $this->assertIsInt($res['lastId']);
+        $this->assertArrayHasKey('count', $res);
+        $this->assertIsInt($res['count']);
+    }
+
     public function testAggTradesSpot()
     {
         $res = $this->spotBinance->aggTrades($this->symbol);
