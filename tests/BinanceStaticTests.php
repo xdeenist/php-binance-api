@@ -787,14 +787,48 @@ class BinanceStaticTests extends TestCase
         } catch (\Throwable $e) {
 
         }
-        $endpoint = "https://api.binance.com/api/v1/ticker/24hr?";
+        $endpoint = "https://api.binance.com/api/v3/ticker/24hr?";
         $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
 
         $queryString = substr(self::$capturedUrl, strlen($endpoint));
         parse_str($queryString, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
+    }
 
+    public function testSpotTradingDay()
+    {
+        try  {
+            $this->binance->tradingDay(null, $this->symbols);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/ticker/tradingDay?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals(json_encode($this->symbols), $params['symbols']);
+    }
+
+    public function testSpotRollingWindowPriceChange()
+    {
+        try  {
+            $this->binance->rollingWindowPriceChange($this->symbol, null, '2d');
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/ticker?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals('2d', $params['windowSize']);
     }
 
     public function testSpotAggTrades()
