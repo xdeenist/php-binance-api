@@ -596,22 +596,26 @@ class API
     /**
      * orders attempts to get the orders for all or a specific currency
      *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#all-orders-user_data
+     *
      * $allBNBOrders = $api->orders( "BNBBTC" );
      *
-     * @param $symbol string the currency symbol
-     * @param $limit int the amount of orders returned
-     * @param $fromOrderId string return the orders from this order onwards
-     * @param $params array optional startTime, endTime parameters
+     * @param string $symbol (mandatory) the currency symbol
+     * @param int $limit (optional) the amount of orders returned (default 500, max 1000)
+     * @param string $fromOrderId (optional) return the orders from this order onwards
+     * @param array $params (optional) an array of additional parameters that the API endpoint allows
      * @return array with error message or array of orderDetails array
      * @throws \Exception
      */
-    public function orders(string $symbol, int $limit = 500, int $fromOrderId = 0, array $params = [])
+    public function orders(string $symbol, ?int $limit = null, int $fromOrderId = null, array $params = [])
     {
         $request = [
             "symbol" => $symbol,
-            "limit" => $limit,
         ];
-        if ($fromOrderId) {
+        if (!is_null($limit)) {
+            $request["limit"] = $limit;
+        }
+        if (!is_null($fromOrderId)) {
             $request["orderId"] = $fromOrderId;
         }
         return $this->apiRequest("v3/allOrders", "GET", array_merge($request, $params), true);
