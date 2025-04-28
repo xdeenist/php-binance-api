@@ -494,22 +494,31 @@ class API
 
     /**
      * cancel attempts to cancel a currency order
+     * either orderid or origClientOrderId is mandatory
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#cancel-order-trade
      *
      * $orderid = "123456789";
      * $order = $api->cancel("BNBBTC", $orderid);
      *
-     * @param $symbol string the currency symbol
-     * @param $orderid string the orderid to cancel
-     * @param $params array of optional options like ["side"=>"sell"]
+     * @param string $symbol (mandatory) the currency symbol
+     * @param string $orderid (optional) the orderid to fetch (mandatory if $params['origClientOrderId'] is not provided)
+     * @param array $params an array of additional parameters that the API endpoint allows
+     * - @param string $params['origClientOrderId'] optional the original client order id (mandatory if $orderid is not provided)
+     * - @param string $params['cancelRestrictions'] optional ONLY_NEW (cancel will succeed if the order status is NEW) or ONLY_PARTIALLY_FILLED (cancel will succeed if the order status is PARTIALLY_FILLED)
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function cancel(string $symbol, string $orderid, $params = [])
+    public function cancel(string $symbol, ?string $orderid = null, $params = [])
     {
         $request = [
             "symbol" => $symbol,
-            "orderId" => $orderid,
         ];
+        if (!is_null($orderid)) {
+            $request["orderId"] = $orderid;
+        } else if (!is_set($params['origClientOrderId'])) {
+            throw new Exception("Either orderId or origClientOrderId must be provided");
+        }
         return $this->apiRequest("v3/order", "DELETE", array_merge($request, $params), true);
     }
 
@@ -522,19 +531,19 @@ class API
      * $orderid = "123456789";
      * $order = $api->orderStatus("BNBBTC", $orderid);
      *
-     * @param $symbol (mandatory) string the currency symbol
-     * @param $orderid (optional) string the orderid to fetch (mandatory if $params['origClientOrderId'] is not provided)
-     * @param $params array of optional options like
-     * - @param $params['origClientOrderId'] optional string the original client order id (mandatory if $orderid is not provided)
+     * @param string $symbol (mandatory) the currency symbol
+     * @param string $orderid (optional) the orderid to fetch (mandatory if $params['origClientOrderId'] is not provided)
+     * @param array $params an array of additional parameters that the API endpoint allows
+     * - @param string $params['origClientOrderId'] optional the original client order id (mandatory if $orderid is not provided)
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function orderStatus(string $symbol, string $orderid, array $params = [])
+    public function orderStatus(string $symbol, ?string $orderid = null, array $params = [])
     {
         $request = [
             "symbol" => $symbol,
         ];
-        if ($orderid) {
+        if (!is_null($orderid)) {
             $request["orderId"] = $orderid;
         } else if (!is_set($params['origClientOrderId'])) {
             throw new Exception("Either orderId or origClientOrderId must be provided");
