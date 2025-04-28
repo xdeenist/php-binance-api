@@ -515,12 +515,17 @@ class API
 
     /**
      * orderStatus attempts to get orders status
+     * either orderid or origClientOrderId is mandatory
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#query-order-user_data
      *
      * $orderid = "123456789";
      * $order = $api->orderStatus("BNBBTC", $orderid);
      *
-     * @param $symbol string the currency symbol
-     * @param $orderid string the orderid to fetch
+     * @param $symbol (mandatory) string the currency symbol
+     * @param $orderid (optional) string the orderid to fetch (mandatory if $params['origClientOrderId'] is not provided)
+     * @param $params array of optional options like
+     * - @param $params['origClientOrderId'] optional string the original client order id (mandatory if $orderid is not provided)
      * @return array with error message or the order details
      * @throws \Exception
      */
@@ -528,8 +533,12 @@ class API
     {
         $request = [
             "symbol" => $symbol,
-            "orderId" => $orderid,
         ];
+        if ($orderid) {
+            $request["orderId"] = $orderid;
+        } else if (!is_set($params['origClientOrderId'])) {
+            throw new Exception("Either orderId or origClientOrderId must be provided");
+        }
         return $this->apiRequest("v3/order", "GET", array_merge($request, $params), true);
     }
 
@@ -1835,6 +1844,8 @@ class API
     /**
      * order formats the orders before sending them to the curl wrapper function
      * You can call this function directly or use the helper functions
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints
      *
      * @see buy()
      * @see sell()
