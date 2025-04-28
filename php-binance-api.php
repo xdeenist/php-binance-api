@@ -554,17 +554,19 @@ class API
     /**
      * openOrders attempts to get open orders for all currencies or a specific currency
      *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#current-open-orders-user_data
+     *
      * $allOpenOrders = $api->openOrders();
      * $allBNBOrders = $api->openOrders( "BNBBTC" );
      *
-     * @param $symbol string the currency symbol
+     * @param string $symbol (optional) the market symbol
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function openOrders($symbol = null, array $params = [])
+    public function openOrders(?string $symbol = null, array $params = [])
     {
         $request = [];
-        if (is_null($symbol) != true) {
+        if (!is_null($symbol)) {
             $request = [
                 "symbol" => $symbol,
             ];
@@ -573,20 +575,21 @@ class API
     }
 
     /**
-     * Cancel all open orders method
+     * cancelOpenOrders - Cancel all open orders method
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#cancel-all-open-orders-on-a-symbol-trade
+     *
      * $api->cancelOpenOrders( "BNBBTC" );
-     * @param $symbol string the currency symbol
+     * @param string $symbol (mandatory) the merket symbol
+     * @param array $params (optional) an array of additional parameters that the API endpoint allows
      * @return array with error message or the order details
      * @throws \Exception
      */
-    public function cancelOpenOrders($symbol = null, array $params = [])
+    public function cancelOpenOrders(string $symbol, array $params = [])
     {
-        $request = [];
-        if (is_null($symbol) != true) {
-            $request = [
-                "symbol" => $symbol,
-            ];
-        }
+        $request = [
+            "symbol" => $symbol,
+        ];
         return $this->apiRequest("v3/openOrders", "DELETE", array_merge($request, $params), true);
     }
 
