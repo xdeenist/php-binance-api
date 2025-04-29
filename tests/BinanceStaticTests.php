@@ -143,6 +143,27 @@ class BinanceStaticTests extends TestCase
         $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX));
     }
 
+    public function testSpotReplaceOrder()
+    {
+        try  {
+            $this->binance->replaceOrder('BUY', 'BTCUSDT', 1, 1000, 'LIMIT', '123456789');
+        } catch(\Throwable $e) {
+
+        }
+        $this->assertEquals("https://api.binance.com/api/v3/order/cancelReplace", self::$capturedUrl);
+
+        parse_str(self::$capturedBody, $params);
+
+        $this->assertEquals("BTCUSDT", $params['symbol']);
+        $this->assertEquals("BUY", $params['side']);
+        $this->assertEquals("LIMIT", $params['type']);
+        $this->assertEquals(1, $params['quantity']);
+        $this->assertEquals(1000, $params['price']);
+        $this->assertEquals("GTC", $params['timeInForce']);
+        $this->assertEquals('123456789', $params['cancelOrderId']);
+        $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX));
+    }
+
     public function testSpotBuy()
     {
         try  {

@@ -1324,7 +1324,7 @@ class API
         } elseif (is_array($symbols) && !empty($symbols)) {
             $request['symbols'] = json_encode($symbols);
         } else {
-            throw new \Exception("tradingDay(): Either symbol or symbols must be set");
+            throw new \Exception("rollingWindowPriceChange(): Either symbol or symbols must be set");
         }
         if (!is_null($windowSize)) {
             $request['windowSize'] = $windowSize;
@@ -1453,7 +1453,7 @@ class API
             } else if ($api_version === 'v3') {
                 $url = "v3/balance";
             } else {
-                throw new \Exception("Invalid API version specified. Use 'v2' or 'v3'.");
+                throw new \Exception("balances(): Invalid API version specified. Use 'v2' or 'v3'.");
             }
         }
         $response = $this->httpRequest($url, "GET", array_merge($request, $params), true);
@@ -1893,6 +1893,25 @@ class API
      */
     public function order(string $side, string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [], bool $test = false)
     {
+        $request = $this->createSpotOrderRequest($side, $symbol, $quantity, $price, $type, $params);
+        $sor = false;
+        if (isset($request['sor'])) {
+            $sor = $request['sor'];
+            unset($request['sor']);
+        }
+        $url = $sor ? "v3/sor/order" : "v3/order";
+        if ($test) {
+            $url = $url . "/test";
+        }
+        return $this->apiRequest($url, "POST", $request, true); // sending only $request cuz $params are already added to $request inside createSpotOrderRequest
+    }
+
+    /**
+     * createSpotOrderRequest
+     * helper function to create a request for the spot order
+     */
+    protected function createSpotOrderRequest(string $side, string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [])
+    {
         $request = [
             "symbol" => $symbol,
             "side" => $side,
@@ -1946,16 +1965,7 @@ class API
         } else {
             $request['newClientOrderId'] = $this->generateSpotClientOrderId();
         }
-        $sor = false;
-        if (isset($params['sor'])) {
-            $sor = $params['sor'];
-            unset($params['sor']);
-        }
-        $url = $sor ? "v3/sor/order" : "v3/order";
-        if ($test) {
-            $url = $url . "/test";
-        }
-        return $this->apiRequest($url, "POST", array_merge($request, $params), true);
+        return array_merge($request, $params);
     }
 
     /**
@@ -1990,6 +2000,46 @@ class API
         return $this->order($side, $symbol, $quantity, $price, $type, $params, $test);
     }
 
+    /**
+     * replaceOrder - cancels an existing order and places a new order on the same symbol
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#cancel-an-existing-order-and-send-a-new-order-trade
+     *
+     * @param string $side (mandatory) typically "BUY" or "SELL"
+     * @param string $symbol (mandatory) to buy or sell
+     * @param string $quantity (mandatory) in the order
+     * @param string $price (optional) for the order
+     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is LIMIT)
+     * @param string $cancelOrderId (optional) the orderId of the order to be replaced (mandatory if cancelOrigClientOrderId is not set)
+     * @param string $cancelOrigClientOrderId (optional) the origClientOrderId of the order to be replaced (mandatory if cancelOrderId is not set)
+     * @param bool $allowFailure (optional) if true new order placement will be attempted even if cancel request fails (default is false)
+     * @param string $cancelRestrictions (optional) ONLY_NEW (cancel will succeed if the order status is NEW) or ONLY_PARTIALLY_FILLED (cancel will succeed if order status is PARTIALLY_FILLED)
+     * @param string $orderRateLimitExceededMode (optional) DO_NOTHING (default - will only attempt to cancel the order if account has not exceeded the unfilled order rate limit) or CANCEL_ONLY (will always cancel the order)
+     * @param array $params (optional) additional transaction options (same as for order())
+     *
+     * returns array containing the response
+     * @throws \Exception
+     */
+    public function replaceOrder(string $side, string $symbol, $quantity, $price, string $type = "LIMIT", ?string $cancelOrderId = null, string $cancelOrigClientOrderId = null, bool $allowFailure = null, string $cancelRestrictions = null, string $orderRateLimitExceededMode = null, array $params = [])
+    {
+        $request = $this->createSpotOrderRequest($side, $symbol, $quantity, $price, $type, $params);
+        if (!is_null($cancelOrderId)) {
+            $request['cancelOrderId'] = $cancelOrderId;
+        } else if (is_null($cancelOrigClientOrderId)) {
+            throw new \Exception("replaceOrder(): Either cancelOrderId or cancelOrigClientOrderId must be set");
+        }
+        if (!is_null($cancelOrigClientOrderId)) {
+            $request['cancelOrigClientOrderId'] = $cancelOrigClientOrderId;
+        }
+        $request['cancelReplaceMode'] = $allowFailure ? 'ALLOW_FAILURE' : 'STOP_ON_FAILURE';
+        if (!is_null($cancelRestrictions)) {
+            $request['cancelRestrictions'] = $cancelRestrictions;
+        }
+        if (!is_null($orderRateLimitExceededMode)) {
+            $request['orderRateLimitExceededMode'] = $orderRateLimitExceededMode;
+        }
+        return $this->apiRequest("v3/order/cancelReplace", "POST", $request, true); // only request is needed, params are already added to request inside createSpotOrderRequest
+    }
     /**
      * candlesticks get the candles for the given intervals
      * 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
@@ -4750,10 +4800,10 @@ class API
     {
         $formatedOrders = $this->createBatchOrdersRequest($orders);
         if (count($formatedOrders) > 5) {
-            throw new \Exception('futuresBatchOrders: max 5 orders allowed');
+            throw new \Exception('futuresBatchOrders(): max 5 orders allowed');
         }
         if (count($formatedOrders) < 1) {
-            throw new \Exception('futuresBatchOrders: at least 1 order required');
+            throw new \Exception('futuresBatchOrders(): at least 1 order required');
         }
         $request = [];
 
@@ -4789,7 +4839,7 @@ class API
             $request['origClientOrderId'] = $origClientOrderId;
         }
         if (!$origClientOrderId && !$orderId) {
-            throw new \Exception('futuresEditOrder: either orderId or origClientOrderId must be set');
+            throw new \Exception('futuresEditOrder(): either orderId or origClientOrderId must be set');
         }
         if ($orderId) {
             $request['orderId'] = $orderId;
@@ -4888,7 +4938,7 @@ class API
         if ($orderid) {
             $request['orderId'] = $orderid;
         } else if (!isset($params['origClientOrderId'])) {
-            throw new \Exception('futuresCancel: either orderId or origClientOrderId must be set');
+            throw new \Exception('futuresCancel(): either orderId or origClientOrderId must be set');
         }
         return $this->fapiRequest("v1/order", 'DELETE', array_merge($request, $params), true);
     }
@@ -4921,7 +4971,7 @@ class API
             // remove spaces between the ids
             $request['origClientOrderIdList'] = str_replace(', ', ',', json_encode($origClientOrderIdList));
         } else {
-            throw new \Exception('futuresCancelBatchOrders: either orderIdList or origClientOrderIdList must be set');
+            throw new \Exception('futuresCancelBatchOrders(): either orderIdList or origClientOrderIdList must be set');
         }
 
         return $this->fapiRequest("v1/batchOrders", 'DELETE', array_merge($request, $params), true);
@@ -5000,7 +5050,7 @@ class API
         } else if ($origClientOrderId) {
             $request['origClientOrderId'] = $origClientOrderId;
         } else {
-            throw new \Exception('futuresOrderStatus: either orderId or origClientOrderId must be set');
+            throw new \Exception('futuresOrderStatus(): either orderId or origClientOrderId must be set');
         }
 
         return $this->fapiRequest("v1/order", 'GET', array_merge($request, $params), true);
@@ -5097,7 +5147,7 @@ class API
         } else if ($origClientOrderId) {
             $request['origClientOrderId'] = $origClientOrderId;
         } else {
-            throw new \Exception('futuresOpenOrder: either orderId or origClientOrderId must be set');
+            throw new \Exception('futuresOpenOrder(): either orderId or origClientOrderId must be set');
         }
 
         return $this->fapiRequest("v1/openOrder", 'GET', array_merge($request, $params), true);
@@ -5439,7 +5489,7 @@ class API
         }
 
         if ($api_version !== 'v2' && $api_version !== 'v3') {
-            throw new \Exception('futuresPositions: api_version must be either v2 or v3');
+            throw new \Exception('futuresPositions(): api_version must be either v2 or v3');
         }
         return $this->fapiRequest($api_version . "/positionRisk", 'GET', array_merge($request, $params), true);
     }
@@ -5568,10 +5618,10 @@ class API
                 } else if ($addOrReduce === 'REDUCE' || $addOrReduce === '2') {
                     $request['addOrReduce'] = 2;
                 } else {
-                    throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
+                    throw new \Exception('futuresPositionMarginChangeHistory(): addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
                 }
             } else {
-                throw new \Exception('futuresPositionMarginChangeHistory: addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
+                throw new \Exception('futuresPositionMarginChangeHistory(): addOrReduce must be "ADD" or "REDUCE" or 1 or 2');
             }
         }
 
@@ -5597,7 +5647,7 @@ class API
     public function futuresBalances(array $params = [], string $api_version = 'v3')
     {
         if ($api_version !== 'v2' && $api_version !== 'v3') {
-            throw new \Exception('futuresBalances: api_version must be either v2 or v3');
+            throw new \Exception('futuresBalances(): api_version must be either v2 or v3');
         }
         return $this->balances('futures', $params, 'v3');
     }
@@ -5640,7 +5690,7 @@ class API
     public function futuresAccount(array $params = [], string $api_version = 'v3')
     {
         if ($api_version !== 'v2' && $api_version !== 'v3') {
-            throw new \Exception('futuresAccount: api_version must be either v2 or v3');
+            throw new \Exception('futuresAccount(): api_version must be either v2 or v3');
         }
 
         return $this->fapiRequest($api_version . "/account", "GET", $params, true);
@@ -6150,7 +6200,7 @@ class API
         } else if ($toAmount) {
             $request['toAmount'] = $toAmount;
         } else {
-            throw new \Exception('convertSendRequest: fromAmount or toAmount must be set');
+            throw new \Exception('convertSendRequest(): fromAmount or toAmount must be set');
         }
         if ($validTime) {
             $request['validTime'] = $validTime;
@@ -6206,7 +6256,7 @@ class API
         } else if ($quoteId) {
             $request['quoteId'] = $quoteId;
         } else {
-            throw new \Exception('convertStatus: orderId or quoteId must be set');
+            throw new \Exception('convertStatus(): orderId or quoteId must be set');
         }
         return $this->fapiRequest("v1/convert/orderStatus", 'GET', array_merge($request, $params), true);
     }
