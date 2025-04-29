@@ -164,6 +164,25 @@ class BinanceStaticTests extends TestCase
         $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX));
     }
 
+    public function testSpotEditOrder()
+    {
+        try  {
+            $this->binance->editOrder('ETHUSDT', 0.009, '123456789');
+        } catch(\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/order/amend/keepPriority?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals("ETHUSDT", $params['symbol']);
+        $this->assertEquals(0.009, $params['newQty']);
+        $this->assertEquals('123456789', $params['orderId']);
+        $this->assertTrue(str_starts_with($params['newClientOrderId'], $this->SPOT_ORDER_PREFIX));
+    }
+
     public function testSpotBuy()
     {
         try  {

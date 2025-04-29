@@ -1969,6 +1969,44 @@ class API
     }
 
     /**
+     * editOrder - edits a quantity of an existing order
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#order-amend-keep-priority-trade
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/faqs/order_amend_keep_priority
+     *
+     * @param string $symbol (mandatory) market symbol
+     * @param string $quantity (mandatory) new quantity (must be greater than 0 and less than the original order quantity)
+     * @param string $orderId (optional) order id to be amended (mandatory if origClientOrderId is not set)
+     * @param string $origClientOrderId (optional) original client order id to be amended (mandatory if orderId is not set)
+     * @param array $params (optional) additional transaction options
+     * - @param string $params['newClientOrderId'] - custom client order id
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function editOrder(string $symbol, $quantity, ?string $orderId = null, ?string $origClientOrderId = null, array $params = [])
+    {
+        $request = [
+            "symbol" => $symbol,
+            "newQty" => $quantity,
+        ];
+
+        if (!is_null($orderId)) {
+            $request['orderId'] = $orderId;
+        } else if (is_null($origClientOrderId)) {
+            throw new \Exception('editOrder(): Either orderId or origClientOrderId must be set');
+        } else {
+            $request['origClientOrderId'] = $origClientOrderId;
+        }
+        if (isset($params['newClientOrderId'])) {
+            $request['newClientOrderId'] = $params['newClientOrderId'];
+        } else {
+            $request['newClientOrderId'] = $this->generateSpotClientOrderId();
+        }
+        return $this->apiRequest("v3/order/amend/keepPriority", "PUT", array_merge($request, $params), true);
+    }
+
+    /**
      * sorOrder creates an order using the SOR endpoint
      *
      * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#sor
