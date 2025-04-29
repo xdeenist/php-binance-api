@@ -1862,18 +1862,31 @@ class API
      * You can call this function directly or use the helper functions
      *
      * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#sor
      *
      * @see buy()
      * @see sell()
      * @see marketBuy()
      * @see marketSell() $this->httpRequest( "https://api.binance.com/api/v1/ticker/24hr");
      *
-     * @param $side string typically "BUY" or "SELL"
-     * @param $symbol string to buy or sell
-     * @param $quantity string in the order
-     * @param $price string for the order
-     * @param $type string is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc.
-     * @param $params array additional transaction options
+     * @param string $side (mandatory) typically "BUY" or "SELL"
+     * @param string $symbol (mandatory) to buy or sell
+     * @param string $quantity (mandatory) in the order
+     * @param string $price (optional) for the order
+     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is LIMIT)
+     * @param array $params (optional) additional transaction options
+     * - @param string $params['timeInForce'] - GTC, IOC, FOK
+     * - @param bool $params['isQuoteOrder'] - if true, quantity is in the quote asset (not for sor orders)
+     * - @param string $params['newClientOrderId'] - custom client order id
+     * - @param string $params['strategyId']
+     * - @param int $params['strategyType']
+     * - @param string $params['stopPrice'] - stop price for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, and TAKE_PROFIT_LIMIT orders (not for SOR orders)
+     * - @param string $params['trailingDelta'] - for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, and TAKE_PROFIT_LIMIT orders (not for SOR orders)
+     * - @param string $params['icebergQty'] - used with LIMIT, STOP_LOSS_LIMIT, and TAKE_PROFIT_LIMIT to create an iceberg order
+     * - @param string $params['newOrderRespType'] - set the response type of the order (ACK, RESULT, FULL)
+     * - @param string $params['selfTradePreventionMode'] - NONE, EXPIRE_MAKER, EXPIRE_TAKER, EXPIRE_BOTH or DECREMENT (default is NONE)
+     * - @param bool $params['sor'] - if true, order will be sent to SOR endpoint
+     * - @param bool $params
      * @param $test bool whether to test or not, test only validates the query
      * @return array containing the response
      * @throws \Exception
@@ -1933,9 +1946,48 @@ class API
         } else {
             $request['newClientOrderId'] = $this->generateSpotClientOrderId();
         }
+        $sor = false;
+        if (isset($params['sor'])) {
+            $sor = $params['sor'];
+            unset($params['sor']);
+        }
+        $url = $sor ? "v3/sor/order" : "v3/order";
+        if ($test) {
+            $url = $url . "/test";
+        }
+        return $this->apiRequest($url, "POST", array_merge($request, $params), true);
+    }
 
-        $qstring = ($test === false) ? "v3/order" : "v3/order/test";
-        return $this->apiRequest($qstring, "POST", array_merge($request, $params), true);
+    /**
+     * sorOrder creates an order using the SOR endpoint
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/trading-endpoints#sor
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/faqs/sor_faq
+     *
+     * @param string $side (mandatory) typically "BUY" or "SELL"
+     * @param string $symbol (mandatory) to buy or sell
+     * @param string $quantity (mandatory) in the order
+     * @param string $price (optional) for the order
+     * @param string $type (optional) is determined by the symbol bu typicall LIMIT, STOP_LOSS_LIMIT etc. (default is LIMIT)
+     * @param array $params (optional) additional transaction options
+     * - @param string $params['timeInForce'] - GTC, IOC, FOK
+     * - @param string $params['newClientOrderId'] - custom client order id
+     * - @param string $params['strategyId']
+     * - @param int $params['strategyType']
+     * - @param string $params['icebergQty'] - used with LIMIT, STOP_LOSS_LIMIT, and TAKE_PROFIT_LIMIT to create an iceberg order
+     * - @param string $params['newOrderRespType'] - set the response type of the order (ACK, RESULT, FULL)
+     * - @param string $params['selfTradePreventionMode'] - NONE, EXPIRE_MAKER, EXPIRE_TAKER, EXPIRE_BOTH or DECREMENT (default is NONE)
+     * - @param bool $params['sor'] - if true, order will be sent to SOR endpoint
+     * - @param bool $params
+     * @param $test bool whether to test or not, test only validates the query
+     *
+     * @return array containing the response
+     * @throws \Exception
+     */
+    public function sorOrder(string $side, string $symbol, $quantity, $price, string $type = "LIMIT", array $params = [], bool $test = false)
+    {
+        $params['sor'] = true;
+        return $this->order($side, $symbol, $quantity, $price, $type, $params, $test);
     }
 
     /**
