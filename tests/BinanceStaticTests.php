@@ -1167,7 +1167,24 @@ class BinanceStaticTests extends TestCase
         parse_str($queryString, $params);
 
         $this->assertEquals($this->symbol, $params['symbol']);
+    }
 
+    public function testOrderAmendments()
+    {
+        try  {
+            $this->binance->orderAmendments($this->symbol, $this->orderId);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/order/amendments?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderId, $params['orderId']);
     }
 
     public function testFuturesAccountSnapshot()

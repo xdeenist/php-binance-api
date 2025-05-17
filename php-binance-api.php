@@ -3645,6 +3645,38 @@ class API
     }
 
     /**
+     * orderAmendments - Get all amendments of a single order
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/account-endpoints#query-order-amendments-user_data
+     *
+     * @property int $weight 4
+     *
+     * @param string $symbol (mandatory) The symbol, e.g. BTCUSDT
+     * @param string $orderId (mandatory) The ID of the order
+     * @param string $fromExecutionId (optional) The ID of the execution to start from
+     * @param int    $limit (optional) The number of results to return (default is 500, max is 1000)
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function orderAmendments(string $symbol, string $orderId, ?string $fromExecutionId = null, ?int $limit = null, array $params = []) {
+        $request = [
+            'symbol' => $symbol,
+            'orderId' => $orderId,
+        ];
+
+        if ($fromExecutionId) {
+            $request['fromExecutionId'] = $fromExecutionId;
+        }
+
+        if (!is_null($limit)) {
+            $request['limit'] = $limit;
+        }
+
+        return $this->apiRequest("v3/order/amendments", 'GET', array_merge($request, $params), true);
+    }
+
+    /**
      * ocoOrder - Create a new OCO order
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade
