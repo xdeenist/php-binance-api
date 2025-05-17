@@ -3624,6 +3624,27 @@ class API
     }
 
     /**
+     * commissionRate - Get the commission rate for a symbol
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/account-endpoints#query-commission-rates-user_data
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol (mandatory) The symbol, e.g. BTCUSDT
+     * @param array  $params (optional) An array of additional parameters that the API endpoint allows
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function commissionRate(string $symbol, array $params = []) {
+        $request = [
+            'symbol' => $symbol,
+        ];
+
+        return $this->apiRequest("v3/account/commission", 'GET', array_merge($request, $params), true);
+    }
+
+    /**
      * ocoOrder - Create a new OCO order
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade

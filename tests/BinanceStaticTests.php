@@ -1152,6 +1152,24 @@ class BinanceStaticTests extends TestCase
         $this->assertEquals($this->orderId, $params['orderId']);
     }
 
+    public function testCommissionRate()
+    {
+        try  {
+            $this->binance->commissionRate($this->symbol);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/account/commission?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+
+    }
+
     public function testFuturesAccountSnapshot()
     {
         try  {

@@ -431,6 +431,48 @@ class BinanceLiveTests extends TestCase
         $this->assertIsArray($res);
     }
 
+    public function testCommissionRateSpot()
+    {
+        $res = $this->spotBinance->commissionRate($this->symbol);
+        $this->assertIsArray($res);
+        $this->assertArrayHasKey('symbol', $res);
+        $this->assertEquals($this->symbol, $res['symbol']);
+        $this->assertArrayHasKey('standardCommission', $res);
+
+        $standardCommission = $res['standardCommission'];
+        $this->assertIsArray($standardCommission);
+        $this->assertArrayHasKey('maker', $standardCommission);
+        $this->assertIsNumeric($standardCommission['maker']);
+        $this->assertArrayHasKey('taker', $standardCommission);
+        $this->assertIsNumeric($standardCommission['taker']);
+        $this->assertArrayHasKey('buyer', $standardCommission);
+        $this->assertIsNumeric($standardCommission['buyer']);
+        $this->assertArrayHasKey('seller', $standardCommission);
+        $this->assertIsNumeric($standardCommission['seller']);
+
+        $this->assertArrayHasKey('taxCommission', $res);
+        $taxCommission = $res['taxCommission'];
+        $this->assertIsArray($taxCommission);
+        $this->assertArrayHasKey('maker', $taxCommission);
+        $this->assertIsNumeric($taxCommission['maker']);
+        $this->assertArrayHasKey('taker', $taxCommission);
+        $this->assertIsNumeric($taxCommission['taker']);
+        $this->assertArrayHasKey('buyer', $taxCommission);
+        $this->assertIsNumeric($taxCommission['buyer']);
+        $this->assertArrayHasKey('seller', $taxCommission);
+
+        $this->assertArrayHasKey('discount', $res);
+        $discount = $res['discount'];
+        $this->assertIsArray($discount);
+        $this->assertArrayHasKey('enabledForAccount', $discount);
+        $this->assertIsBool($discount['enabledForAccount']);
+        $this->assertArrayHasKey('enabledForSymbol', $discount);
+        $this->assertIsBool($discount['enabledForSymbol']);
+        $this->assertArrayHasKey('discountAsset', $discount);
+        $this->assertArrayHasKey('discount', $discount);
+        $this->assertIsNumeric($discount['discount']);
+    }
+
     public function testAllocationsSpot()
     {
         $res = $this->spotBinance->allocations($this->symbol);
