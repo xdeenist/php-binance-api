@@ -425,6 +425,12 @@ class BinanceLiveTests extends TestCase
         $this->assertIsNumeric($res);
     }
 
+    public function testPreventedMatchesSpot()
+    {
+        $res = $this->spotBinance->preventedMatches($this->symbol, null, '0123456789');
+        $this->assertIsArray($res);
+    }
+
     public function testTimeFutures()
     {
         $res = $this->futuresBinance->futuresTime();
@@ -1388,7 +1394,7 @@ class BinanceLiveTests extends TestCase
         $this->assertIsInt($firstEntry['limit']);
     }
 
-    public function testOrderRateLimit()
+    public function testOrderRateLimitSpot()
     {
         $res = $this->spotBinance->orderRateLimit();
         $this->assertIsArray($res);

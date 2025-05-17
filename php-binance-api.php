@@ -3535,6 +3535,49 @@ class API
     }
 
     /**
+     * preventedMatches - Get the list of orders that were expired due to STP
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/account-endpoints#query-prevented-matches-user_data
+     *
+     * @property int $weight 2
+     * - 2 if preventedMatchId is provided
+     * - 20 if orderId is provided
+     *
+     * @param string $symbol (mandatory) The symbol, e.g. BTCUSDT
+     * @param string $preventedMatchId (optional) The ID of the prevented match (mandatory if orderId is not provided)
+     * @param string $orderId (optional) The ID of the order (mandatory if preventedMatchId is not provided)
+     * @param string $fromPreventedMatchId (optional) The ID of the prevented match to start from
+     * @param int    $limit (optional) The number of results to return (default is 500, max is 1000)
+     * @param array  $params (optional) An array of additional parameters that the API endpoint allows
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function preventedMatches(string $symbol, ?string $preventedMatchId = null, ?string $orderId = null, ?string $fromPreventedMatchId = null, ?int $limit = null, array $params = []) {
+        $request = [
+            'symbol' => $symbol,
+        ];
+
+        if (is_null($preventedMatchId) && is_null($orderId)) {
+            throw new \Exception("Either preventedMatchId or orderId must be provided");
+        } else if ($preventedMatchId) {
+            $request['preventedMatchId'] = $preventedMatchId;
+        } else {
+            $request['orderId'] = $orderId;
+        }
+
+        if ($fromPreventedMatchId) {
+            $request['fromPreventedMatchId'] = $fromPreventedMatchId;
+        }
+
+        if (!is_null($limit)) {
+            $request['limit'] = $limit;
+        }
+
+        return $this->apiRequest("v3/myPreventedMatches", 'GET', array_merge($request, $params), true);
+    }
+
+    /**
      * ocoOrder - Create a new OCO order
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade

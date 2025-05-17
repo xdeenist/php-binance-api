@@ -1111,6 +1111,25 @@ class BinanceStaticTests extends TestCase
 
     }
 
+    public function testPreventedMatches()
+    {
+        try  {
+            $this->binance->preventedMatches($this->symbol, null, $this->orderId);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/myPreventedMatches?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+
+    }
+
     public function testFuturesAccountSnapshot()
     {
         try  {
