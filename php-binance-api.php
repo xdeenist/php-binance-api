@@ -3578,6 +3578,52 @@ class API
     }
 
     /**
+     * allocations - Get the allocations resulting from SOR order placement
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/account-endpoints#query-allocations-user_data
+     *
+     * @property int $weight 20
+     *
+     * @param string $symbol (mandatory) The symbol, e.g. BTCUSDT
+     * @param int    $startTime (optional) The start time of the query
+     * @param int    $endTime (optional) The end time of the query
+     * @param string $fromAllocationId (optional) The ID of the allocation to start from
+     * @param int    $limit (optional) The number of results to return (default is 500, max is 1000)
+     * @param string $orderId (optional) The ID of the order
+     * @param array  $params (optional) An array of additional parameters that the API endpoint allows
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function allocations(string $symbol, ?int $startTime = null, ?int $endTime = null, ?string $fromAllocationId = null, ?int $limit = null, ?string $orderId = null, array $params = []) {
+        $request = [
+            'symbol' => $symbol,
+        ];
+
+        if ($startTime) {
+            $request['startTime'] = $startTime;
+        }
+
+        if ($endTime) {
+            $request['endTime'] = $endTime;
+        }
+
+        if ($fromAllocationId) {
+            $request['fromAllocationId'] = $fromAllocationId;
+        }
+
+        if (!is_null($limit)) {
+            $request['limit'] = $limit;
+        }
+
+        if ($orderId) {
+            $request['orderId'] = $orderId;
+        }
+
+        return $this->apiRequest("v3/myAllocations", 'GET', array_merge($request, $params), true);
+    }
+
+    /**
      * ocoOrder - Create a new OCO order
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade

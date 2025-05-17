@@ -431,6 +431,12 @@ class BinanceLiveTests extends TestCase
         $this->assertIsArray($res);
     }
 
+    public function testAllocationsSpot()
+    {
+        $res = $this->spotBinance->allocations($this->symbol);
+        $this->assertIsArray($res);
+    }
+
     public function testTimeFutures()
     {
         $res = $this->futuresBinance->futuresTime();

@@ -1130,6 +1130,28 @@ class BinanceStaticTests extends TestCase
 
     }
 
+    public function testAllocations()
+    {
+        try  {
+            $this->binance->allocations($this->symbol, $this->startTime, $this->endTime, $this->fromId, $this->limit, $this->orderId);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/myAllocations?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->symbol, $params['symbol']);
+        $this->assertEquals($this->startTime, $params['startTime']);
+        $this->assertEquals($this->endTime, $params['endTime']);
+        $this->assertEquals($this->fromId, $params['fromAllocationId']);
+        $this->assertEquals($this->limit, $params['limit']);
+        $this->assertEquals($this->orderId, $params['orderId']);
+    }
+
     public function testFuturesAccountSnapshot()
     {
         try  {
