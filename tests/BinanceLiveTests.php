@@ -1388,6 +1388,22 @@ class BinanceLiveTests extends TestCase
         $this->assertIsInt($firstEntry['limit']);
     }
 
+    public function testOrderRateLimit()
+    {
+        $res = $this->spotBinance->orderRateLimit();
+        $this->assertIsArray($res);
+        $firstEntry = $res[0];
+        $this->assertIsArray($firstEntry);
+        $this->assertArrayHasKey('rateLimitType', $firstEntry);
+        $this->assertEquals('ORDERS', $firstEntry['rateLimitType']);
+        $this->assertArrayHasKey('interval', $firstEntry);
+        $this->assertIsString($firstEntry['interval']);
+        $this->assertArrayHasKey('intervalNum', $firstEntry);
+        $this->assertIsNumeric($firstEntry['intervalNum']);
+        $this->assertArrayHasKey('limit', $firstEntry);
+        $this->assertIsInt($firstEntry['limit']);
+    }
+
     public function testLeveragesFutures()
     {
         $res = $this->futuresBinance->futuresLeverages($this->symbol);

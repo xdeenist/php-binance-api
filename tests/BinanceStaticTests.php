@@ -2711,6 +2711,23 @@ class BinanceStaticTests extends TestCase
         $this->assertEquals($this->recvWindow, $params['recvWindow']);
     }
 
+    public function testOrderRateLimit()
+    {
+        try  {
+            $this->binance->orderRateLimit([ 'recvWindow' => $this->recvWindow ]);
+
+        } catch (\Throwable $e) {
+
+        }
+        $endpoint = "https://api.binance.com/api/v3/rateLimit/order?";
+        $this->assertTrue(str_starts_with(self::$capturedUrl, $endpoint));
+
+        $queryString = substr(self::$capturedUrl, strlen($endpoint));
+        parse_str($queryString, $params);
+
+        $this->assertEquals($this->recvWindow, $params['recvWindow']);
+    }
+
     public function testFuturesLeverages()
     {
         try  {

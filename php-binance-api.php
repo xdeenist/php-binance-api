@@ -3515,6 +3515,26 @@ class API
     }
 
     /**
+     * orderRateLimit gets the user rate limit
+     *
+     * @link https://developers.binance.com/docs/binance-spot-api-docs/rest-api/account-endpoints#query-unfilled-order-count-user_data
+     *
+     * $rateLimit = $api->orderRateLimit();
+     *
+     * @property int $weight 1
+     *
+     * @param array  $params (optional)  An array of additional parameters that the API endpoint allows
+     * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
+     *
+     * @return array with error message or the rate limit details
+     * @throws \Exception
+     */
+    public function orderRateLimit(array $params = [])
+    {
+        return $this->apiRequest("v3/rateLimit/order", 'GET', $params, true);
+    }
+
+    /**
      * ocoOrder - Create a new OCO order
      *
      * @link https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade
