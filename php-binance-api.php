@@ -73,8 +73,8 @@ class API
 
     public $headers = [];
 
-    private $SPOT_ORDER_PREFIX     = "x-HNA2TXFJ";
-	private $CONTRACT_ORDER_PREFIX = "x-Cb7ytekJ";
+    private $SPOT_ORDER_PREFIX     = "x-B3AUXNYV";
+	private $CONTRACT_ORDER_PREFIX = "x-ftGmvgAN";
 
     /**
      * Constructor for the class,
@@ -5674,7 +5674,7 @@ class API
      * @property int $weight 5
      *
      * @param string $symbol (optional) market symbol (e.g. ETHUSDT)
-     * @param array  $params      (optional) an array of additional parameters that the API endpoint allows
+     * @param array  $params      (optional) an array of additional parameters that the API endpoint afllows
      * - @param int  $params['recvWindow'] (optional) the time in milliseconds to wait for the response
      * @param string $api_version (optional) API version, "v2" or "v3" (default is v3)
      *
