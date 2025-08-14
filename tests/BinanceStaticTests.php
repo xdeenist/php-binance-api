@@ -28,8 +28,8 @@ class BinanceStaticTests extends TestCase
     public static $capturedBody = null;
     private MockBinanceAPI $binance;
 
-    private $SPOT_ORDER_PREFIX     = "x-HNA2TXFJ";
-	private $CONTRACT_ORDER_PREFIX = "x-Cb7ytekJ";
+    private $SPOT_ORDER_PREFIX     = "x-B3AUXNYV";
+	private $CONTRACT_ORDER_PREFIX = "x-ftGmvgAN";
 
     // Default values for the tests
     private $symbol = 'ETHUSDT';

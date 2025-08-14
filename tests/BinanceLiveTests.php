@@ -70,8 +70,8 @@ class BinanceLiveTests extends TestCase
     private $quoteId = 'testQuoteId';
     private $timeInForce = 'GTC';
 
-    private $SPOT_ORDER_PREFIX     = "x-HNA2TXFJ";
-	private $CONTRACT_ORDER_PREFIX = "x-Cb7ytekJ";
+    private $SPOT_ORDER_PREFIX     = "x-B3AUXNYV";
+	private $CONTRACT_ORDER_PREFIX = "x-ftGmvgAN";
 
     public function testPricesSpot()
     {
