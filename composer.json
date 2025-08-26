@@ -5,7 +5,7 @@
     "license": "MIT",
     "repositories": [ {
             "type": "vcs",
-            "url": "https://github.com/jaggedsoft/php-binance-api"
+            "url": "https://github.com/xdeenist/php-binance-api"
     }],
     "require": {
         "php": ">=7.4",
